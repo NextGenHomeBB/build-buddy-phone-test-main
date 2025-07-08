@@ -266,49 +266,47 @@ export default function ProjectDetail() {
             ) : (
               <div className="space-y-3">
                 {phases?.map((phase) => (
-                  <Card key={phase.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-2">
+                  <Link key={phase.id} to={`/projects/${id}/phase/${phase.id}`}>
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              {getPhaseStatusIcon(phase.status)}
+                              <h4 className="font-semibold">{phase.name}</h4>
+                              <Badge variant="outline" className={getStatusColor(phase.status)}>
+                                {phase.status}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {phase.description}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(phase.startDate), 'MMM dd')} - {format(new Date(phase.endDate), 'MMM dd')}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <DollarSign className="h-3 w-3" />
+                                ${(phase.spent / 1000).toFixed(0)}k / ${(phase.budget / 1000).toFixed(0)}k
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <CheckCircle className="h-3 w-3" />
+                                {phase.checklist.filter(item => item.completed).length} / {phase.checklist.length} tasks
+                              </span>
+                            </div>
+                          </div>
                           <div className="flex items-center gap-3">
-                            {getPhaseStatusIcon(phase.status)}
-                            <h4 className="font-semibold">{phase.name}</h4>
-                            <Badge variant="outline" className={getStatusColor(phase.status)}>
-                              {phase.status}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {phase.description}
-                          </p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(phase.startDate), 'MMM dd')} - {format(new Date(phase.endDate), 'MMM dd')}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3" />
-                              ${(phase.spent / 1000).toFixed(0)}k / ${(phase.budget / 1000).toFixed(0)}k
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3" />
-                              {phase.checklist.filter(item => item.completed).length} / {phase.checklist.length} tasks
-                            </span>
+                            <div className="text-right space-y-1">
+                              <div className="text-sm font-medium">{phase.progress}%</div>
+                              <Progress value={phase.progress} className="w-20" />
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="text-right space-y-1">
-                            <div className="text-sm font-medium">{phase.progress}%</div>
-                            <Progress value={phase.progress} className="w-20" />
-                          </div>
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/projects/${id}/phase/${phase.id}`}>
-                              <ChevronRight className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 )) || (
                   <div className="text-center py-8 text-muted-foreground">
                     No phases found for this project.
