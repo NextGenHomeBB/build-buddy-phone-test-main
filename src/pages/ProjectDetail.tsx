@@ -157,7 +157,7 @@ export default function ProjectDetail() {
                   <div>
                     <div className="text-sm text-muted-foreground">Timeline</div>
                     <div className="text-sm font-medium">
-                      {format(new Date(project.startDate), 'MMM dd')} - {format(new Date(project.endDate), 'MMM dd, yyyy')}
+                      {format(new Date(project.start_date), 'MMM dd')} - {format(new Date(project.end_date), 'MMM dd, yyyy')}
                     </div>
                   </div>
                 </div>
@@ -204,7 +204,7 @@ export default function ProjectDetail() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Project Manager</span>
-                      <span className="font-medium">{project.manager}</span>
+                      <span className="font-medium">{project.manager?.name || 'Unassigned'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Type</span>
@@ -212,11 +212,11 @@ export default function ProjectDetail() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Start Date</span>
-                      <span className="font-medium">{format(new Date(project.startDate), 'MMM dd, yyyy')}</span>
+                      <span className="font-medium">{format(new Date(project.start_date), 'MMM dd, yyyy')}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">End Date</span>
-                      <span className="font-medium">{format(new Date(project.endDate), 'MMM dd, yyyy')}</span>
+                      <span className="font-medium">{format(new Date(project.end_date), 'MMM dd, yyyy')}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -241,11 +241,11 @@ export default function ProjectDetail() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Documents</span>
-                      <span className="font-medium">{project.documents.length}</span>
+                      <span className="font-medium">0</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Recent Activities</span>
-                      <span className="font-medium">{project.activities.length}</span>
+                      <span className="font-medium">0</span>
                     </div>
                   </div>
                 </CardContent>
@@ -284,7 +284,7 @@ export default function ProjectDetail() {
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                {format(new Date(phase.startDate), 'MMM dd')} - {format(new Date(phase.endDate), 'MMM dd')}
+                                {phase.start_date && phase.end_date ? `${format(new Date(phase.start_date), 'MMM dd')} - ${format(new Date(phase.end_date), 'MMM dd')}` : 'No dates'}
                               </span>
                               <span className="flex items-center gap-1">
                                 <DollarSign className="h-3 w-3" />
@@ -292,7 +292,7 @@ export default function ProjectDetail() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <CheckCircle className="h-3 w-3" />
-                                {phase.checklist.filter(item => item.completed).length} / {phase.checklist.length} tasks
+                                0 / 0 tasks
                               </span>
                             </div>
                           </div>
