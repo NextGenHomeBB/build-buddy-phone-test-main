@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
+import PhaseDetail from "./pages/PhaseDetail";
 import MyTasks from "./pages/MyTasks";
 import Reports from "./pages/Reports";
 import UserManagement from "./pages/admin/UserManagement";
@@ -35,6 +37,8 @@ const App = () => (
             <Route path="/dashboard" element={<RequireAuth><Index /></RequireAuth>} />
             <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
             <Route path="/projects" element={<RequireAuth><Projects /></RequireAuth>} />
+            <Route path="/projects/:id" element={<RequireAuth><ProjectDetail /></RequireAuth>} />
+            <Route path="/projects/:id/phase/:phaseId" element={<RequireAuth><PhaseDetail /></RequireAuth>} />
             <Route path="/my-tasks" element={<RequireAuth><MyTasks /></RequireAuth>} />
             <Route path="/reports" element={<RequireAuth><Reports /></RequireAuth>} />
             
