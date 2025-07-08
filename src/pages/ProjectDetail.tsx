@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { EditProjectDialog } from '@/components/project/EditProjectDialog';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -108,9 +109,11 @@ export default function ProjectDetail() {
             
             <div className="flex gap-2">
               {canEditProject() && (
-                <Button variant="outline" size="sm">
-                  Edit Project
-                </Button>
+                <EditProjectDialog project={project}>
+                  <Button variant="outline" size="sm">
+                    Edit Project
+                  </Button>
+                </EditProjectDialog>
               )}
               {canViewReports() && (
                 <Button size="sm">
