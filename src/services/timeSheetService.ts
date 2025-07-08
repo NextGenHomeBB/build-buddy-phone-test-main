@@ -1,119 +1,151 @@
-import { TimeEntry } from '@/hooks/useTimeSheet';
-import { mockTimeSheetData } from '@/mocks/timeSheet';
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Mock time sheet service for managing time entries
- * In a real application, this would connect to your backend API
- */
-class TimeSheetService {
-  private entries: TimeEntry[] = mockTimeSheetData;
+export const timeSheetService = {
+  async getTimeSheets(userId: string, filters?: any) {
+    let query = supabase
+      .from('time_sheets')
+      .select(`
+        *,
+        project:projects(name),
+        task:tasks(title)
+      `)
+      .eq('user_id', userId);
 
-  /**
-   * Get all time entries for a specific date
-   */
-  async getEntriesByDate(date: string): Promise<TimeEntry[]> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return this.entries.filter(entry => {
-      const entryDate = entry.date instanceof Date ? entry.date : new Date(entry.date);
-      const queryDate = new Date(date);
-      return entryDate.toDateString() === queryDate.toDateString();
-    });
-  }
-
-  /**
-   * Get all time entries for a specific user
-   */
-  async getEntriesByUser(userId: string): Promise<TimeEntry[]> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return this.entries.filter(entry => entry.userId === userId);
-  }
-
-  /**
-   * Get time entries for a date range
-   */
-  async getEntriesByDateRange(startDate: string, endDate: string): Promise<TimeEntry[]> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    return this.entries.filter(entry => {
-      const entryDate = entry.date instanceof Date ? entry.date : new Date(entry.date);
-      return entryDate >= start && entryDate <= end;
-    });
-  }
-
-  /**
-   * Create a new time entry
-   */
-  async createEntry(entryData: Omit<TimeEntry, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<TimeEntry> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    const newEntry: TimeEntry = {
-      ...entryData,
-      id: `entry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: 'current_user', // In real app, get from auth context
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    this.entries.push(newEntry);
-    return newEntry;
-  }
-
-  /**
-   * Update an existing time entry
-   */
-  async updateEntry(id: string, updates: Partial<Pick<TimeEntry, 'hours' | 'notes'>>): Promise<TimeEntry> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    const entryIndex = this.entries.findIndex(entry => entry.id === id);
-    if (entryIndex === -1) {
-      throw new Error('Time entry not found');
+    if (filters?.startDate) {
+      query = query.gte('date', filters.startDate);
     }
-    
-    this.entries[entryIndex] = {
-      ...this.entries[entryIndex],
-      ...updates,
-      updatedAt: new Date()
-    };
-    
-    return this.entries[entryIndex];
-  }
 
-  /**
-   * Delete a time entry
-   */
-  async deleteEntry(id: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    const entryIndex = this.entries.findIndex(entry => entry.id === id);
-    if (entryIndex === -1) {
-      throw new Error('Time entry not found');
+    if (filters?.endDate) {
+      query = query.lte('date', filters.endDate);
     }
+
+    if (filters?.projectId) {
+      query = query.eq('project_id', filters.projectId);
+    }
+
+    const { data, error } = await query.order('date', { ascending: false });
     
-    this.entries.splice(entryIndex, 1);
-  }
+    if (error) throw error;
+    return data;
+  },
 
-  /**
-   * Get total hours for a specific date
-   */
-  async getTotalHoursByDate(date: string): Promise<number> {
-    const entries = await this.getEntriesByDate(date);
-    return entries.reduce((total, entry) => total + entry.hours, 0);
-  }
+  async createTimeSheet(timeSheet: any) {
+    const { data, error } = await supabase
+      .from('time_sheets')
+      .insert(timeSheet)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
 
-  /**
-   * Get total hours for a user in a date range
-   */
-  async getTotalHoursByUserAndDateRange(userId: string, startDate: string, endDate: string): Promise<number> {
-    const entries = await this.getEntriesByDateRange(startDate, endDate);
-    const userEntries = entries.filter(entry => entry.userId === userId);
-    return userEntries.reduce((total, entry) => total + entry.hours, 0);
-  }
-}
+  async updateTimeSheet(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('time_sheets')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
 
-export const timeSheetService = new TimeSheetService();
+  async deleteTimeSheet(id: string) {
+    const { error } = await supabase
+      .from('time_sheets')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  // Compatibility methods for existing hooks
+  async getEntriesByDate(date: string) {
+    const { data, error } = await supabase
+      .from('time_sheets')
+      .select(`
+        *,
+        project:projects(name),
+        task:tasks(title)
+      `)
+      .eq('date', date);
+    
+    if (error) throw error;
+    // Transform to match expected interface
+    return data.map(entry => ({
+      id: entry.id,
+      date: new Date(entry.date),
+      hours: entry.hours,
+      notes: entry.description || '',
+      projectId: entry.project_id,
+      userId: entry.user_id,
+      createdAt: new Date(entry.created_at),
+      updatedAt: new Date(entry.updated_at)
+    }));
+  },
+
+  async createEntry(entryData: any) {
+    const { data, error } = await supabase
+      .from('time_sheets')
+      .insert({
+        date: entryData.date instanceof Date ? entryData.date.toISOString().split('T')[0] : entryData.date,
+        hours: entryData.hours,
+        description: entryData.notes,
+        project_id: entryData.projectId,
+        user_id: entryData.userId || 'current_user' // Should get from auth context
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    // Transform back to expected interface
+    return {
+      id: data.id,
+      date: new Date(data.date),
+      hours: data.hours,
+      notes: data.description || '',
+      projectId: data.project_id,
+      userId: data.user_id,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  },
+
+  async updateEntry(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('time_sheets')
+      .update({
+        hours: updates.hours,
+        description: updates.notes
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    // Transform back to expected interface
+    return {
+      id: data.id,
+      date: new Date(data.date),
+      hours: data.hours,
+      notes: data.description || '',
+      projectId: data.project_id,
+      userId: data.user_id,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  },
+
+  async deleteEntry(id: string) {
+    const { error } = await supabase
+      .from('time_sheets')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  }
+};

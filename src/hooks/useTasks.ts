@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { taskService } from '@/services/supabaseService';
+import { taskService } from '@/services/taskService';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface Task {

@@ -1,112 +1,58 @@
-import { mockProjects, mockPhases, Project, Phase } from '@/mocks/projects';
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Project service for handling project-related API calls
- * Currently returns mock data, will be replaced with real API calls later
- */
-class ProjectService {
-  /**
-   * Get all projects
-   */
-  async getProjects(): Promise<Project[]> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockProjects;
-  }
-
-  /**
-   * Get project by ID
-   */
-  async getProject(id: string): Promise<Project | null> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return mockProjects.find(p => p.id === id) || null;
-  }
-
-  /**
-   * Get phases for a project
-   */
-  async getProjectPhases(projectId: string): Promise<Phase[]> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return mockPhases.filter(p => p.projectId === projectId);
-  }
-
-  /**
-   * Get phase by ID
-   */
-  async getPhase(phaseId: string): Promise<Phase | null> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return mockPhases.find(p => p.id === phaseId) || null;
-  }
-
-  /**
-   * Update checklist item completion status
-   */
-  async updateChecklistItem(phaseId: string, itemId: string, completed: boolean, completedBy?: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 200));
+export const projectService = {
+  async getProjects() {
+    const { data, error } = await supabase
+      .from('projects')
+      .select(`
+        *,
+        manager:profiles!manager_id(name)
+      `)
+      .order('created_at', { ascending: false });
     
-    const phase = mockPhases.find(p => p.id === phaseId);
-    if (phase) {
-      const item = phase.checklist.find(i => i.id === itemId);
-      if (item) {
-        item.completed = completed;
-        if (completed && completedBy) {
-          item.completedBy = completedBy;
-          item.completedAt = new Date().toISOString();
-        } else {
-          item.completedBy = undefined;
-          item.completedAt = undefined;
-        }
-      }
-    }
-  }
+    if (error) throw error;
+    return data;
+  },
 
-  /**
-   * Create new project
-   */
-  async createProject(projectData: Omit<Project, 'id' | 'phases' | 'materials' | 'labour' | 'documents' | 'activities'>): Promise<Project> {
-    await new Promise(resolve => setTimeout(resolve, 500));
+  async getProject(id: string) {
+    const { data, error } = await supabase
+      .from('projects')
+      .select(`
+        *,
+        manager:profiles!manager_id(name),
+        phases:project_phases(*),
+        materials:project_materials(
+          *,
+          material:materials(name, unit)
+        )
+      `)
+      .eq('id', id)
+      .single();
     
-    const newProject: Project = {
-      ...projectData,
-      id: Date.now().toString(),
-      phases: [],
-      materials: [],
-      labour: [],
-      documents: [],
-      activities: []
-    };
+    if (error) throw error;
+    return data;
+  },
 
-    mockProjects.push(newProject);
-    return newProject;
-  }
-
-  /**
-   * Update project
-   */
-  async updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
-    await new Promise(resolve => setTimeout(resolve, 300));
+  async createProject(project: any) {
+    const { data, error } = await supabase
+      .from('projects')
+      .insert(project)
+      .select()
+      .single();
     
-    const index = mockProjects.findIndex(p => p.id === id);
-    if (index >= 0) {
-      mockProjects[index] = { ...mockProjects[index], ...updates };
-      return mockProjects[index];
-    }
-    return null;
-  }
+    if (error) throw error;
+    return data;
+  },
 
-  /**
-   * Delete project
-   */
-  async deleteProject(id: string): Promise<boolean> {
-    await new Promise(resolve => setTimeout(resolve, 300));
+  async updateProject(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('projects')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
     
-    const index = mockProjects.findIndex(p => p.id === id);
-    if (index >= 0) {
-      mockProjects.splice(index, 1);
-      return true;
-    }
-    return false;
+    if (error) throw error;
+    return data;
   }
-}
-
-export const projectService = new ProjectService();
+};

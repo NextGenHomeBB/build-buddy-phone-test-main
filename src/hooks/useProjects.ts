@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { projectService } from '@/services/supabaseService';
+import { projectService } from '@/services/projectService';
 
 /**
  * Hook to fetch all projects
