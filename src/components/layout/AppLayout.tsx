@@ -20,7 +20,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   return (
     <SidebarProvider defaultOpen>
@@ -102,10 +102,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     className="text-destructive"
-                    onClick={() => {
-                      // Add logout functionality here
-                      console.log('Logout clicked');
-                    }}
+                    onClick={signOut}
                   >
                     Sign out
                   </DropdownMenuItem>
