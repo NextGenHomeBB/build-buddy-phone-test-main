@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Home, FolderOpen, CheckSquare, BarChart3, Users, Settings } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -13,35 +13,32 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const navigationItems = [
   {
     title: "Dashboard",
     url: "/dashboard",
-    icon: () => (
-      <div className="h-4 w-4 rounded bg-primary/20 border border-primary/30" />
-    ),
+    icon: Home,
+    badge: null,
   },
   {
     title: "Projects",
     url: "/projects",
-    icon: () => (
-      <div className="h-4 w-4 rounded bg-secondary/20 border border-secondary/30" />
-    ),
+    icon: FolderOpen,
+    badge: "12",
   },
   {
     title: "My Tasks",
     url: "/my-tasks",
-    icon: () => (
-      <div className="h-4 w-4 rounded bg-accent/20 border border-accent/30" />
-    ),
+    icon: CheckSquare,
+    badge: "3",
   },
   {
     title: "Reports",
     url: "/reports",
-    icon: () => (
-      <div className="h-4 w-4 rounded bg-warning/20 border border-warning/30" />
-    ),
+    icon: BarChart3,
+    badge: null,
   },
 ];
 
@@ -49,16 +46,14 @@ const adminItems = [
   {
     title: "User Management",
     url: "/admin/users",
-    icon: () => (
-      <div className="h-4 w-4 rounded bg-destructive/20 border border-destructive/30" />
-    ),
+    icon: Users,
+    badge: "5",
   },
   {
     title: "Project Settings",
     url: "/admin/projects",
-    icon: () => (
-      <div className="h-4 w-4 rounded bg-muted-foreground/20 border border-muted-foreground/30" />
-    ),
+    icon: Settings,
+    badge: null,
   },
 ];
 
@@ -66,7 +61,9 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
-  const [adminExpanded, setAdminExpanded] = useState(false);
+  const [adminExpanded, setAdminExpanded] = useState(
+    adminItems.some(item => item.url === currentPath)
+  );
   
   const collapsed = state === "collapsed";
 
@@ -74,39 +71,68 @@ export function AppSidebar() {
   const getNavClasses = (active: boolean) =>
     active
       ? "bg-primary/10 text-primary font-medium border-r-2 border-primary"
-      : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
+      : "hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors";
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-72"}>
-      <SidebarContent className="bg-card">
+    <Sidebar 
+      className={`${collapsed ? "w-16" : "w-72"} transition-all duration-300 ease-in-out`}
+      collapsible="icon"
+    >
+      <SidebarContent className="bg-card border-r border-border">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border/50">
           {!collapsed && (
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary via-primary to-blue-600 flex items-center justify-center shadow-sm">
                 <span className="text-primary-foreground font-bold text-sm">PG</span>
               </div>
-              <span className="font-semibold text-foreground">Phase-Gate</span>
+              <div>
+                <span className="font-semibold text-foreground">Phase-Gate</span>
+                <div className="text-xs text-muted-foreground">Keeper</div>
+              </div>
+            </div>
+          )}
+          {collapsed && (
+            <div className="mx-auto">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary via-primary to-blue-600 flex items-center justify-center shadow-sm">
+                <span className="text-primary-foreground font-bold text-sm">PG</span>
+              </div>
             </div>
           )}
         </div>
 
         {/* Main Navigation */}
-        <SidebarGroup className="px-2">
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-            Navigation
-          </SidebarGroupLabel>
+        <SidebarGroup className="px-2 py-4">
+          {!collapsed && (
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
+              Navigation
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="w-full">
                     <NavLink
                       to={item.url}
-                      className={({ isActive }) => getNavClasses(isActive)}
+                      className={({ isActive }) => 
+                        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${getNavClasses(isActive)}`
+                      }
                     >
-                      <item.icon />
-                      {!collapsed && <span>{item.title}</span>}
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      {!collapsed && (
+                        <>
+                          <span className="flex-1">{item.title}</span>
+                          {item.badge && (
+                            <Badge 
+                              variant="secondary" 
+                              className="ml-auto text-xs h-5 px-1.5 bg-primary/20 text-primary border-primary/30"
+                            >
+                              {item.badge}
+                            </Badge>
+                          )}
+                        </>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -117,40 +143,52 @@ export function AppSidebar() {
 
         {/* Admin Section */}
         <SidebarGroup className="px-2">
-          <div
-            className={`flex items-center justify-between px-2 py-1 text-sm font-medium text-muted-foreground ${
-              collapsed ? "justify-center" : ""
-            }`}
-          >
-            {!collapsed && <span>Administration</span>}
-            {!collapsed && (
+          <div className="mb-2">
+            {!collapsed ? (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setAdminExpanded(!adminExpanded)}
-                className="h-6 w-6 p-0"
+                className="w-full justify-between h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
               >
+                <span>Administration</span>
                 {adminExpanded ? (
                   <ChevronDown className="h-3 w-3" />
                 ) : (
                   <ChevronRight className="h-3 w-3" />
                 )}
               </Button>
+            ) : (
+              <div className="h-8" /> // Spacer for collapsed state
             )}
           </div>
           
           {(adminExpanded || collapsed) && (
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="space-y-1">
                 {adminItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton asChild className="w-full">
                       <NavLink
                         to={item.url}
-                        className={({ isActive }) => getNavClasses(isActive)}
+                        className={({ isActive }) => 
+                          `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${getNavClasses(isActive)}`
+                        }
                       >
-                        <item.icon />
-                        {!collapsed && <span>{item.title}</span>}
+                        <item.icon className="h-5 w-5 flex-shrink-0" />
+                        {!collapsed && (
+                          <>
+                            <span className="flex-1">{item.title}</span>
+                            {item.badge && (
+                              <Badge 
+                                variant="outline" 
+                                className="ml-auto text-xs h-5 px-1.5"
+                              >
+                                {item.badge}
+                              </Badge>
+                            )}
+                          </>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -159,6 +197,15 @@ export function AppSidebar() {
             </SidebarGroupContent>
           )}
         </SidebarGroup>
+
+        {/* Footer */}
+        <div className="mt-auto p-4 border-t border-border/50">
+          {!collapsed && (
+            <div className="text-xs text-muted-foreground text-center">
+              Version 2.1.0
+            </div>
+          )}
+        </div>
       </SidebarContent>
     </Sidebar>
   );

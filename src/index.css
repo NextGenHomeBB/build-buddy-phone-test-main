@@ -65,6 +65,43 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  /* Safe area insets for mobile devices */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .h-safe-area-inset-bottom {
+    height: env(safe-area-inset-bottom);
+  }
+
+  /* Touch improvements */
+  @media (hover: none) and (pointer: coarse) {
+    .hover\:bg-muted\/50:hover {
+      background-color: hsl(var(--muted) / 0.5);
+    }
+    
+    /* Increase touch targets on mobile */
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .dark {
     --background: 215 25% 8%;
     --foreground: 210 20% 95%;
