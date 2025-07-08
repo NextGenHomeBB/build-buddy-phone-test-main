@@ -10,9 +10,17 @@ import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import PhaseDetail from "./pages/PhaseDetail";
 import MyTasks from "./pages/MyTasks";
+import TimeSheet from "./pages/TimeSheet";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
+import ReportsOverview from "./pages/Reports/Overview";
+import ReportsMaterials from "./pages/Reports/Materials";
 import UserManagement from "./pages/admin/UserManagement";
 import ProjectSettings from "./pages/admin/ProjectSettings";
+import AdminChecklists from "./pages/admin/Checklists";
+import AdminMaterials from "./pages/admin/Materials";
+import AdminReports from "./pages/admin/Reports";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Onboarding from "./pages/auth/Onboarding";
@@ -40,11 +48,19 @@ const App = () => (
             <Route path="/projects/:id" element={<RequireAuth><ProjectDetail /></RequireAuth>} />
             <Route path="/projects/:id/phase/:phaseId" element={<RequireAuth><PhaseDetail /></RequireAuth>} />
             <Route path="/my-tasks" element={<RequireAuth><MyTasks /></RequireAuth>} />
+            <Route path="/time-sheet" element={<RequireAuth><TimeSheet /></RequireAuth>} />
+            <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+            <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
             <Route path="/reports" element={<RequireAuth><Reports /></RequireAuth>} />
+            <Route path="/reports/overview" element={<RequireAuth><ReportsOverview /></RequireAuth>} />
+            <Route path="/reports/materials" element={<RequireAuth><ReportsMaterials /></RequireAuth>} />
             
             {/* Admin routes */}
             <Route path="/admin/users" element={<RequireAuth roles={['admin', 'manager']}><UserManagement /></RequireAuth>} />
             <Route path="/admin/projects" element={<RequireAuth roles={['admin', 'manager']}><ProjectSettings /></RequireAuth>} />
+            <Route path="/admin/checklists" element={<RequireAuth roles={['admin', 'manager']}><AdminChecklists /></RequireAuth>} />
+            <Route path="/admin/materials" element={<RequireAuth roles={['admin', 'manager']}><AdminMaterials /></RequireAuth>} />
+            <Route path="/admin/reports" element={<RequireAuth roles={['admin', 'manager']}><AdminReports /></RequireAuth>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
