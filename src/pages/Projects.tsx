@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Calendar, DollarSign, MapPin, Users, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { CreateProjectDialog } from '@/components/project/CreateProjectDialog';
 
 export default function Projects() {
   const { data: projects, isLoading } = useProjects();
@@ -33,10 +34,12 @@ export default function Projects() {
               Manage all your construction projects
             </p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
+          <CreateProjectDialog>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Project
+            </Button>
+          </CreateProjectDialog>
         </div>
         
         {isLoading ? (
@@ -109,10 +112,12 @@ export default function Projects() {
                 <p className="text-muted-foreground mb-4">
                   Get started by creating your first project.
                 </p>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Project
-                </Button>
+                <CreateProjectDialog>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Project
+                  </Button>
+                </CreateProjectDialog>
               </div>
             )}
           </div>
