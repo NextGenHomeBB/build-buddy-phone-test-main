@@ -3,35 +3,51 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import MyTasks from "./pages/MyTasks";
 import Reports from "./pages/Reports";
 import UserManagement from "./pages/admin/UserManagement";
 import ProjectSettings from "./pages/admin/ProjectSettings";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import Onboarding from "./pages/auth/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Index />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/my-tasks" element={<MyTasks />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/admin/users" element={<UserManagement />} />
-          <Route path="/admin/projects" element={<ProjectSettings />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Protected routes */}
+            <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
+            <Route path="/dashboard" element={<RequireAuth><Index /></RequireAuth>} />
+            <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
+            <Route path="/projects" element={<RequireAuth><Projects /></RequireAuth>} />
+            <Route path="/my-tasks" element={<RequireAuth><MyTasks /></RequireAuth>} />
+            <Route path="/reports" element={<RequireAuth><Reports /></RequireAuth>} />
+            
+            {/* Admin routes */}
+            <Route path="/admin/users" element={<RequireAuth roles={['admin', 'manager']}><UserManagement /></RequireAuth>} />
+            <Route path="/admin/projects" element={<RequireAuth roles={['admin', 'manager']}><ProjectSettings /></RequireAuth>} />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
