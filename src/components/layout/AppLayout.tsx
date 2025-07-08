@@ -22,10 +22,10 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-[9999] bg-black/50 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           >
-            <div className="fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border">
+            <div className="fixed inset-y-0 left-0 z-[10000] w-72 bg-card border-r border-border shadow-2xl">
               <AppSidebar onClose={() => setSidebarOpen(false)} />
             </div>
           </div>
