@@ -23,7 +23,7 @@ interface OnboardingData {
 }
 
 export default function Onboarding() {
-  const { user, updateProfile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -61,7 +61,7 @@ export default function Onboarding() {
     try {
       // Update user profile with onboarding data
       await updateProfile({
-        name: user.name, // Keep existing name
+        name: profile?.name || user?.email, // Keep existing name
         // In a real app, you'd save the additional profile data
       });
 
@@ -134,7 +134,7 @@ export default function Onboarding() {
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={data.profilePicture} />
                   <AvatarFallback className="text-lg">
-                    {user.name?.split(' ').map(n => n[0]).join('')}
+                    {profile?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <Button

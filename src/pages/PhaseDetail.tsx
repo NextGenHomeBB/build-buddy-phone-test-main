@@ -27,7 +27,7 @@ import { ChecklistItem } from '@/mocks/projects';
 export default function PhaseDetail() {
   const { id: projectId, phaseId } = useParams<{ id: string; phaseId: string }>();
   const { data: phase, isLoading } = usePhase(phaseId!);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const updateChecklistItem = useUpdateChecklistItem();
   const [swipingItemId, setSwipingItemId] = useState<string | null>(null);
@@ -90,7 +90,7 @@ export default function PhaseDetail() {
         phaseId: phase.id,
         itemId: item.id,
         completed: !item.completed,
-        completedBy: !item.completed ? user.name : undefined,
+        completedBy: !item.completed ? profile?.name || user?.email : undefined,
       });
 
       toast({

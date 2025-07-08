@@ -10,9 +10,9 @@ import { Camera, Save, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    name: profile?.name || '',
     email: user?.email || '',
     phone: '',
     password: '',
@@ -73,9 +73,9 @@ export default function Profile() {
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={avatarUrl} alt={user?.name} />
+              <AvatarImage src={avatarUrl} alt={profile?.name} />
               <AvatarFallback className="text-lg">
-                {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                {profile?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
               </AvatarFallback>
             </Avatar>
             <Button onClick={handleAvatarUpload} variant="outline">
@@ -130,7 +130,7 @@ export default function Profile() {
                 <Label htmlFor="role">Role</Label>
                 <Input
                   id="role"
-                  value={user?.role || 'User'}
+                  value={profile?.role || 'worker'}
                   readOnly
                   className="bg-muted"
                 />

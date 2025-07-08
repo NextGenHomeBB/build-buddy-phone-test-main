@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { taskService } from '@/services/taskService';
+import { taskService } from '@/services/supabaseService';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface Task {
@@ -50,7 +50,7 @@ export function useTasks(filters?: TaskFilters) {
 
   const query = useQuery({
     queryKey: ['tasks', user?.id, filters],
-    queryFn: () => taskService.getTasks(user?.id || '', filters),
+    queryFn: () => taskService.getTasks(user?.id, filters),
     enabled: !!user?.id,
   });
 
@@ -63,8 +63,10 @@ export function useTasks(filters?: TaskFilters) {
   });
 
   const addCommentMutation = useMutation({
-    mutationFn: ({ taskId, message }: { taskId: string; message: string }) =>
-      taskService.addComment(taskId, message, user?.id || ''),
+    mutationFn: ({ taskId, message }: { taskId: string; message: string }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      return taskService.addComment(taskId, message, user.id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
@@ -91,6 +93,7 @@ export function useTasks(filters?: TaskFilters) {
   };
 
   const addComment = async (taskId: string, message: string) => {
+    if (!user?.id) throw new Error('User not authenticated');
     return addCommentMutation.mutateAsync({ taskId, message });
   };
 
@@ -112,7 +115,10 @@ export function useTaskStats() {
   
   return useQuery({
     queryKey: ['task-stats', user?.id],
-    queryFn: () => taskService.getTaskStats(user?.id || ''),
+    queryFn: () => {
+      if (!user?.id) throw new Error('User not authenticated');
+      return taskService.getTaskStats(user.id);
+    },
     enabled: !!user?.id,
   });
 }

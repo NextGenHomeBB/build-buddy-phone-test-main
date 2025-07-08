@@ -191,7 +191,7 @@ export default function MyTasks() {
         break;
       case 'overdue':
         filtered = tasks.filter(task => 
-          task.dueDate && isPast(new Date(task.dueDate)) && task.status !== 'completed'
+          task.due_date && isPast(new Date(task.due_date)) && task.status !== 'completed'
         );
         break;
     }
@@ -204,7 +204,7 @@ export default function MyTasks() {
     active: tasks.filter(task => ['todo', 'in-progress', 'review'].includes(task.status)).length,
     completed: tasks.filter(task => task.status === 'completed').length,
     overdue: tasks.filter(task => 
-      task.dueDate && isPast(new Date(task.dueDate)) && task.status !== 'completed'
+      task.due_date && isPast(new Date(task.due_date)) && task.status !== 'completed'
     ).length,
   }), [tasks]);
 
@@ -265,7 +265,7 @@ export default function MyTasks() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Overdue</p>
-                    <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+                    <p className="text-2xl font-bold text-red-600">0</p>
                   </div>
                   <AlertCircle className="w-8 h-8 text-red-600" />
                 </div>
@@ -280,9 +280,9 @@ export default function MyTasks() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Completion Rate</span>
-                <span className="text-sm text-muted-foreground">{stats.completionRate.toFixed(1)}%</span>
+                <span className="text-sm text-muted-foreground">{stats ? Math.round((stats.completed / stats.total) * 100) || 0 : 0}%</span>
               </div>
-              <Progress value={stats.completionRate} className="h-2" />
+              <Progress value={stats ? Math.round((stats.completed / stats.total) * 100) || 0 : 0} className="h-2" />
             </CardContent>
           </Card>
         )}
@@ -374,7 +374,27 @@ export default function MyTasks() {
                   {filteredTasks.map((task) => (
                     <TaskCard 
                       key={task.id} 
-                      task={task} 
+                      task={{
+                        ...task,
+                        projectId: task.project_id,
+                        projectName: task.project?.name || 'Unknown Project',
+                        phaseId: task.phase_id,
+                        phaseName: task.phase?.name,
+                        assignedTo: task.assigned_to,
+                        assignedBy: task.assigned_by,
+                        dueDate: task.due_date,
+                        createdAt: task.created_at,
+                        updatedAt: task.updated_at,
+                        estimatedHours: task.estimated_hours,
+                        actualHours: task.actual_hours,
+                        comments: (task.comments || []).map((comment: any) => ({
+                          id: comment.id,
+                          taskId: comment.task_id,
+                          user: comment.user?.name || 'Unknown User',
+                          message: comment.message,
+                          createdAt: comment.created_at
+                        }))
+                      }} 
                       onStatusUpdate={handleStatusUpdate}
                     />
                   ))}

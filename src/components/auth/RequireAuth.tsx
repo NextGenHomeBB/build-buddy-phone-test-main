@@ -1,10 +1,9 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { User } from '@/lib/supabaseClient';
 
 interface RequireAuthProps {
   children: React.ReactNode;
-  roles?: Array<User['role']>;
+  roles?: Array<'admin' | 'manager' | 'worker' | 'viewer'>;
 }
 
 /**
@@ -12,7 +11,7 @@ interface RequireAuthProps {
  * Optionally can require specific roles
  */
 export function RequireAuth({ children, roles }: RequireAuthProps) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -28,7 +27,7 @@ export function RequireAuth({ children, roles }: RequireAuthProps) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (roles && !roles.includes(user.role)) {
+  if (roles && profile && !roles.includes(profile.role)) {
     // User doesn't have required role
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -48,7 +47,7 @@ export function RequireAuth({ children, roles }: RequireAuthProps) {
  */
 export function withAuth<T extends object>(
   Component: React.ComponentType<T>,
-  roles?: Array<User['role']>
+  roles?: Array<'admin' | 'manager' | 'worker' | 'viewer'>
 ) {
   return function AuthenticatedComponent(props: T) {
     return (
