@@ -1,0 +1,12 @@
+{
+  "name": "Phase-Gate Keeper",
+  "short_name": "PGK",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "theme_color": "#2563EB",
+  "background_color": "#ffffff",
+  "icons": [
+    { "src": "/icons/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icons/icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}
