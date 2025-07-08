@@ -62,11 +62,7 @@ const adminItems = [
   },
 ];
 
-interface AppSidebarProps {
-  onClose?: () => void;
-}
-
-export function AppSidebar({ onClose }: AppSidebarProps) {
+export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -93,12 +89,6 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
               <span className="font-semibold text-foreground">Phase-Gate</span>
             </div>
           )}
-          
-          {onClose && (
-            <Button variant="ghost" size="sm" onClick={onClose} className="lg:hidden">
-              <X className="h-4 w-4" />
-            </Button>
-          )}
         </div>
 
         {/* Main Navigation */}
@@ -114,7 +104,6 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
                     <NavLink
                       to={item.url}
                       className={({ isActive }) => getNavClasses(isActive)}
-                      onClick={onClose}
                     >
                       <item.icon />
                       {!collapsed && <span>{item.title}</span>}
@@ -159,7 +148,6 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
                       <NavLink
                         to={item.url}
                         className={({ isActive }) => getNavClasses(isActive)}
-                        onClick={onClose}
                       >
                         <item.icon />
                         {!collapsed && <span>{item.title}</span>}

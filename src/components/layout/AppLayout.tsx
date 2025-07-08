@@ -1,39 +1,84 @@
-import { useState } from "react";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { TopBar } from "./TopBar";
 import { MobileTabBar } from "./MobileTabBar";
+import { Bell, Settings, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:block">
-          <AppSidebar />
-        </div>
-
-        {/* Mobile Sidebar Overlay */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 z-[9999] bg-black/50 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <div className="fixed inset-y-0 left-0 z-[10000] w-72 bg-card border-r border-border shadow-2xl">
-              <AppSidebar onClose={() => setSidebarOpen(false)} />
+        <AppSidebar />
+        
+        <SidebarInset>
+          {/* Top Bar */}
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:px-8">
+            {/* Left Section - Menu & Title */}
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="lg:hidden" />
+              
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-semibold text-foreground">
+                  Phase-Gate Keeper
+                </h1>
+              </div>
             </div>
-          </div>
-        )}
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <TopBar onMenuClick={() => setSidebarOpen(true)} />
+            {/* Right Section - Actions & Profile */}
+            <div className="flex items-center gap-2">
+              {/* Notifications */}
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full text-xs"></span>
+              </Button>
+
+              {/* Settings */}
+              <Button variant="ghost" size="sm" className="hidden sm:flex">
+                <Settings className="h-5 w-5" />
+              </Button>
+
+              {/* Profile Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="/avatars/01.png" alt="User" />
+                      <AvatarFallback>
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex flex-col space-y-1 p-2">
+                    <p className="text-sm font-medium leading-none">John Doe</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      john.doe@construction.com
+                    </p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>Profile</DropdownMenuItem>
+                  <DropdownMenuItem>Settings</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive">
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
           
           <main className="flex-1 overflow-x-hidden bg-muted/30">
             <div className="h-full px-4 py-6 lg:px-8">
@@ -45,7 +90,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <div className="lg:hidden">
             <MobileTabBar />
           </div>
-        </div>
+        </SidebarInset>
       </div>
     </SidebarProvider>
   );
