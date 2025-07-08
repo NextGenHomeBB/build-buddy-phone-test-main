@@ -24,11 +24,13 @@ import {
   Pause
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: project, isLoading: projectLoading } = useProject(id!);
   const { data: phases, isLoading: phasesLoading } = useProjectPhases(id!);
+  const { canEditProject, canAddPhase, canViewReports } = useRoleAccess();
 
   if (projectLoading) {
     return (
@@ -105,12 +107,16 @@ export default function ProjectDetail() {
             </div>
             
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                Edit Project
-              </Button>
-              <Button size="sm">
-                View Reports
-              </Button>
+              {canEditProject() && (
+                <Button variant="outline" size="sm">
+                  Edit Project
+                </Button>
+              )}
+              {canViewReports() && (
+                <Button size="sm">
+                  View Reports
+                </Button>
+              )}
             </div>
           </div>
 
@@ -256,7 +262,9 @@ export default function ProjectDetail() {
           <TabsContent value="phases" className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Project Phases</h3>
-              <Button size="sm">Add Phase</Button>
+              {canAddPhase() && (
+                <Button size="sm">Add Phase</Button>
+              )}
             </div>
             
             {phasesLoading ? (

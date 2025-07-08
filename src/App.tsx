@@ -50,10 +50,10 @@ const App = () => (
             <Route path="/my-tasks" element={<RequireAuth><MyTasks /></RequireAuth>} />
             <Route path="/time-sheet" element={<RequireAuth><TimeSheet /></RequireAuth>} />
             <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-            <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
-            <Route path="/reports" element={<RequireAuth><Reports /></RequireAuth>} />
-            <Route path="/reports/overview" element={<RequireAuth><ReportsOverview /></RequireAuth>} />
-            <Route path="/reports/materials" element={<RequireAuth><ReportsMaterials /></RequireAuth>} />
+            <Route path="/settings" element={<RequireAuth roles={['admin', 'manager']}><Settings /></RequireAuth>} />
+            <Route path="/reports" element={<RequireAuth roles={['admin', 'manager']}><Reports /></RequireAuth>} />
+            <Route path="/reports/overview" element={<RequireAuth roles={['admin', 'manager']}><ReportsOverview /></RequireAuth>} />
+            <Route path="/reports/materials" element={<RequireAuth roles={['admin', 'manager']}><ReportsMaterials /></RequireAuth>} />
             
             {/* Admin routes */}
             <Route path="/admin/users" element={<RequireAuth roles={['admin', 'manager']}><UserManagement /></RequireAuth>} />

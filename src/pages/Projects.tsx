@@ -8,9 +8,11 @@ import { Progress } from '@/components/ui/progress';
 import { Calendar, DollarSign, MapPin, Users, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { CreateProjectDialog } from '@/components/project/CreateProjectDialog';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 export default function Projects() {
   const { data: projects, isLoading } = useProjects();
+  const { canCreateProject } = useRoleAccess();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -31,15 +33,17 @@ export default function Projects() {
               Projects
             </h1>
             <p className="text-muted-foreground mt-1">
-              Manage all your construction projects
+              {canCreateProject() ? 'Manage all your construction projects' : 'View your assigned projects'}
             </p>
           </div>
-          <CreateProjectDialog>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
-            </Button>
-          </CreateProjectDialog>
+          {canCreateProject() && (
+            <CreateProjectDialog>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                New Project
+              </Button>
+            </CreateProjectDialog>
+          )}
         </div>
         
         {isLoading ? (
@@ -110,14 +114,16 @@ export default function Projects() {
                   No projects found
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  Get started by creating your first project.
+                  {canCreateProject() ? 'Get started by creating your first project.' : 'No projects have been assigned to you yet.'}
                 </p>
-                <CreateProjectDialog>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Project
-                  </Button>
-                </CreateProjectDialog>
+                {canCreateProject() && (
+                  <CreateProjectDialog>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Project
+                    </Button>
+                  </CreateProjectDialog>
+                )}
               </div>
             )}
           </div>

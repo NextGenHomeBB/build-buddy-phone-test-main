@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search } from "lucide-react";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
 
 // Mock data for demonstration
 const mockProjects = [
@@ -83,6 +84,7 @@ const recentActivities = [
 
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { canCreateProject, isWorker } = useRoleAccess();
 
   const filteredProjects = mockProjects.filter(project =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -95,17 +97,19 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-            Project Dashboard
+            {isWorker() ? 'My Work Dashboard' : 'Project Dashboard'}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Monitor and manage your construction projects
+            {isWorker() ? 'Track your assigned tasks and projects' : 'Monitor and manage your construction projects'}
           </p>
         </div>
         
-        <Button size="lg" className="sm:w-auto w-full">
-          <Plus className="h-4 w-4 mr-2" />
-          New Project
-        </Button>
+        {canCreateProject() && (
+          <Button size="lg" className="sm:w-auto w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Button>
+        )}
       </div>
 
       {/* Stats Grid */}
