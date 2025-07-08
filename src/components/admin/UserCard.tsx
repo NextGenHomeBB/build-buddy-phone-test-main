@@ -3,15 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Edit } from "lucide-react";
-import { User } from "@/mocks/users";
-import { getStatusBadge, getRoleBadge } from "./UserBadges";
+import { UserProfile } from "@/services/userService";
+import { getRoleBadge } from "./UserBadges";
 
 interface UserCardProps {
-  user: User;
-  onUpdateStatus: (userId: string, status: User['status']) => void;
+  user: UserProfile;
+  onUpdateRole: (userId: string, role: UserProfile['role']) => void;
 }
 
-export function UserCard({ user, onUpdateStatus }: UserCardProps) {
+export function UserCard({ user, onUpdateRole }: UserCardProps) {
   return (
     <Card className="p-4">
       <div className="flex items-start justify-between mb-3">
@@ -23,7 +23,7 @@ export function UserCard({ user, onUpdateStatus }: UserCardProps) {
           </Avatar>
           <div>
             <div className="font-medium text-sm">{user.name}</div>
-            <div className="text-xs text-muted-foreground">{user.email}</div>
+            <div className="text-xs text-muted-foreground">ID: {user.user_id.slice(0, 8)}...</div>
           </div>
         </div>
         <Button variant="ghost" size="sm" className="touch-target">
@@ -37,41 +37,37 @@ export function UserCard({ user, onUpdateStatus }: UserCardProps) {
           {getRoleBadge(user.role)}
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">Status</div>
-          {getStatusBadge(user.status)}
+          <div className="text-xs text-muted-foreground mb-1">Phone</div>
+          <div className="text-sm">{user.phone || 'Not provided'}</div>
         </div>
       </div>
       
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
-          <div className="text-xs text-muted-foreground mb-1">Department</div>
-          <div className="text-sm">{user.department}</div>
+          <div className="text-xs text-muted-foreground mb-1">Created</div>
+          <div className="text-sm">{new Date(user.created_at).toLocaleDateString()}</div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">Last Login</div>
-          <div className="text-sm">
-            {user.lastLogin ? 
-              new Date(user.lastLogin).toLocaleDateString() : 
-              'Never'
-            }
-          </div>
+          <div className="text-xs text-muted-foreground mb-1">Updated</div>
+          <div className="text-sm">{new Date(user.updated_at).toLocaleDateString()}</div>
         </div>
       </div>
       
       <div className="flex justify-end">
         <Select
-          value={user.status}
+          value={user.role}
           onValueChange={(value) => 
-            onUpdateStatus(user.id, value as User['status'])
+            onUpdateRole(user.user_id, value as UserProfile['role'])
           }
         >
           <SelectTrigger className="w-32 h-9 touch-target">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="manager">Manager</SelectItem>
+            <SelectItem value="worker">Worker</SelectItem>
+            <SelectItem value="viewer">Viewer</SelectItem>
           </SelectContent>
         </Select>
       </div>

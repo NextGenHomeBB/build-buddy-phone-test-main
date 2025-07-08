@@ -7,21 +7,21 @@ import { UserFilters } from "@/components/admin/UserFilters";
 import { UserTable } from "@/components/admin/UserTable";
 import { UserCardList } from "@/components/admin/UserCardList";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
+import { Loader2 } from "lucide-react";
 
 export default function UserManagement() {
   const isMobile = useIsMobile();
   const {
     filteredUsers,
+    loading,
     searchTerm,
     setSearchTerm,
     roleFilter,
     setRoleFilter,
-    statusFilter,
-    setStatusFilter,
     isAddUserOpen,
     setIsAddUserOpen,
     handleAddUser,
-    handleUpdateStatus,
+    handleUpdateRole,
     stats
   } = useUserManagement();
 
@@ -62,21 +62,26 @@ export default function UserManagement() {
               setSearchTerm={setSearchTerm}
               roleFilter={roleFilter}
               setRoleFilter={setRoleFilter}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
             />
 
-            {/* Responsive User Display */}
-            {!isMobile ? (
-              <UserTable 
-                users={filteredUsers} 
-                onUpdateStatus={handleUpdateStatus} 
-              />
+            {/* Loading State */}
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
             ) : (
-              <UserCardList 
-                users={filteredUsers} 
-                onUpdateStatus={handleUpdateStatus} 
-              />
+              /* Responsive User Display */
+              !isMobile ? (
+                <UserTable 
+                  users={filteredUsers} 
+                  onUpdateRole={handleUpdateRole} 
+                />
+              ) : (
+                <UserCardList 
+                  users={filteredUsers} 
+                  onUpdateRole={handleUpdateRole} 
+                />
+              )
             )}
           </CardContent>
         </Card>

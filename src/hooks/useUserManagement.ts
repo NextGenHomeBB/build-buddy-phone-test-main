@@ -1,22 +1,53 @@
-import { useState } from "react";
-import { mockUsers, User } from "@/mocks/users";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { userService, UserProfile } from "@/services/userService";
 
 export const useUserManagement = () => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    pending: 0,
+    admins: 0,
+    managers: 0,
+    workers: 0,
+  });
   const { toast } = useToast();
 
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const [usersData, statsData] = await Promise.all([
+        userService.getAllUsers(),
+        userService.getUserStats()
+      ]);
+      setUsers(usersData);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load users. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
     
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesRole;
   });
 
   const handleAddUser = () => {
@@ -25,38 +56,40 @@ export const useUserManagement = () => {
       description: "New user has been successfully added to the system.",
     });
     setIsAddUserOpen(false);
+    loadUsers(); // Refresh the list
   };
 
-  const handleUpdateStatus = (userId: string, newStatus: User['status']) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId ? { ...user, status: newStatus } : user
-    ));
-    toast({
-      title: "Status Updated",
-      description: `User status has been changed to ${newStatus}.`,
-    });
-  };
-
-  const stats = {
-    total: users.length,
-    active: users.filter(u => u.status === 'active').length,
-    pending: users.filter(u => u.status === 'pending').length,
-    admins: users.filter(u => u.role === 'admin').length,
+  const handleUpdateRole = async (userId: string, newRole: UserProfile['role']) => {
+    try {
+      await userService.updateUserRole(userId, newRole);
+      toast({
+        title: "Role Updated",
+        description: `User role has been changed to ${newRole}.`,
+      });
+      loadUsers(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to update user role:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user role. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return {
     users,
     filteredUsers,
+    loading,
     searchTerm,
     setSearchTerm,
     roleFilter,
     setRoleFilter,
-    statusFilter,
-    setStatusFilter,
     isAddUserOpen,
     setIsAddUserOpen,
     handleAddUser,
-    handleUpdateStatus,
-    stats
+    handleUpdateRole,
+    stats,
+    refreshUsers: loadUsers
   };
 };

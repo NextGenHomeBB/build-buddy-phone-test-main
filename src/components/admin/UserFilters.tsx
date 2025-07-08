@@ -7,17 +7,13 @@ interface UserFiltersProps {
   setSearchTerm: (term: string) => void;
   roleFilter: string;
   setRoleFilter: (role: string) => void;
-  statusFilter: string;
-  setStatusFilter: (status: string) => void;
 }
 
 export function UserFilters({ 
   searchTerm, 
   setSearchTerm, 
   roleFilter, 
-  setRoleFilter, 
-  statusFilter, 
-  setStatusFilter 
+  setRoleFilter 
 }: UserFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -40,18 +36,8 @@ export function UserFilters({
           <SelectItem value="all">All Roles</SelectItem>
           <SelectItem value="admin">Admin</SelectItem>
           <SelectItem value="manager">Manager</SelectItem>
-          <SelectItem value="team_member">Team Member</SelectItem>
-        </SelectContent>
-      </Select>
-      <Select value={statusFilter} onValueChange={setStatusFilter}>
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="Filter by status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="active">Active</SelectItem>
-          <SelectItem value="inactive">Inactive</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="worker">Worker</SelectItem>
+          <SelectItem value="viewer">Viewer</SelectItem>
         </SelectContent>
       </Select>
     </div>

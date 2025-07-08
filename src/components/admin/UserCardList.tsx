@@ -1,19 +1,19 @@
-import { User } from "@/mocks/users";
+import { UserProfile } from "@/services/userService";
 import { UserCard } from "./UserCard";
 
 interface UserCardListProps {
-  users: User[];
-  onUpdateStatus: (userId: string, status: User['status']) => void;
+  users: UserProfile[];
+  onUpdateRole: (userId: string, role: UserProfile['role']) => void;
 }
 
-export function UserCardList({ users, onUpdateStatus }: UserCardListProps) {
+export function UserCardList({ users, onUpdateRole }: UserCardListProps) {
   return (
     <div className="space-y-4">
       {users.map((user) => (
         <UserCard 
           key={user.id} 
           user={user} 
-          onUpdateStatus={onUpdateStatus} 
+          onUpdateRole={onUpdateRole} 
         />
       ))}
     </div>

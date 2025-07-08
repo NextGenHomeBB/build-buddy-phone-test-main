@@ -3,15 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Edit } from "lucide-react";
-import { User } from "@/mocks/users";
-import { getStatusBadge, getRoleBadge } from "./UserBadges";
+import { UserProfile } from "@/services/userService";
+import { getRoleBadge } from "./UserBadges";
 
 interface UserTableProps {
-  users: User[];
-  onUpdateStatus: (userId: string, status: User['status']) => void;
+  users: UserProfile[];
+  onUpdateRole: (userId: string, role: UserProfile['role']) => void;
 }
 
-export function UserTable({ users, onUpdateStatus }: UserTableProps) {
+export function UserTable({ users, onUpdateRole }: UserTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -19,9 +19,8 @@ export function UserTable({ users, onUpdateStatus }: UserTableProps) {
           <TableRow>
             <TableHead>User</TableHead>
             <TableHead>Role</TableHead>
-            <TableHead>Department</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Last Login</TableHead>
+            <TableHead>Phone</TableHead>
+            <TableHead>Created</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -37,18 +36,14 @@ export function UserTable({ users, onUpdateStatus }: UserTableProps) {
                   </Avatar>
                   <div>
                     <div className="font-medium">{user.name}</div>
-                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                    <div className="text-sm text-muted-foreground">ID: {user.user_id.slice(0, 8)}...</div>
                   </div>
                 </div>
               </TableCell>
               <TableCell>{getRoleBadge(user.role)}</TableCell>
-              <TableCell>{user.department}</TableCell>
-              <TableCell>{getStatusBadge(user.status)}</TableCell>
+              <TableCell>{user.phone || 'Not provided'}</TableCell>
               <TableCell>
-                {user.lastLogin ? 
-                  new Date(user.lastLogin).toLocaleDateString() : 
-                  'Never'
-                }
+                {new Date(user.created_at).toLocaleDateString()}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
@@ -56,18 +51,19 @@ export function UserTable({ users, onUpdateStatus }: UserTableProps) {
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Select
-                    value={user.status}
+                    value={user.role}
                     onValueChange={(value) => 
-                      onUpdateStatus(user.id, value as User['status'])
+                      onUpdateRole(user.user_id, value as UserProfile['role'])
                     }
                   >
-                    <SelectTrigger className="w-24 h-8">
+                    <SelectTrigger className="w-28 h-8">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="worker">Worker</SelectItem>
+                      <SelectItem value="viewer">Viewer</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
