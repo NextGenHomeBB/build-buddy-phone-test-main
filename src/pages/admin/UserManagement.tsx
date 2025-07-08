@@ -13,6 +13,7 @@ import { Search, UserPlus, MoreHorizontal, Edit, Trash2, Mail, Shield, Users, Us
 import { mockUsers, User } from "@/mocks/users";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>(mockUsers);
@@ -21,6 +22,7 @@ export default function UserManagement() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -248,71 +250,142 @@ export default function UserManagement() {
               </Select>
             </div>
 
-            {/* Users Table */}
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Last Login</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              {user.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{user.name}</div>
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell>{user.department}</TableCell>
-                      <TableCell>{getStatusBadge(user.status)}</TableCell>
-                      <TableCell>
-                        {user.lastLogin ? 
-                          new Date(user.lastLogin).toLocaleDateString() : 
-                          'Never'
-                        }
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Select
-                            value={user.status}
-                            onValueChange={(value) => 
-                              handleUpdateStatus(user.id, value as User['status'])
-                            }
-                          >
-                            <SelectTrigger className="w-24 h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
-                              <SelectItem value="pending">Pending</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </TableCell>
+            {/* Desktop Table View */}
+            {!isMobile ? (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Last Login</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback>
+                                {user.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{user.name}</div>
+                              <div className="text-sm text-muted-foreground">{user.email}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell>{user.department}</TableCell>
+                        <TableCell>{getStatusBadge(user.status)}</TableCell>
+                        <TableCell>
+                          {user.lastLogin ? 
+                            new Date(user.lastLogin).toLocaleDateString() : 
+                            'Never'
+                          }
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Select
+                              value={user.status}
+                              onValueChange={(value) => 
+                                handleUpdateStatus(user.id, value as User['status'])
+                              }
+                            >
+                              <SelectTrigger className="w-24 h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              /* Mobile Card View */
+              <div className="space-y-4">
+                {filteredUsers.map((user) => (
+                  <Card key={user.id} className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>
+                            {user.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium text-sm">{user.name}</div>
+                          <div className="text-xs text-muted-foreground">{user.email}</div>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="touch-target">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">Role</div>
+                        {getRoleBadge(user.role)}
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">Status</div>
+                        {getStatusBadge(user.status)}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">Department</div>
+                        <div className="text-sm">{user.department}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">Last Login</div>
+                        <div className="text-sm">
+                          {user.lastLogin ? 
+                            new Date(user.lastLogin).toLocaleDateString() : 
+                            'Never'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <Select
+                        value={user.status}
+                        onValueChange={(value) => 
+                          handleUpdateStatus(user.id, value as User['status'])
+                        }
+                      >
+                        <SelectTrigger className="w-32 h-9 touch-target">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
