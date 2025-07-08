@@ -182,13 +182,13 @@ export default function ProjectDetail() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="phases">Phases</TabsTrigger>
-            <TabsTrigger value="materials">Materials</TabsTrigger>
-            <TabsTrigger value="labour">Labour</TabsTrigger>
-            <TabsTrigger value="docs">Docs</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-6 sm:grid-cols-6">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="phases" className="text-xs sm:text-sm">Phases</TabsTrigger>
+            <TabsTrigger value="materials" className="text-xs sm:text-sm">Materials</TabsTrigger>
+            <TabsTrigger value="labour" className="text-xs sm:text-sm">Labour</TabsTrigger>
+            <TabsTrigger value="docs" className="text-xs sm:text-sm">Docs</TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs sm:text-sm">Activity</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
