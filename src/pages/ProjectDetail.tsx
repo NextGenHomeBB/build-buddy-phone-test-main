@@ -26,6 +26,7 @@ import {
 import { format } from 'date-fns';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { EditProjectDialog } from '@/components/project/EditProjectDialog';
+import { ProjectManagerSelector } from '@/components/project/ProjectManagerSelector';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -213,7 +214,11 @@ export default function ProjectDetail() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Project Manager</span>
-                      <span className="font-medium">{project.manager?.name || 'Unassigned'}</span>
+                      <ProjectManagerSelector 
+                        projectId={project.id}
+                        currentManagerId={project.manager_id}
+                        currentManagerName={project.manager?.name}
+                      />
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Type</span>
