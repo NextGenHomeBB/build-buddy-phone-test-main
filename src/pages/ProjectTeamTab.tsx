@@ -275,3 +275,5 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
     </RequireAccess>
   );
 }
+
+export default ProjectTeamTab;

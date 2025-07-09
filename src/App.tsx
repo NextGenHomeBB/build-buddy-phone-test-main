@@ -12,6 +12,7 @@ import { Suspense, lazy } from "react";
 const Index = lazy(() => import("./pages/Index"));
 const Projects = lazy(() => import("./pages/Projects"));
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
+const ProjectTeamTab = lazy(() => import("./pages/ProjectTeamTab"));
 const PhaseDetail = lazy(() => import("./pages/PhaseDetail"));
 const MyTasks = lazy(() => import("./pages/MyTasks"));
 const TimeSheet = lazy(() => import("./pages/TimeSheet"));
@@ -52,6 +53,15 @@ const PhaseDetailWrapper = () => {
   return (
     <RequireAccess projectId={id} phaseId={phaseId}>
       <PhaseDetail />
+    </RequireAccess>
+  );
+};
+
+const ProjectTeamWrapper = () => {
+  const { id } = useParams();
+  return (
+    <RequireAccess projectId={id}>
+      <ProjectTeamTab projectId={id!} />
     </RequireAccess>
   );
 };
@@ -98,7 +108,7 @@ const App = () => (
               
               {/* Project routes with access control */}
               <Route path="/projects/:id" element={<RequireAuth><ProjectDetailWrapper /></RequireAuth>} />
-              <Route path="/projects/:id/team" element={<RequireAuth><TeamPageWrapper /></RequireAuth>} />
+              <Route path="/projects/:id/team" element={<RequireAuth><ProjectTeamWrapper /></RequireAuth>} />
               <Route path="/projects/:id/phase/:phaseId" element={<RequireAuth><PhaseDetailWrapper /></RequireAuth>} />
               
               {/* Phase routes with access control */}
