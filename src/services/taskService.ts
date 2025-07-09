@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { upsertUserProjectRole } from '@/services/userProjectRole.service';
 
 export const taskService = {
   async getTasks(userId?: string, filters?: any) {
@@ -43,23 +42,6 @@ export const taskService = {
     return data;
   },
 
-  async createTask(taskData: any) {
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert(taskData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-
-    // Auto-assign user to project if task has an assignee
-    if (data.assigned_to && data.project_id) {
-      await upsertUserProjectRole(data.assigned_to, data.project_id, 'worker');
-    }
-
-    return data;
-  },
-
   async updateTask(id: string, updates: any) {
     const { data, error } = await supabase
       .from('tasks')
@@ -69,12 +51,6 @@ export const taskService = {
       .single();
     
     if (error) throw error;
-
-    // Auto-assign user to project if task has an assignee
-    if (data.assigned_to && data.project_id) {
-      await upsertUserProjectRole(data.assigned_to, data.project_id, 'worker');
-    }
-
     return data;
   },
 

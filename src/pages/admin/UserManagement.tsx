@@ -24,8 +24,7 @@ export default function UserManagement() {
     setIsAddUserOpen,
     handleAddUser,
     handleUpdateRole,
-    stats,
-    refreshUsers
+    stats
   } = useUserManagement();
 
   return (
@@ -85,14 +84,12 @@ export default function UserManagement() {
               !isMobile ? (
                 <UserTable 
                   users={filteredUsers} 
-                  onUpdateRole={handleUpdateRole}
-                  onUserUpdated={refreshUsers}
+                  onUpdateRole={handleUpdateRole} 
                 />
               ) : (
                 <UserCardList 
                   users={filteredUsers} 
-                  onUpdateRole={handleUpdateRole}
-                  onUserUpdated={refreshUsers}
+                  onUpdateRole={handleUpdateRole} 
                 />
               )
             )}

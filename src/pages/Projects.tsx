@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useAccessibleProjects } from '@/hooks/useProjects';
+import { useProjects } from '@/hooks/useProjects';
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { CreateProjectDialog } from '@/components/project/CreateProjectDialog';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 export default function Projects() {
-  const { data: projects, isLoading } = useAccessibleProjects();
+  const { data: projects, isLoading } = useProjects();
   const { canCreateProject } = useRoleAccess();
 
   const getStatusColor = (status: string) => {

@@ -40,32 +40,6 @@ export const accessService = {
       .maybeSingle();
 
     if (error) throw error;
-    
-    // If no explicit role found, check if user has any tasks in this project
-    if (!data) {
-      const { data: taskExists, error: taskError } = await supabase
-        .from('tasks')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('assigned_to', userId)
-        .limit(1)
-        .maybeSingle();
-
-      if (taskError) throw taskError;
-      
-      // If user has tasks in this project, return a virtual "worker" role
-      if (taskExists) {
-        return {
-          id: 'virtual',
-          user_id: userId,
-          project_id: projectId,
-          role: 'worker',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        } as ProjectRole;
-      }
-    }
-    
     return data as ProjectRole | null;
   },
 
@@ -89,7 +63,7 @@ export const accessService = {
         project_id: projectId,
         role
       }, {
-        onConflict: 'user_id,project_id'
+        onConflict: 'user_id,project_id,role'
       });
 
     if (error) throw error;
@@ -100,13 +74,10 @@ export const accessService = {
       .from('user_project_role')
       .delete()
       .eq('user_id', userId)
-      .eq('project_id', projectId);
-      // Note: Not filtering by role since there's only one role per user per project
+      .eq('project_id', projectId)
+      .eq('role', role);
 
-    if (error) {
-      console.error('Error removing user project role:', error);
-      throw new Error(`Failed to remove project access: ${error.message}`);
-    }
+    if (error) throw error;
   },
 
   async upsertUserPhaseRole(userId: string, phaseId: string, role: 'manager' | 'worker'): Promise<void> {
@@ -117,7 +88,7 @@ export const accessService = {
         phase_id: phaseId,
         role
       }, {
-        onConflict: 'user_id,phase_id'
+        onConflict: 'user_id,phase_id,role'
       });
 
     if (error) throw error;
@@ -128,13 +99,10 @@ export const accessService = {
       .from('user_phase_role')
       .delete()
       .eq('user_id', userId)
-      .eq('phase_id', phaseId);
-      // Note: Not filtering by role since there's only one role per user per phase
+      .eq('phase_id', phaseId)
+      .eq('role', role);
 
-    if (error) {
-      console.error('Error removing user phase role:', error);
-      throw new Error(`Failed to remove phase access: ${error.message}`);
-    }
+    if (error) throw error;
   },
 
   async canEditTask(userId: string, taskId: string): Promise<boolean> {

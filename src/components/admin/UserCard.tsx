@@ -5,15 +5,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Edit } from "lucide-react";
 import { UserProfile } from "@/services/userService";
 import { getRoleBadge } from "./UserBadges";
-import { EditUserDialog } from "./EditUserDialog";
 
 interface UserCardProps {
   user: UserProfile;
   onUpdateRole: (userId: string, role: UserProfile['role']) => void;
-  onUserUpdated: () => void;
 }
 
-export function UserCard({ user, onUpdateRole, onUserUpdated }: UserCardProps) {
+export function UserCard({ user, onUpdateRole }: UserCardProps) {
   return (
     <Card className="p-4">
       <div className="flex items-start justify-between mb-3">
@@ -28,11 +26,9 @@ export function UserCard({ user, onUpdateRole, onUserUpdated }: UserCardProps) {
             <div className="text-xs text-muted-foreground">ID: {user.user_id.slice(0, 8)}...</div>
           </div>
         </div>
-        <EditUserDialog user={user} onUserUpdated={onUserUpdated}>
-          <Button variant="ghost" size="sm" className="touch-target">
-            <Edit className="h-4 w-4" />
-          </Button>
-        </EditUserDialog>
+        <Button variant="ghost" size="sm" className="touch-target">
+          <Edit className="h-4 w-4" />
+        </Button>
       </div>
       
       <div className="grid grid-cols-2 gap-3 mb-3">

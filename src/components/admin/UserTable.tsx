@@ -5,15 +5,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Edit } from "lucide-react";
 import { UserProfile } from "@/services/userService";
 import { getRoleBadge } from "./UserBadges";
-import { EditUserDialog } from "./EditUserDialog";
 
 interface UserTableProps {
   users: UserProfile[];
   onUpdateRole: (userId: string, role: UserProfile['role']) => void;
-  onUserUpdated: () => void;
 }
 
-export function UserTable({ users, onUpdateRole, onUserUpdated }: UserTableProps) {
+export function UserTable({ users, onUpdateRole }: UserTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -49,11 +47,9 @@ export function UserTable({ users, onUpdateRole, onUserUpdated }: UserTableProps
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
-                  <EditUserDialog user={user} onUserUpdated={onUserUpdated}>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </EditUserDialog>
+                  <Button variant="ghost" size="sm">
+                    <Edit className="h-4 w-4" />
+                  </Button>
                   <Select
                     value={user.role}
                     onValueChange={(value) => 

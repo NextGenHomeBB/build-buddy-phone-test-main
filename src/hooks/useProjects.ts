@@ -2,27 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectService } from '@/services/projectService';
 
 /**
- * Hook to fetch all projects (admin/manager view)
+ * Hook to fetch all projects
  */
 export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
     queryFn: () => projectService.getProjects(),
-  });
-}
-
-/**
- * Hook to fetch accessible projects based on user role and permissions
- */
-export function useAccessibleProjects() {
-  return useQuery({
-    queryKey: ['accessible-projects'],
-    queryFn: () => {
-      console.log('🎣 useAccessibleProjects hook executing');
-      return projectService.getAccessibleProjects();
-    },
-    retry: 1,
-    staleTime: 0, // Always refetch for debugging
   });
 }
 
