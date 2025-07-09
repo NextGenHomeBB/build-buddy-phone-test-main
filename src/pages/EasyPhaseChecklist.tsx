@@ -1,21 +1,25 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { CheckCircle, Clock, AlertTriangle } from "lucide-react";
-import { useOfflineQuery } from "@/hooks/useOfflineQuery";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { t } from "@/lib/i18n";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { ArrowLeft, Plus, Search, Trash2, Edit, Check, X, Camera, ScanLine, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { useOfflineQuery } from '@/hooks/useOfflineQuery';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { t } from '@/lib/i18n';
+import { getPriorityIcon } from '@/lib/ui-helpers';
 
 interface ChecklistItem {
   id: string;
@@ -176,15 +180,7 @@ export default function EasyPhaseChecklist() {
       setLongPressTimer(null);
     }
   };
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case "high": return <AlertTriangle className="h-4 w-4 text-destructive" />;
-      case "medium": return <Clock className="h-4 w-4 text-warning" />;
-      default: return <CheckCircle className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
+  
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high": return "destructive";
@@ -275,7 +271,10 @@ export default function EasyPhaseChecklist() {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          {React.createElement(getPriorityIcon(item.priority), { className: "h-4 w-4" })}
+                          {(() => {
+                            const Icon = getPriorityIcon(item.priority);
+                            return <Icon className="h-4 w-4" />;
+                          })()}
                           <span className={`font-medium ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
                             {t(item.title)}
                           </span>
@@ -330,7 +329,10 @@ export default function EasyPhaseChecklist() {
           <Card className="border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {React.createElement(getPriorityIcon(selectedItem.priority), { className: "h-4 w-4" })}
+                {(() => {
+                  const Icon = getPriorityIcon(selectedItem.priority);
+                  return <Icon className="h-4 w-4" />;
+                })()}
                 {t(selectedItem.title)}
               </CardTitle>
             </CardHeader>

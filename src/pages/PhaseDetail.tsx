@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { ChecklistItem } from '@/mocks/projects';
+import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 
 export default function PhaseDetail() {
   const { id: projectId, phaseId } = useParams<{ id: string; phaseId: string }>();
@@ -74,13 +75,6 @@ export default function PhaseDetail() {
     }
   };
 
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'high': return <AlertTriangle className="h-4 w-4" />;
-      case 'medium': return <Clock className="h-4 w-4" />;
-      default: return <Circle className="h-4 w-4" />;
-    }
-  };
 
   const handleToggleItem = async (item: ChecklistItem) => {
     if (!user) return;
@@ -169,7 +163,10 @@ export default function PhaseDetail() {
                   
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
-                      {React.createElement(getPriorityIcon(item.priority), { className: "h-3 w-3" })}
+                      {(() => {
+                        const Icon = getPriorityIcon(item.priority);
+                        return <Icon className="h-3 w-3" />;
+                      })()}
                       <span className="text-xs font-medium capitalize">
                         {item.priority}
                       </span>

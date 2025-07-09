@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { t } from "@/lib/i18n";
+import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 
 interface Task {
   id: string;
@@ -193,22 +194,6 @@ export default function SubcontractorPage() {
     }
   };
 
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case "urgent": return <AlertTriangle className="h-4 w-4 text-destructive" />;
-      case "high": return <AlertTriangle className="h-4 w-4 text-warning" />;
-      case "medium": return <Clock className="h-4 w-4 text-primary" />;
-      default: return <Clock className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
-  const getPhaseStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed": return <CheckCircle className="h-5 w-5 text-success" />;
-      case "active": return <Clock className="h-5 w-5 text-primary" />;
-      default: return <Clock className="h-5 w-5 text-muted-foreground" />;
-    }
-  };
 
   if (isLoading) {
     return (
@@ -295,7 +280,10 @@ export default function SubcontractorPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-3">
-                        {React.createElement(getPriorityIcon(task.priority), { className: "h-4 w-4" })}
+                        {(() => {
+                          const Icon = getPriorityIcon(task.priority);
+                          return <Icon className="h-4 w-4" />;
+                        })()}
                         <Badge className={getStatusColor(task.status)}>
                           {t(task.status)}
                         </Badge>
@@ -330,7 +318,10 @@ export default function SubcontractorPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {React.createElement(getPhaseStatusIcon(phase.status), { className: "h-4 w-4" })}
+                        {(() => {
+                          const Icon = getPhaseStatusIcon(phase.status);
+                          return <Icon className="h-4 w-4" />;
+                        })()}
                         <div>
                           <h3 className="font-semibold">{t(phase.name)}</h3>
                           <p className="text-sm text-muted-foreground">

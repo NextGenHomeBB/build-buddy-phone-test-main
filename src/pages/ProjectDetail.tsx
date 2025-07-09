@@ -28,6 +28,7 @@ import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { EditProjectDialog } from '@/components/project/EditProjectDialog';
 import { ProjectManagerSelector } from '@/components/project/ProjectManagerSelector';
 import { ProjectOverview } from '@/components/project/ProjectOverview';
+import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -70,14 +71,6 @@ export default function ProjectDetail() {
     }
   };
 
-  const getPhaseStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircle className="h-4 w-4 text-success" />;
-      case 'active': return <Activity className="h-4 w-4 text-primary" />;
-      case 'blocked': return <AlertCircle className="h-4 w-4 text-destructive" />;
-      default: return <Pause className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
 
   return (
     <AppLayout>
@@ -227,7 +220,10 @@ export default function ProjectDetail() {
                         <div className="flex items-center justify-between">
                           <div className="space-y-2">
                             <div className="flex items-center gap-3">
-                              {React.createElement(getPhaseStatusIcon(phase.status), { className: "h-4 w-4" })}
+                              {(() => {
+                                const Icon = getPhaseStatusIcon(phase.status);
+                                return <Icon className="h-4 w-4" />;
+                              })()}
                               <h4 className="font-semibold">{phase.name}</h4>
                               <Badge variant="outline" className={getStatusColor(phase.status)}>
                                 {phase.status}
