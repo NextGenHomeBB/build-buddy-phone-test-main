@@ -28,6 +28,7 @@ import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { EditProjectDialog } from '@/components/project/EditProjectDialog';
 import { ProjectManagerSelector } from '@/components/project/ProjectManagerSelector';
 import { ProjectOverview } from '@/components/project/ProjectOverview';
+import { ProjectTeamTab } from './ProjectTeamTab';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 
 export default function ProjectDetail() {
@@ -186,11 +187,12 @@ export default function ProjectDetail() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6 sm:grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7 sm:grid-cols-7">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="phases" className="text-xs sm:text-sm">Phases</TabsTrigger>
             <TabsTrigger value="materials" className="text-xs sm:text-sm">Materials</TabsTrigger>
             <TabsTrigger value="labour" className="text-xs sm:text-sm">Labour</TabsTrigger>
+            <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>
             <TabsTrigger value="docs" className="text-xs sm:text-sm">Docs</TabsTrigger>
             <TabsTrigger value="activity" className="text-xs sm:text-sm">Activity</TabsTrigger>
           </TabsList>
@@ -265,6 +267,10 @@ export default function ProjectDetail() {
                 )}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="team">
+            <ProjectTeamTab projectId={id!} />
           </TabsContent>
 
           {/* Other tabs with placeholder content */}
