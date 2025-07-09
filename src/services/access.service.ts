@@ -100,10 +100,13 @@ export const accessService = {
       .from('user_project_role')
       .delete()
       .eq('user_id', userId)
-      .eq('project_id', projectId)
-      .eq('role', role);
+      .eq('project_id', projectId);
+      // Note: Not filtering by role since there's only one role per user per project
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error removing user project role:', error);
+      throw new Error(`Failed to remove project access: ${error.message}`);
+    }
   },
 
   async upsertUserPhaseRole(userId: string, phaseId: string, role: 'manager' | 'worker'): Promise<void> {
@@ -125,10 +128,13 @@ export const accessService = {
       .from('user_phase_role')
       .delete()
       .eq('user_id', userId)
-      .eq('phase_id', phaseId)
-      .eq('role', role);
+      .eq('phase_id', phaseId);
+      // Note: Not filtering by role since there's only one role per user per phase
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error removing user phase role:', error);
+      throw new Error(`Failed to remove phase access: ${error.message}`);
+    }
   },
 
   async canEditTask(userId: string, taskId: string): Promise<boolean> {

@@ -22,10 +22,11 @@ export const useAccessManagement = () => {
         description: 'User has been granted project access.',
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error('Failed to assign project role:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to grant project access.',
+        title: 'Failed to grant access',
+        description: error.message || 'Unable to grant project access. Please try again.',
         variant: 'destructive',
       });
     },
@@ -47,10 +48,11 @@ export const useAccessManagement = () => {
         description: 'User project access has been revoked.',
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error('Failed to remove project role:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to revoke project access.',
+        title: 'Failed to revoke access',
+        description: error.message || 'Unable to revoke project access. Please try again.',
         variant: 'destructive',
       });
     },
@@ -71,10 +73,11 @@ export const useAccessManagement = () => {
         description: 'User has been granted phase access.',
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error('Failed to assign phase role:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to grant phase access.',
+        title: 'Failed to grant phase access',
+        description: error.message || 'Unable to grant phase access. Please try again.',
         variant: 'destructive',
       });
     },
@@ -95,10 +98,11 @@ export const useAccessManagement = () => {
         description: 'User phase access has been revoked.',
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error('Failed to remove phase role:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to revoke phase access.',
+        title: 'Failed to revoke phase access',
+        description: error.message || 'Unable to revoke phase access. Please try again.',
         variant: 'destructive',
       });
     },
