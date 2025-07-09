@@ -11,6 +11,7 @@ interface AccessMatrixProps {
   projects: any[];
   userProjectRoles: any[];
   userPhaseRoles: any[];
+  selectedUserId: string;
   onRoleChange: (projectId: string, role: string, enabled: boolean) => void;
   onPhaseRoleChange: (phaseId: string, role: string, enabled: boolean) => void;
 }
@@ -19,6 +20,7 @@ export const AccessMatrix = ({
   projects,
   userProjectRoles,
   userPhaseRoles,
+  selectedUserId,
   onRoleChange,
   onPhaseRoleChange
 }: AccessMatrixProps) => {

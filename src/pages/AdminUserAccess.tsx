@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { BulkAccessActions } from '@/components/admin/BulkAccessActions';
 import { AccessMatrix } from '@/components/admin/AccessMatrix';
+import { useAccessManagement } from '@/hooks/useAccessManagement';
+import { AccessTestButton } from '@/components/admin/AccessTestButton';
 
 interface User {
   id: string;
@@ -461,6 +463,10 @@ export default function AdminUserAccess() {
                   <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <AccessTestButton 
+                    userId={selectedUser.id} 
+                    userName={selectedUser.name || 'Unknown'} 
+                  />
                   <Button
                     variant="outline"
                     size="sm"
@@ -509,6 +515,7 @@ export default function AdminUserAccess() {
               projects={projects}
               userProjectRoles={userProjectRoles}
               userPhaseRoles={userPhaseRoles}
+              selectedUserId={selectedUser.id}
               onRoleChange={handleProjectRoleChange}
               onPhaseRoleChange={handlePhaseRoleChange}
             />
