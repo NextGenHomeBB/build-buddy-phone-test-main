@@ -10,13 +10,17 @@ interface ProjectRole {
   user_id: string;
   project_id: string;
   role: 'manager' | 'worker';
+  created_at: string;
+  updated_at: string;
 }
 
 interface PhaseRole {
   id: string;
-  upr_id: string;
+  user_id: string;
   phase_id: string;
   role: 'manager' | 'worker';
+  created_at: string;
+  updated_at: string;
 }
 
 interface AccessResult {
@@ -28,48 +32,77 @@ interface AccessResult {
 // Core service functions
 export const accessService = {
   async getUserProjectRole(userId: string, projectId: string): Promise<ProjectRole | null> {
-    // Since user_project_role table doesn't exist yet, we'll simulate based on existing data
-    // Check if user has tasks in this project (indicates worker role)
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('id')
-      .eq('assigned_to', userId)
+    const { data, error } = await supabase
+      .from('user_project_role')
+      .select('*')
+      .eq('user_id', userId)
       .eq('project_id', projectId)
-      .limit(1);
+      .maybeSingle();
 
-    if (tasks && tasks.length > 0) {
-      return {
-        id: `${userId}-${projectId}`,
-        user_id: userId,
-        project_id: projectId,
-        role: 'worker'
-      };
-    }
-
-    // Check if user is manager of this project
-    const { data: project } = await supabase
-      .from('projects')
-      .select('manager_id')
-      .eq('id', projectId)
-      .eq('manager_id', userId)
-      .single();
-
-    if (project) {
-      return {
-        id: `${userId}-${projectId}`,
-        user_id: userId,
-        project_id: projectId,
-        role: 'manager'
-      };
-    }
-
-    return null;
+    if (error) throw error;
+    return data as ProjectRole | null;
   },
 
-  async getUserPhaseRole(uprId: string, phaseId: string): Promise<PhaseRole | null> {
-    // Since user_phase_role table doesn't exist yet, return null
-    // This would be implemented when the table is created
-    return null;
+  async getUserPhaseRole(userId: string, phaseId: string): Promise<PhaseRole | null> {
+    const { data, error } = await supabase
+      .from('user_phase_role')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('phase_id', phaseId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as PhaseRole | null;
+  },
+
+  async upsertUserProjectRole(userId: string, projectId: string, role: 'manager' | 'worker'): Promise<void> {
+    const { error } = await supabase
+      .from('user_project_role')
+      .upsert({
+        user_id: userId,
+        project_id: projectId,
+        role
+      }, {
+        onConflict: 'user_id,project_id,role'
+      });
+
+    if (error) throw error;
+  },
+
+  async removeUserProjectRole(userId: string, projectId: string, role: 'manager' | 'worker'): Promise<void> {
+    const { error } = await supabase
+      .from('user_project_role')
+      .delete()
+      .eq('user_id', userId)
+      .eq('project_id', projectId)
+      .eq('role', role);
+
+    if (error) throw error;
+  },
+
+  async upsertUserPhaseRole(userId: string, phaseId: string, role: 'manager' | 'worker'): Promise<void> {
+    const { error } = await supabase
+      .from('user_phase_role')
+      .upsert({
+        user_id: userId,
+        phase_id: phaseId,
+        role
+      }, {
+        onConflict: 'user_id,phase_id,role'
+      });
+
+    if (error) throw error;
+  },
+
+  async removeUserPhaseRole(userId: string, phaseId: string, role: 'manager' | 'worker'): Promise<void> {
+    const { error } = await supabase
+      .from('user_phase_role')
+      .delete()
+      .eq('user_id', userId)
+      .eq('phase_id', phaseId)
+      .eq('role', role);
+
+    if (error) throw error;
   },
 
   async canEditTask(userId: string, taskId: string): Promise<boolean> {
@@ -148,9 +181,9 @@ export const accessService = {
 
     let effectiveRole: 'manager' | 'worker' = projectRole.role;
     
-    // Check phase-specific role override (when implemented)
+    // Check phase-specific role override
     if (phaseId) {
-      const phaseRole = await this.getUserPhaseRole(projectRole.id, phaseId);
+      const phaseRole = await this.getUserPhaseRole(userId, phaseId);
       if (phaseRole) {
         effectiveRole = phaseRole.role;
       }
@@ -184,11 +217,11 @@ export const useUserProjectRole = (userId: string, projectId: string) => {
   });
 };
 
-export const useUserPhaseRole = (uprId: string, phaseId: string) => {
+export const useUserPhaseRole = (userId: string, phaseId: string) => {
   return useQuery({
-    queryKey: ['userPhaseRole', uprId, phaseId],
-    queryFn: () => accessService.getUserPhaseRole(uprId, phaseId),
-    enabled: !!uprId && !!phaseId,
+    queryKey: ['userPhaseRole', userId, phaseId],
+    queryFn: () => accessService.getUserPhaseRole(userId, phaseId),
+    enabled: !!userId && !!phaseId,
   });
 };
 

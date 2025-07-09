@@ -3,6 +3,7 @@ import { Search, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { accessService } from '@/services/access.service';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +37,7 @@ interface UserProjectRole {
 
 interface UserPhaseRole {
   id: string;
-  upr_id: string;
+  user_id: string;
   phase_id: string;
   role: 'manager' | 'worker';
 }
@@ -99,28 +100,36 @@ export default function AdminUserAccess() {
     },
   });
 
-  // Mock user project roles (since tables don't exist yet)
+  // Get user project roles
   const { data: userProjectRoles = [] } = useQuery({
     queryKey: ['user-project-roles', selectedUser?.id],
     queryFn: async () => {
       if (!selectedUser) return [];
       
-      // Mock data for demonstration - in real implementation this would query user_project_role table
-      console.warn('user_project_role table not yet implemented, using mock data');
-      return [] as UserProjectRole[];
+      const { data, error } = await supabase
+        .from('user_project_role')
+        .select('*')
+        .eq('user_id', selectedUser.id);
+      
+      if (error) throw error;
+      return data as UserProjectRole[];
     },
     enabled: !!selectedUser,
   });
 
-  // Mock user phase roles (since tables don't exist yet)
+  // Get user phase roles
   const { data: userPhaseRoles = [] } = useQuery({
     queryKey: ['user-phase-roles', selectedUser?.id],
     queryFn: async () => {
       if (!selectedUser) return [];
       
-      // Mock data for demonstration - in real implementation this would query user_phase_role table
-      console.warn('user_phase_role table not yet implemented, using mock data');
-      return [] as UserPhaseRole[];
+      const { data, error } = await supabase
+        .from('user_phase_role')
+        .select('*')
+        .eq('user_id', selectedUser.id);
+      
+      if (error) throw error;
+      return data as UserPhaseRole[];
     },
     enabled: !!selectedUser,
   });
@@ -139,18 +148,14 @@ export default function AdminUserAccess() {
         role: 'manager' | 'worker'; 
         enabled: boolean;
       }) => {
-        // Mock implementation - in real implementation this would upsert to user_project_role table
-        console.log('Would upsert project role:', { userId, projectId, role, enabled });
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        if (Math.random() > 0.8) {
-          throw new Error('Simulated error for testing');
+        if (enabled) {
+          await accessService.upsertUserProjectRole(userId, projectId, role);
+        } else {
+          await accessService.removeUserProjectRole(userId, projectId, role);
         }
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['user-project-roles'] });
+        queryClient.invalidateQueries({ queryKey: ['user-project-roles', selectedUser?.id] });
         toast({
           title: "Success",
           description: "User access updated",
@@ -180,28 +185,24 @@ export default function AdminUserAccess() {
   const useDebouncedPhaseUpsert = () => {
     const mutation = useMutation({
       mutationFn: async ({ 
-        uprId, 
+        userId, 
         phaseId, 
         role, 
         enabled 
       }: { 
-        uprId: string; 
+        userId: string; 
         phaseId: string; 
         role: 'manager' | 'worker'; 
         enabled: boolean;
       }) => {
-        // Mock implementation - in real implementation this would upsert to user_phase_role table
-        console.log('Would upsert phase role:', { uprId, phaseId, role, enabled });
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        if (Math.random() > 0.8) {
-          throw new Error('Simulated error for testing');
+        if (enabled) {
+          await accessService.upsertUserPhaseRole(userId, phaseId, role);
+        } else {
+          await accessService.removeUserPhaseRole(userId, phaseId, role);
         }
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['user-phase-roles'] });
+        queryClient.invalidateQueries({ queryKey: ['user-phase-roles', selectedUser?.id] });
         toast({
           title: "Success",
           description: "Phase access updated",
@@ -238,14 +239,8 @@ export default function AdminUserAccess() {
   };
 
   const hasPhaseRole = (phaseId: string, role: 'manager' | 'worker') => {
-    const projectRole = userProjectRoles.find(upr => 
-      projects.find(p => p.id === upr.project_id)?.phases.some(ph => ph.id === phaseId)
-    );
-    
-    if (!projectRole) return false;
-    
     return userPhaseRoles.some(
-      upr => upr.upr_id === projectRole.id && upr.phase_id === phaseId && upr.role === role
+      upr => upr.phase_id === phaseId && upr.role === role
     );
   };
 
@@ -273,14 +268,8 @@ export default function AdminUserAccess() {
   const handlePhaseRoleChange = (phaseId: string, role: 'manager' | 'worker', enabled: boolean) => {
     if (!selectedUser) return;
     
-    const projectRole = userProjectRoles.find(upr => 
-      projects.find(p => p.id === upr.project_id)?.phases.some(ph => ph.id === phaseId)
-    );
-    
-    if (!projectRole) return;
-    
     phaseRoleUpsert.mutate({
-      uprId: projectRole.id,
+      userId: selectedUser.id,
       phaseId,
       role,
       enabled
@@ -438,15 +427,6 @@ export default function AdminUserAccess() {
         </Card>
       )}
       
-      {/* Note about missing tables */}
-      <Card className="border-yellow-200 bg-yellow-50">
-        <CardContent className="pt-6">
-          <p className="text-sm text-yellow-800">
-            <strong>Note:</strong> This interface is ready but requires the <code>user_project_role</code> and <code>user_phase_role</code> tables to be created in the database. 
-            Currently using mock data for demonstration.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
