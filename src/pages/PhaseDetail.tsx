@@ -22,8 +22,19 @@ import {
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { ChecklistItem } from '@/mocks/projects';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
+
+interface ChecklistItem {
+  id: string;
+  title: string;
+  description?: string;
+  completed: boolean;
+  completedBy?: string;
+  completedAt?: string;
+  priority: 'low' | 'medium' | 'high';
+  category: string;
+  estimatedHours?: number;
+}
 
 export default function PhaseDetail() {
   const { id: projectId, phaseId } = useParams<{ id: string; phaseId: string }>();
