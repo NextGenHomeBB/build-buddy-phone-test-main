@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Search, ChevronDown, ChevronRight, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Search, ChevronDown, ChevronRight, Users, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { accessService } from '@/services/access.service';
@@ -57,6 +57,7 @@ export default function AdminUserAccess() {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Search users by email
   const { data: users = [] } = useQuery({
@@ -279,11 +280,22 @@ export default function AdminUserAccess() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">User Access Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage project and phase access for users
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">User Access Management</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage project and phase access for users
+            </p>
+          </div>
         </div>
         <Button asChild variant="outline" size="sm">
           <Link to="/admin/users">
