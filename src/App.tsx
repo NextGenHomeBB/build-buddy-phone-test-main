@@ -2,9 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RequireAuth } from "@/components/auth/RequireAuth";
+import { RequireAccess } from "@/components/auth/RequireAccess";
 import { Suspense, lazy } from "react";
 
 // Lazy load pages
@@ -24,6 +25,7 @@ const ProjectSettings = lazy(() => import("./pages/admin/ProjectSettings"));
 const AdminChecklists = lazy(() => import("./pages/admin/Checklists"));
 const AdminMaterials = lazy(() => import("./pages/admin/Materials"));
 const AdminReports = lazy(() => import("./pages/admin/Reports"));
+const AdminUserAccess = lazy(() => import("./pages/AdminUserAccess"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -34,6 +36,43 @@ const SubcontractorPage = lazy(() => import("./pages/SubcontractorPage"));
 const TeamPage = lazy(() => import("./pages/TeamPage"));
 const Onboarding = lazy(() => import("./pages/auth/Onboarding"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Wrapper components to access route params for RequireAccess
+const ProjectDetailWrapper = () => {
+  const { id } = useParams();
+  return (
+    <RequireAccess projectId={id}>
+      <ProjectDetail />
+    </RequireAccess>
+  );
+};
+
+const PhaseDetailWrapper = () => {
+  const { id, phaseId } = useParams();
+  return (
+    <RequireAccess projectId={id} phaseId={phaseId}>
+      <PhaseDetail />
+    </RequireAccess>
+  );
+};
+
+const TeamPageWrapper = () => {
+  const { id } = useParams();
+  return (
+    <RequireAccess projectId={id}>
+      <TeamPage />
+    </RequireAccess>
+  );
+};
+
+const EasyPhaseChecklistWrapper = () => {
+  const { phaseId } = useParams();
+  return (
+    <RequireAccess phaseId={phaseId} rolesAllowed={['manager']}>
+      <EasyPhaseChecklist />
+    </RequireAccess>
+  );
+};
 
 const queryClient = new QueryClient();
 
@@ -56,10 +95,15 @@ const App = () => (
               <Route path="/dashboard" element={<RequireAuth><Index /></RequireAuth>} />
               <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
               <Route path="/projects" element={<RequireAuth><Projects /></RequireAuth>} />
-              <Route path="/projects/:id" element={<RequireAuth><ProjectDetail /></RequireAuth>} />
-              <Route path="/projects/:id/team" element={<RequireAuth><TeamPage /></RequireAuth>} />
-              <Route path="/projects/:id/phase/:phaseId" element={<RequireAuth><PhaseDetail /></RequireAuth>} />
-              <Route path="/phases/:phaseId/checklist" element={<RequireAuth><EasyPhaseChecklist /></RequireAuth>} />
+              
+              {/* Project routes with access control */}
+              <Route path="/projects/:id" element={<RequireAuth><ProjectDetailWrapper /></RequireAuth>} />
+              <Route path="/projects/:id/team" element={<RequireAuth><TeamPageWrapper /></RequireAuth>} />
+              <Route path="/projects/:id/phase/:phaseId" element={<RequireAuth><PhaseDetailWrapper /></RequireAuth>} />
+              
+              {/* Phase routes with access control */}
+              <Route path="/phases/:phaseId/checklist" element={<RequireAuth><EasyPhaseChecklistWrapper /></RequireAuth>} />
+              
               <Route path="/checklists/new" element={<RequireAuth roles={['admin', 'manager']}><ChecklistCreator /></RequireAuth>} />
               <Route path="/subcontractors/:id" element={<RequireAuth><SubcontractorPage /></RequireAuth>} />
               <Route path="/my-tasks" element={<RequireAuth><MyTasks /></RequireAuth>} />
@@ -77,6 +121,7 @@ const App = () => (
               <Route path="/admin/checklists" element={<RequireAuth roles={['admin']}><AdminChecklists /></RequireAuth>} />
               <Route path="/admin/materials" element={<RequireAuth roles={['admin']}><AdminMaterials /></RequireAuth>} />
               <Route path="/admin/reports" element={<RequireAuth roles={['admin']}><AdminReports /></RequireAuth>} />
+              <Route path="/admin/access" element={<RequireAuth roles={['admin']}><AdminUserAccess /></RequireAuth>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
