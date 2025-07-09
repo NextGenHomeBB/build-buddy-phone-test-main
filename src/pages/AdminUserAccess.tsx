@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Search, ChevronDown, ChevronRight, Users, ArrowLeft } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, Users, ArrowLeft, Copy, Download } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { BulkAccessActions } from '@/components/admin/BulkAccessActions';
+import { AccessMatrix } from '@/components/admin/AccessMatrix';
 
 interface User {
   id: string;
@@ -55,6 +57,8 @@ export default function AdminUserAccess() {
   const [searchName, setSearchName] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'basic' | 'advanced'>('basic');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -280,6 +284,114 @@ export default function AdminUserAccess() {
     });
   };
 
+  const handleBulkAssign = (projectIds: string[], role: 'manager' | 'worker') => {
+    if (!selectedUser) return;
+    
+    projectIds.forEach(projectId => {
+      projectRoleUpsert.mutate({
+        userId: selectedUser.id,
+        projectId,
+        role,
+        enabled: true
+      });
+    });
+    
+    setSelectedProjects([]);
+    toast({
+      title: "Bulk Assignment Complete",
+      description: `Assigned ${role} role to ${projectIds.length} projects`,
+    });
+  };
+
+  const handleBulkRemove = (projectIds: string[]) => {
+    if (!selectedUser) return;
+    
+    projectIds.forEach(projectId => {
+      ['manager', 'worker'].forEach(role => {
+        if (hasProjectRole(projectId, role as 'manager' | 'worker')) {
+          projectRoleUpsert.mutate({
+            userId: selectedUser.id,
+            projectId,
+            role: role as 'manager' | 'worker',
+            enabled: false
+          });
+        }
+      });
+    });
+    
+    setSelectedProjects([]);
+    toast({
+      title: "Bulk Removal Complete",
+      description: `Removed access from ${projectIds.length} projects`,
+    });
+  };
+
+  const handleProjectSelection = (projectId: string, selected: boolean) => {
+    if (selected) {
+      setSelectedProjects(prev => [...prev, projectId]);
+    } else {
+      setSelectedProjects(prev => prev.filter(id => id !== projectId));
+    }
+  };
+
+  const handleCopyUserAccess = () => {
+    if (!selectedUser) return;
+    
+    const accessData = {
+      user: selectedUser.name,
+      projects: projects.map(project => ({
+        name: project.name,
+        managerAccess: hasProjectRole(project.id, 'manager'),
+        workerAccess: hasProjectRole(project.id, 'worker'),
+        phases: project.phases?.map((phase: any) => ({
+          name: phase.name,
+          managerAccess: hasPhaseRole(phase.id, 'manager'),
+          workerAccess: hasPhaseRole(phase.id, 'worker')
+        })) || []
+      }))
+    };
+    
+    navigator.clipboard.writeText(JSON.stringify(accessData, null, 2));
+    toast({
+      title: "Access Data Copied",
+      description: "User access information copied to clipboard",
+    });
+  };
+
+  const handleExportAccess = () => {
+    if (!selectedUser) return;
+    
+    const accessData = {
+      user: selectedUser.name,
+      exportDate: new Date().toISOString(),
+      projects: projects.map(project => ({
+        name: project.name,
+        managerAccess: hasProjectRole(project.id, 'manager'),
+        workerAccess: hasProjectRole(project.id, 'worker'),
+        phases: project.phases?.map((phase: any) => ({
+          name: phase.name,
+          managerAccess: hasPhaseRole(phase.id, 'manager'),
+          workerAccess: hasPhaseRole(phase.id, 'worker')
+        })) || []
+      }))
+    };
+    
+    const blob = new Blob([JSON.stringify(accessData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedUser.name}-access-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Access Data Exported",
+      description: "User access information exported successfully",
+    });
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -294,18 +406,20 @@ export default function AdminUserAccess() {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">User Access Management</h1>
+            <h1 className="text-3xl font-bold">Advanced User Access Management</h1>
             <p className="text-muted-foreground mt-1">
-              Manage project and phase access for users
+              Manage project and phase access for users with advanced controls
             </p>
           </div>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/admin/users">
-            <Users className="w-4 h-4 mr-2" />
-            User Management
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/users">
+              <Users className="w-4 h-4 mr-2" />
+              User Management
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* User Search */}
@@ -325,7 +439,7 @@ export default function AdminUserAccess() {
           </div>
           
           {users.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {users.map((user) => (
                 <Button
                   key={user.id}
@@ -340,80 +454,114 @@ export default function AdminUserAccess() {
           )}
           
           {selectedUser && (
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="font-medium">Selected: {selectedUser.name}</p>
+            <div className="p-4 bg-muted rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Selected: {selectedUser.name}</p>
+                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyUserAccess}
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copy Access
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportAccess}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Project Access Grid */}
+      {/* Advanced Project Access */}
       {selectedUser && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Access</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {projects.map((project) => {
-                const isExpanded = expandedProjects.has(project.id);
-                
-                return (
-                  <div key={project.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleProjectExpansion(project.id)}
-                          className="p-1"
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <span className="font-medium">{project.name}</span>
-                      </div>
+        <>
+          <div className="flex items-center gap-4">
+            <Button
+              variant={viewMode === 'basic' ? 'default' : 'outline'}
+              onClick={() => setViewMode('basic')}
+            >
+              Basic View
+            </Button>
+            <Button
+              variant={viewMode === 'advanced' ? 'default' : 'outline'}
+              onClick={() => setViewMode('advanced')}
+            >
+              Advanced Matrix
+            </Button>
+          </div>
+
+          {viewMode === 'advanced' ? (
+            <AccessMatrix
+              projects={projects}
+              userProjectRoles={userProjectRoles}
+              userPhaseRoles={userPhaseRoles}
+              onRoleChange={handleProjectRoleChange}
+              onPhaseRoleChange={handlePhaseRoleChange}
+            />
+          ) : (
+            <>
+              <BulkAccessActions
+                selectedProjects={selectedProjects}
+                onBulkAssign={handleBulkAssign}
+                onBulkRemove={handleBulkRemove}
+                onClearSelection={() => setSelectedProjects([])}
+              />
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Access</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {projects.map((project) => {
+                      const isExpanded = expandedProjects.has(project.id);
+                      const isSelected = selectedProjects.includes(project.id);
                       
-                      <div className="flex items-center space-x-6">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={hasProjectRole(project.id, 'manager')}
-                            onCheckedChange={(checked) => 
-                              handleProjectRoleChange(project.id, 'manager', !!checked)
-                            }
-                          />
-                          <label className="text-sm">Manager</label>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={hasProjectRole(project.id, 'worker')}
-                            onCheckedChange={(checked) => 
-                              handleProjectRoleChange(project.id, 'worker', !!checked)
-                            }
-                          />
-                          <label className="text-sm">Worker</label>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Phase Access */}
-                    {isExpanded && project.phases && project.phases.length > 0 && (
-                      <div className="mt-4 ml-6 space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Phases</h4>
-                        {project.phases.map((phase) => (
-                          <div key={phase.id} className="flex items-center justify-between py-2 px-3 bg-muted rounded">
-                            <span className="text-sm">{phase.name}</span>
+                      return (
+                        <div key={project.id} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => 
+                                  handleProjectSelection(project.id, !!checked)
+                                }
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleProjectExpansion(project.id)}
+                                className="p-1"
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <span className="font-medium">{project.name}</span>
+                            </div>
                             
                             <div className="flex items-center space-x-6">
                               <div className="flex items-center space-x-2">
                                 <Checkbox
-                                  checked={hasPhaseRole(phase.id, 'manager')}
+                                  checked={hasProjectRole(project.id, 'manager')}
                                   onCheckedChange={(checked) => 
-                                    handlePhaseRoleChange(phase.id, 'manager', !!checked)
+                                    handleProjectRoleChange(project.id, 'manager', !!checked)
                                   }
                                 />
                                 <label className="text-sm">Manager</label>
@@ -421,26 +569,59 @@ export default function AdminUserAccess() {
                               
                               <div className="flex items-center space-x-2">
                                 <Checkbox
-                                  checked={hasPhaseRole(phase.id, 'worker')}
+                                  checked={hasProjectRole(project.id, 'worker')}
                                   onCheckedChange={(checked) => 
-                                    handlePhaseRoleChange(phase.id, 'worker', !!checked)
+                                    handleProjectRoleChange(project.id, 'worker', !!checked)
                                   }
                                 />
                                 <label className="text-sm">Worker</label>
                               </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          
+                          {/* Phase Access */}
+                          {isExpanded && project.phases && project.phases.length > 0 && (
+                            <div className="mt-4 ml-6 space-y-2">
+                              <h4 className="text-sm font-medium text-muted-foreground">Phases</h4>
+                              {project.phases.map((phase) => (
+                                <div key={phase.id} className="flex items-center justify-between py-2 px-3 bg-muted rounded">
+                                  <span className="text-sm">{phase.name}</span>
+                                  
+                                  <div className="flex items-center space-x-6">
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        checked={hasPhaseRole(phase.id, 'manager')}
+                                        onCheckedChange={(checked) => 
+                                          handlePhaseRoleChange(phase.id, 'manager', !!checked)
+                                        }
+                                      />
+                                      <label className="text-sm">Manager</label>
+                                    </div>
+                                    
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        checked={hasPhaseRole(phase.id, 'worker')}
+                                        onCheckedChange={(checked) => 
+                                          handlePhaseRoleChange(phase.id, 'worker', !!checked)
+                                        }
+                                      />
+                                      <label className="text-sm">Worker</label>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </>
       )}
-      
     </div>
   );
 }
