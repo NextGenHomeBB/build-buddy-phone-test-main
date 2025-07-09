@@ -1,57 +1,23 @@
-import { openDB, IDBPDatabase } from 'idb';
-import { supabase } from '@/integrations/supabase/client';
-
-// Simple interface for our sync database
-interface SyncRecord {
-  id: string;
-  data: any;
-  updated_at: string;
-  synced: boolean;
-  operation: 'insert' | 'update' | 'delete';
-}
-
-interface OutboxRecord {
-  id: string;
-  table: string;
-  operation: 'insert' | 'update' | 'delete';
-  data: any;
-  timestamp: string;
-}
+import { IDBClient, SyncRecord, OutboxRecord } from './idbClient';
+import { SupabaseRealtime } from './supabaseRealtime';
 
 class SyncService {
-  private db: IDBPDatabase | null = null;
-  private channels: Map<string, any> = new Map();
+  private idbClient = new IDBClient();
+  private supabaseRealtime: SupabaseRealtime;
   private isOnline = navigator.onLine;
   private syncInterval: number | null = null;
   private initialized = false;
   private readonly syncTables = ['projects', 'phases', 'tasks', 'phaseChecks', 'subcontractors'];
 
+  constructor() {
+    this.supabaseRealtime = new SupabaseRealtime(this.handleRealtimeChange.bind(this));
+  }
+
   async init() {
     if (this.initialized) return;
 
     try {
-      // Open IndexedDB with simpler approach
-      this.db = await openDB('construction-sync', 1, {
-        upgrade(db) {
-          // Create object stores for each sync table
-          const syncTables = ['projects', 'phases', 'tasks', 'phaseChecks', 'subcontractors'];
-          
-          syncTables.forEach(tableName => {
-            if (!db.objectStoreNames.contains(tableName)) {
-              const store = db.createObjectStore(tableName, { keyPath: 'id' });
-              store.createIndex('updated_at', 'updated_at');
-              store.createIndex('synced', 'synced');
-            }
-          });
-
-          // Create outbox for offline operations
-          if (!db.objectStoreNames.contains('outbox')) {
-            const outboxStore = db.createObjectStore('outbox', { keyPath: 'id' });
-            outboxStore.createIndex('timestamp', 'timestamp');
-            outboxStore.createIndex('table', 'table');
-          }
-        },
-      });
+      await this.idbClient.init();
 
       // Setup online/offline detection
       window.addEventListener('online', this.handleOnline.bind(this));
@@ -88,39 +54,16 @@ class SyncService {
   }
 
   async observeSupabase(table: string) {
-    if (!this.db) {
+    if (!this.idbClient.isInitialized) {
       console.error('Database not initialized');
       return;
     }
 
-    // Remove existing channel if it exists
-    if (this.channels.has(table)) {
-      supabase.removeChannel(this.channels.get(table));
-    }
-
-    // Create new realtime channel
-    const channel = supabase
-      .channel(`sync-${table}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: table,
-        },
-        async (payload) => {
-          await this.handleRealtimeChange(table, payload);
-        }
-      )
-      .subscribe((status) => {
-        console.log(`Realtime subscription for ${table}:`, status);
-      });
-
-    this.channels.set(table, channel);
+    await this.supabaseRealtime.observeTable(table);
   }
 
   private async handleRealtimeChange(table: string, payload: any) {
-    if (!this.db) return;
+    if (!this.idbClient.isInitialized) return;
 
     try {
       const { eventType, new: newRecord, old: oldRecord } = payload;
@@ -161,10 +104,7 @@ class SyncService {
 
       // Only store in supported sync tables
       if (this.syncTables.includes(table)) {
-        const tx = this.db.transaction(table, 'readwrite');
-        const store = tx.objectStore(table);
-        await store.put(storeData);
-        await tx.done;
+        await this.idbClient.storeSyncRecord(table, storeData);
 
         // Emit custom event for UI updates
         window.dispatchEvent(new CustomEvent('sync-update', {
@@ -178,21 +118,10 @@ class SyncService {
   }
 
   async addToOutbox(table: string, operation: 'insert' | 'update' | 'delete', data: any) {
-    if (!this.db) return;
-
-    const outboxItem: OutboxRecord = {
-      id: crypto.randomUUID(),
-      table,
-      operation,
-      data,
-      timestamp: new Date().toISOString(),
-    };
+    if (!this.idbClient.isInitialized) return;
 
     try {
-      const tx = this.db.transaction('outbox', 'readwrite');
-      const store = tx.objectStore('outbox');
-      await store.add(outboxItem);
-      await tx.done;
+      await this.idbClient.addToOutbox(table, operation, data);
 
       // Try immediate sync if online
       if (this.isOnline) {
@@ -204,23 +133,17 @@ class SyncService {
   }
 
   async syncOutbox() {
-    if (!this.db || !this.isOnline) return;
+    if (!this.idbClient.isInitialized || !this.isOnline) return;
 
     try {
-      const tx = this.db.transaction('outbox', 'readonly');
-      const store = tx.objectStore('outbox');
-      const outboxItems = await store.getAll();
-      await tx.done;
+      const outboxItems = await this.idbClient.getAllOutboxItems();
 
       for (const item of outboxItems) {
         try {
-          await this.syncOutboxItem(item);
+          await this.supabaseRealtime.syncOutboxItem(item.table, item.operation, item.data);
           
           // Remove from outbox after successful sync
-          const deleteTx = this.db.transaction('outbox', 'readwrite');
-          const deleteStore = deleteTx.objectStore('outbox');
-          await deleteStore.delete(item.id);
-          await deleteTx.done;
+          await this.idbClient.removeFromOutbox(item.id);
 
         } catch (error) {
           console.error(`Failed to sync outbox item ${item.id}:`, error);
@@ -232,83 +155,16 @@ class SyncService {
     }
   }
 
-  private async syncOutboxItem(item: OutboxRecord) {
-    const { table, operation, data } = item;
-
-    switch (operation) {
-      case 'insert':
-        const { error: insertError } = await (supabase as any)
-          .from(table)
-          .insert(data);
-        if (insertError) throw insertError;
-        break;
-
-      case 'update':
-        const { error: updateError } = await (supabase as any)
-          .from(table)
-          .update(data)
-          .eq('id', data.id);
-        if (updateError) throw updateError;
-        break;
-
-      case 'delete':
-        const { error: deleteError } = await (supabase as any)
-          .from(table)
-          .delete()
-          .eq('id', data.id);
-        if (deleteError) throw deleteError;
-        break;
-    }
-  }
-
   async getOfflineData(table: string, filter?: any) {
-    if (!this.db) return [];
-
-    try {
-      if (!this.syncTables.includes(table)) return [];
-      
-      const tx = this.db.transaction(table, 'readonly');
-      const store = tx.objectStore(table);
-      const allItems = await store.getAll();
-      await tx.done;
-
-      // Filter out deleted items and apply any additional filters
-      let filteredItems = (allItems as SyncRecord[])
-        .filter(item => item.operation !== 'delete')
-        .map(item => item.data);
-
-      // Apply basic filters if provided
-      if (filter) {
-        Object.keys(filter).forEach(key => {
-          filteredItems = filteredItems.filter(item => item[key] === filter[key]);
-        });
-      }
-
-      return filteredItems;
-    } catch (error) {
-      console.error(`Error getting offline data for ${table}:`, error);
-      return [];
-    }
+    return this.idbClient.getOfflineData(table, filter);
   }
 
   async storeOfflineData(table: string, data: any, operation: 'insert' | 'update' | 'delete' = 'insert') {
-    if (!this.db) return;
-
-    const storeData: SyncRecord = {
-      id: data.id || crypto.randomUUID(),
-      data,
-      updated_at: new Date().toISOString(),
-      synced: false,
-      operation,
-    };
+    if (!this.idbClient.isInitialized) return;
 
     try {
-      if (!this.syncTables.includes(table)) return;
-      
-      const tx = this.db.transaction(table, 'readwrite');
-      const store = tx.objectStore(table);
-      await store.put(storeData);
-      await tx.done;
+      const storeData = await this.idbClient.storeOfflineData(table, data, operation);
+      if (!storeData) return;
 
       // Add to outbox for later sync
       await this.addToOutbox(table, operation, data);
@@ -324,48 +180,20 @@ class SyncService {
   }
 
   async clearTable(table: string) {
-    if (!this.db) return;
-
-    try {
-      if (!this.syncTables.includes(table)) return;
-      
-      const tx = this.db.transaction(table, 'readwrite');
-      const store = tx.objectStore(table);
-      await store.clear();
-      await tx.done;
-    } catch (error) {
-      console.error(`Error clearing table ${table}:`, error);
-    }
+    return this.idbClient.clearTable(table);
   }
 
   async getConnectionStatus() {
     return {
       online: this.isOnline,
       initialized: this.initialized,
-      pendingSync: this.db ? await this.getPendingSyncCount() : 0,
+      pendingSync: this.idbClient.isInitialized ? await this.idbClient.getPendingSyncCount() : 0,
     };
   }
 
-  private async getPendingSyncCount() {
-    if (!this.db) return 0;
-
-    try {
-      const tx = this.db.transaction('outbox', 'readonly');
-      const store = tx.objectStore('outbox');
-      const count = await store.count();
-      await tx.done;
-      return count;
-    } catch {
-      return 0;
-    }
-  }
-
   destroy() {
-    // Cleanup subscriptions
-    this.channels.forEach(channel => {
-      supabase.removeChannel(channel);
-    });
-    this.channels.clear();
+    // Cleanup realtime subscriptions
+    this.supabaseRealtime.destroy();
 
     // Clear intervals
     if (this.syncInterval) {
