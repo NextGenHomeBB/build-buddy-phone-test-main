@@ -295,7 +295,7 @@ export default function SubcontractorPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-3">
-                        {getPriorityIcon(task.priority)}
+                        {React.createElement(getPriorityIcon(task.priority), { className: "h-4 w-4" })}
                         <Badge className={getStatusColor(task.status)}>
                           {t(task.status)}
                         </Badge>
@@ -330,7 +330,7 @@ export default function SubcontractorPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {getPhaseStatusIcon(phase.status)}
+                        {React.createElement(getPhaseStatusIcon(phase.status), { className: "h-4 w-4" })}
                         <div>
                           <h3 className="font-semibold">{t(phase.name)}</h3>
                           <p className="text-sm text-muted-foreground">

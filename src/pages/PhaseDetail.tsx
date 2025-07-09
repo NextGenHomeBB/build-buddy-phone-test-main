@@ -168,8 +168,8 @@ export default function PhaseDetail() {
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <div className={`flex items-center gap-1 ${getPriorityColor(item.priority)}`}>
-                      {getPriorityIcon(item.priority)}
+                    <div className="flex items-center gap-1">
+                      {React.createElement(getPriorityIcon(item.priority), { className: "h-3 w-3" })}
                       <span className="text-xs font-medium capitalize">
                         {item.priority}
                       </span>

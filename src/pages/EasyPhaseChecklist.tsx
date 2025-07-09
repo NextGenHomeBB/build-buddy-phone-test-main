@@ -275,7 +275,7 @@ export default function EasyPhaseChecklist() {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          {getPriorityIcon(item.priority)}
+                          {React.createElement(getPriorityIcon(item.priority), { className: "h-4 w-4" })}
                           <span className={`font-medium ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
                             {t(item.title)}
                           </span>
@@ -330,7 +330,7 @@ export default function EasyPhaseChecklist() {
           <Card className="border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {getPriorityIcon(selectedItem.priority)}
+                {React.createElement(getPriorityIcon(selectedItem.priority), { className: "h-4 w-4" })}
                 {t(selectedItem.title)}
               </CardTitle>
             </CardHeader>

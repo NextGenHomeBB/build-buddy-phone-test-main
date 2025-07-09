@@ -227,7 +227,7 @@ export default function ProjectDetail() {
                         <div className="flex items-center justify-between">
                           <div className="space-y-2">
                             <div className="flex items-center gap-3">
-                              {getPhaseStatusIcon(phase.status)}
+                              {React.createElement(getPhaseStatusIcon(phase.status), { className: "h-4 w-4" })}
                               <h4 className="font-semibold">{phase.name}</h4>
                               <Badge variant="outline" className={getStatusColor(phase.status)}>
                                 {phase.status}
