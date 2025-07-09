@@ -17,7 +17,12 @@ export function useProjects() {
 export function useAccessibleProjects() {
   return useQuery({
     queryKey: ['accessible-projects'],
-    queryFn: () => projectService.getAccessibleProjects(),
+    queryFn: () => {
+      console.log('🎣 useAccessibleProjects hook executing');
+      return projectService.getAccessibleProjects();
+    },
+    retry: 1,
+    staleTime: 0, // Always refetch for debugging
   });
 }
 

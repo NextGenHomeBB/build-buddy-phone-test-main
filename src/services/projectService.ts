@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const projectService = {
   async getProjects() {
+    console.log('📂 getProjects called');
     const { data, error } = await supabase
       .from('projects')
       .select(`
@@ -10,13 +11,20 @@ export const projectService = {
       `)
       .order('created_at', { ascending: false });
     
+    console.log('📋 All projects result:', data, error);
     if (error) throw error;
     return data;
   },
 
   async getAccessibleProjects() {
+    console.log('🔍 getAccessibleProjects called');
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    console.log('👤 Current user:', user?.id, user?.email);
+    
+    if (!user) {
+      console.log('❌ No user found');
+      throw new Error('Not authenticated');
+    }
 
     // Get user's role
     const { data: profile } = await supabase
@@ -25,11 +33,15 @@ export const projectService = {
       .eq('user_id', user.id)
       .single();
 
+    console.log('👥 User profile:', profile);
+
     // Admin and managers see all projects
     if (profile?.role === 'admin' || profile?.role === 'manager') {
+      console.log('🔑 User is admin/manager, fetching all projects');
       return this.getProjects();
     }
 
+    console.log('🔒 User is worker, fetching accessible projects');
     // Workers see projects they have specific access to via user_project_role
     const { data, error } = await supabase
       .from('projects')
@@ -41,6 +53,7 @@ export const projectService = {
       .eq('user_project_role.user_id', user.id)
       .order('created_at', { ascending: false });
     
+    console.log('📋 Worker projects result:', data, error);
     if (error) throw error;
     return data;
   },
