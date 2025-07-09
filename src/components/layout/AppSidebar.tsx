@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Home, FolderOpen, CheckSquare, BarChart3, Users, Settings } from "lucide-react";
+import { ChevronDown, ChevronRight, Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -49,6 +49,12 @@ const adminItems = [
     url: "/admin/users",
     icon: Users,
     badge: "5",
+  },
+  {
+    title: "User Access",
+    url: "/admin/access",
+    icon: Shield,
+    badge: null,
   },
   {
     title: "Project Settings",

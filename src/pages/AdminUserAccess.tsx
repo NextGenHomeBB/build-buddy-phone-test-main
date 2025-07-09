@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -289,7 +290,18 @@ export default function AdminUserAccess() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">User Access Management</h1>
+        <div>
+          <h1 className="text-3xl font-bold">User Access Management</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage project and phase access for users
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/admin/users">
+            <Users className="w-4 h-4 mr-2" />
+            User Management
+          </Link>
+        </Button>
       </div>
 
       {/* User Search */}

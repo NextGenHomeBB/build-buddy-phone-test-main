@@ -7,7 +7,9 @@ import { UserFilters } from "@/components/admin/UserFilters";
 import { UserTable } from "@/components/admin/UserTable";
 import { UserCardList } from "@/components/admin/UserCardList";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export default function UserManagement() {
   const isMobile = useIsMobile();
@@ -38,11 +40,19 @@ export default function UserManagement() {
             </p>
           </div>
           
-          <AddUserDialog 
-            isOpen={isAddUserOpen}
-            onOpenChange={setIsAddUserOpen}
-            onAddUser={handleAddUser}
-          />
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/admin/access">
+                <Shield className="w-4 h-4 mr-2" />
+                Project Access
+              </Link>
+            </Button>
+            <AddUserDialog 
+              isOpen={isAddUserOpen}
+              onOpenChange={setIsAddUserOpen}
+              onAddUser={handleAddUser}
+            />
+          </div>
         </div>
 
         {/* Stats Cards */}
