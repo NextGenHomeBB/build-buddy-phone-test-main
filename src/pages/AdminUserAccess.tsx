@@ -59,17 +59,21 @@ export default function AdminUserAccess() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Search users by name
+  // Load users and filter by name
   const { data: users = [] } = useQuery({
     queryKey: ['users', searchName],
     queryFn: async () => {
-      if (!searchName) return [];
-      
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('user_id, name')
-        .ilike('name', `%${searchName}%`)
-        .limit(10);
+        .limit(50);
+      
+      // Apply search filter if provided
+      if (searchName) {
+        query = query.ilike('name', `%${searchName}%`);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       
@@ -80,7 +84,6 @@ export default function AdminUserAccess() {
         name: profile.name
       }));
     },
-    enabled: searchName.length > 2,
   });
 
   // Get all projects with phases
