@@ -144,22 +144,32 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
             </div>
 
             <div className="flex space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleCall(member)}
-                className="h-8 w-8 p-0"
-              >
-                <Phone className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleMessage(member)}
-                className="h-8 w-8 p-0"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </Button>
+              {member.profile?.phone ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCall(member)}
+                    className="h-8 w-8 p-0"
+                    title="Call"
+                  >
+                    <Phone className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleMessage(member)}
+                    className="h-8 w-8 p-0"
+                    title="Message"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <div className="text-xs text-muted-foreground">
+                  No phone
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
