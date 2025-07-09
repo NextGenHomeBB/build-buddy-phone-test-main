@@ -70,8 +70,6 @@ export default function AdminLogin() {
         navigate("/admin/users");
       }
     } catch (error) {
-      console.error("Admin login error:", error);
-      
       let errorMessage = t("Invalid email or password");
       
       if (error instanceof Error) {
