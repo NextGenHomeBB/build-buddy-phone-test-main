@@ -40,6 +40,32 @@ export const accessService = {
       .maybeSingle();
 
     if (error) throw error;
+    
+    // If no explicit role found, check if user has any tasks in this project
+    if (!data) {
+      const { data: taskExists, error: taskError } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('assigned_to', userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (taskError) throw taskError;
+      
+      // If user has tasks in this project, return a virtual "worker" role
+      if (taskExists) {
+        return {
+          id: 'virtual',
+          user_id: userId,
+          project_id: projectId,
+          role: 'worker',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as ProjectRole;
+      }
+    }
+    
     return data as ProjectRole | null;
   },
 
