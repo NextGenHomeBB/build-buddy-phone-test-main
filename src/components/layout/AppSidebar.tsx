@@ -62,7 +62,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
-  const { hasAdminAccess, canViewReports } = useRoleAccess();
+  const { hasAdminAccess, canViewReports, hasFullAccess } = useRoleAccess();
   const [adminExpanded, setAdminExpanded] = useState(
     adminItems.some(item => item.url === currentPath)
   );
@@ -151,8 +151,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Admin Section - Only visible for admins and managers */}
-        {hasAdminAccess() && (
+        {/* Admin Section - Only visible for admins */}
+        {hasFullAccess() && (
           <SidebarGroup className="px-2">
             <div className="mb-2">
               {!collapsed ? (
