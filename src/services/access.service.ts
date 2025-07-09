@@ -63,7 +63,7 @@ export const accessService = {
         project_id: projectId,
         role
       }, {
-        onConflict: 'user_id,project_id,role'
+        onConflict: 'user_id,project_id'
       });
 
     if (error) throw error;
@@ -88,7 +88,7 @@ export const accessService = {
         phase_id: phaseId,
         role
       }, {
-        onConflict: 'user_id,phase_id,role'
+        onConflict: 'user_id,phase_id'
       });
 
     if (error) throw error;
