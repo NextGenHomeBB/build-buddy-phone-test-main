@@ -15,6 +15,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useCreateProject } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 const projectSchema = z.object({
@@ -42,6 +43,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false);
   const { mutate: createProject, isPending } = useCreateProject();
   const { toast } = useToast();
+  const { user, profile } = useAuth();
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -56,6 +58,26 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
   });
 
   const onSubmit = (values: ProjectFormValues) => {
+    // Check authentication
+    if (!user || !profile) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to create a project.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check user permissions
+    if (!['admin', 'manager'].includes(profile.role)) {
+      toast({
+        title: "Permission denied",
+        description: "Only administrators and managers can create projects.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createProject({
       ...values,
       budget: parseFloat(values.budget),
@@ -73,12 +95,12 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
         form.reset();
       },
       onError: (error) => {
+        console.error("Create project error:", error);
         toast({
           title: "Error",
-          description: "Failed to create project. Please try again.",
+          description: error.message || "Failed to create project. Please try again.",
           variant: "destructive",
         });
-        console.error("Create project error:", error);
       },
     });
   };

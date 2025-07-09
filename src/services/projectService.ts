@@ -78,13 +78,20 @@ export const projectService = {
   },
 
   async createProject(project: any) {
+    console.log('🚀 Creating project:', project);
+    
     const { data, error } = await supabase
       .from('projects')
       .insert(project)
       .select()
       .single();
     
-    if (error) throw error;
+    console.log('📊 Create project result:', { data, error });
+    
+    if (error) {
+      console.error('❌ Project creation error:', error);
+      throw new Error(error.message || 'Failed to create project');
+    }
     return data;
   },
 
