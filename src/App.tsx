@@ -23,6 +23,7 @@ import AdminMaterials from "./pages/admin/Materials";
 import AdminReports from "./pages/admin/Reports";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import AdminLogin from "./pages/AdminLogin";
 import Onboarding from "./pages/auth/Onboarding";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             
             {/* Protected routes */}
             <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
@@ -55,12 +57,12 @@ const App = () => (
             <Route path="/reports/overview" element={<RequireAuth roles={['admin', 'manager']}><ReportsOverview /></RequireAuth>} />
             <Route path="/reports/materials" element={<RequireAuth roles={['admin', 'manager']}><ReportsMaterials /></RequireAuth>} />
             
-            {/* Admin routes */}
-            <Route path="/admin/users" element={<RequireAuth roles={['admin', 'manager']}><UserManagement /></RequireAuth>} />
-            <Route path="/admin/projects" element={<RequireAuth roles={['admin', 'manager']}><ProjectSettings /></RequireAuth>} />
-            <Route path="/admin/checklists" element={<RequireAuth roles={['admin', 'manager']}><AdminChecklists /></RequireAuth>} />
-            <Route path="/admin/materials" element={<RequireAuth roles={['admin', 'manager']}><AdminMaterials /></RequireAuth>} />
-            <Route path="/admin/reports" element={<RequireAuth roles={['admin', 'manager']}><AdminReports /></RequireAuth>} />
+            {/* Admin routes - Admin only */}
+            <Route path="/admin/users" element={<RequireAuth roles={['admin']}><UserManagement /></RequireAuth>} />
+            <Route path="/admin/projects" element={<RequireAuth roles={['admin']}><ProjectSettings /></RequireAuth>} />
+            <Route path="/admin/checklists" element={<RequireAuth roles={['admin']}><AdminChecklists /></RequireAuth>} />
+            <Route path="/admin/materials" element={<RequireAuth roles={['admin']}><AdminMaterials /></RequireAuth>} />
+            <Route path="/admin/reports" element={<RequireAuth roles={['admin']}><AdminReports /></RequireAuth>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
