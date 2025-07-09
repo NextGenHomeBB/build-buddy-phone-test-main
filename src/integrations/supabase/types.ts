@@ -593,6 +593,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_user_global_role: {
+        Args: { user_id_param: string }
+        Returns: string
+      }
       update_user_role: {
         Args: {
           target_user_id: string
