@@ -52,23 +52,23 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
 }
 
 export default function AdminUserAccess() {
-  const [searchEmail, setSearchEmail] = useState('');
+  const [searchName, setSearchName] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Search users by email
+  // Search users by name
   const { data: users = [] } = useQuery({
-    queryKey: ['users', searchEmail],
+    queryKey: ['users', searchName],
     queryFn: async () => {
-      if (!searchEmail) return [];
+      if (!searchName) return [];
       
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, name')
-        .ilike('name', `%${searchEmail}%`)
+        .ilike('name', `%${searchName}%`)
         .limit(10);
       
       if (error) throw error;
@@ -76,11 +76,11 @@ export default function AdminUserAccess() {
       // Convert to User format
       return data.map(profile => ({
         id: profile.user_id,
-        email: profile.name || '', // This would need to be properly mapped from auth.users
+        email: `${profile.name}@user.local`, // Placeholder since email isn't available
         name: profile.name
       }));
     },
-    enabled: searchEmail.length > 2,
+    enabled: searchName.length > 2,
   });
 
   // Get all projects with phases
@@ -314,9 +314,9 @@ export default function AdminUserAccess() {
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search user by email..."
-              value={searchEmail}
-              onChange={(e) => setSearchEmail(e.target.value)}
+              placeholder="Search user by name..."
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -330,7 +330,7 @@ export default function AdminUserAccess() {
                   className="w-full justify-start"
                   onClick={() => setSelectedUser(user)}
                 >
-                  {user.email} {user.name && `(${user.name})`}
+                  {user.name}
                 </Button>
               ))}
             </div>
@@ -338,8 +338,7 @@ export default function AdminUserAccess() {
           
           {selectedUser && (
             <div className="p-3 bg-muted rounded-lg">
-              <p className="font-medium">Selected: {selectedUser.email}</p>
-              {selectedUser.name && <p className="text-sm text-muted-foreground">{selectedUser.name}</p>}
+              <p className="font-medium">Selected: {selectedUser.name}</p>
             </div>
           )}
         </CardContent>
