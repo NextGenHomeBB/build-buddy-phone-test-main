@@ -27,6 +27,7 @@ import { format } from 'date-fns';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { EditProjectDialog } from '@/components/project/EditProjectDialog';
 import { ProjectManagerSelector } from '@/components/project/ProjectManagerSelector';
+import { ProjectOverview } from '@/components/project/ProjectOverview';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -202,69 +203,7 @@ export default function ProjectDetail() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Project Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Project Manager</span>
-                      <ProjectManagerSelector 
-                        projectId={project.id}
-                        currentManagerId={project.manager_id}
-                        currentManagerName={project.manager?.name}
-                      />
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Type</span>
-                      <span className="font-medium capitalize">{project.type}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Start Date</span>
-                      <span className="font-medium">{format(new Date(project.start_date), 'MMM dd, yyyy')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">End Date</span>
-                      <span className="font-medium">{format(new Date(project.end_date), 'MMM dd, yyyy')}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    Quick Stats
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Total Phases</span>
-                      <span className="font-medium">{phases?.length || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Materials</span>
-                      <span className="font-medium">{project.materials.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Documents</span>
-                      <span className="font-medium">0</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Recent Activities</span>
-                      <span className="font-medium">0</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <ProjectOverview project={project} phases={phases} />
           </TabsContent>
 
           <TabsContent value="phases" className="space-y-4">
