@@ -54,47 +54,33 @@ interface CostEstimate {
   labour: number;
 }
 
-// Fetch phase costs data
 export const fetchPhaseCosts = async (phaseId: string): Promise<PhaseCosts> => {
   try {
-    // Fetch material costs
-    const { data: materialCosts, error: materialError } = await supabase
-      .from('material_costs')
-      .select('*')
-      .eq('phase_id', phaseId);
+    const [materialResult, labourResult, phaseResult] = await Promise.all([
+      supabase.from('material_costs').select('*').eq('phase_id', phaseId),
+      supabase.from('labour_costs').select('*').eq('phase_id', phaseId),
+      supabase.from('project_phases').select('project_id').eq('id', phaseId).single()
+    ]);
 
-    if (materialError) {
-      throw { code: materialError.code === 'PGRST116' ? 'RLS_DENIED' : 'UNKNOWN', 
-              message: materialError.message };
+    if (materialResult.error) {
+      throw { code: materialResult.error.code === 'PGRST116' ? 'RLS_DENIED' : 'UNKNOWN', 
+              message: materialResult.error.message };
     }
 
-    // Fetch labour costs
-    const { data: labourCosts, error: labourError } = await supabase
-      .from('labour_costs')
-      .select('*')
-      .eq('phase_id', phaseId);
-
-    if (labourError) {
-      throw { code: labourError.code === 'PGRST116' ? 'RLS_DENIED' : 'UNKNOWN',
-              message: labourError.message };
+    if (labourResult.error) {
+      throw { code: labourResult.error.code === 'PGRST116' ? 'RLS_DENIED' : 'UNKNOWN',
+              message: labourResult.error.message };
     }
 
-    // Fetch project remaining budget
-    const { data: phaseData, error: phaseError } = await supabase
-      .from('project_phases')
-      .select('project_id')
-      .eq('id', phaseId)
-      .single();
-
-    if (phaseError) {
-      throw { code: phaseError.code === 'PGRST116' ? 'RLS_DENIED' : 'UNKNOWN',
-              message: phaseError.message };
+    if (phaseResult.error) {
+      throw { code: phaseResult.error.code === 'PGRST116' ? 'RLS_DENIED' : 'UNKNOWN',
+              message: phaseResult.error.message };
     }
 
     const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .select('remaining_budget')
-      .eq('id', phaseData.project_id)
+      .eq('id', phaseResult.data.project_id)
       .single();
 
     if (projectError) {
@@ -102,12 +88,14 @@ export const fetchPhaseCosts = async (phaseId: string): Promise<PhaseCosts> => {
               message: projectError.message };
     }
 
-    const totalMaterial = materialCosts?.reduce((sum, cost) => sum + cost.total, 0) || 0;
-    const totalLabour = labourCosts?.reduce((sum, cost) => sum + cost.total, 0) || 0;
+    const materialCosts = materialResult.data || [];
+    const labourCosts = labourResult.data || [];
+    const totalMaterial = materialCosts.reduce((sum, cost) => sum + cost.total, 0);
+    const totalLabour = labourCosts.reduce((sum, cost) => sum + cost.total, 0);
 
     return {
-      materialCosts: materialCosts || [],
-      labourCosts: labourCosts || [],
+      materialCosts,
+      labourCosts,
       totalMaterial,
       totalLabour,
       remainingBudget: projectData.remaining_budget || 0
@@ -118,7 +106,6 @@ export const fetchPhaseCosts = async (phaseId: string): Promise<PhaseCosts> => {
   }
 };
 
-// React Query hook
 export const usePhaseCosts = (phaseId: string) => {
   return useQuery({
     queryKey: ['phase-costs', phaseId],
@@ -127,7 +114,6 @@ export const usePhaseCosts = (phaseId: string) => {
   });
 };
 
-// Insert material cost with optimistic update
 export const insertMaterialCost = async (dto: MaterialCostDto): Promise<MaterialCost> => {
   try {
     const total = dto.qty * dto.unit_price;
@@ -144,7 +130,6 @@ export const insertMaterialCost = async (dto: MaterialCostDto): Promise<Material
               message: error.message };
     }
 
-    // Update remaining budget
     const { data: phaseData } = await supabase
       .from('project_phases')
       .select('project_id')
@@ -152,10 +137,18 @@ export const insertMaterialCost = async (dto: MaterialCostDto): Promise<Material
       .single();
 
     if (phaseData) {
-      await supabase.rpc('update_remaining_budget', {
-        project_id: phaseData.project_id,
-        amount_delta: -total
-      });
+      const { data: currentProject } = await supabase
+        .from('projects')
+        .select('remaining_budget')
+        .eq('id', phaseData.project_id)
+        .single();
+
+      if (currentProject) {
+        await supabase
+          .from('projects')
+          .update({ remaining_budget: currentProject.remaining_budget - total })
+          .eq('id', phaseData.project_id);
+      }
     }
 
     return data;
@@ -165,7 +158,6 @@ export const insertMaterialCost = async (dto: MaterialCostDto): Promise<Material
   }
 };
 
-// Insert labour cost with optimistic update
 export const insertLabourCost = async (dto: LabourCostDto): Promise<LabourCost> => {
   try {
     const total = dto.hours * dto.rate;
@@ -182,7 +174,6 @@ export const insertLabourCost = async (dto: LabourCostDto): Promise<LabourCost> 
               message: error.message };
     }
 
-    // Update remaining budget
     const { data: phaseData } = await supabase
       .from('project_phases')
       .select('project_id')
@@ -190,10 +181,18 @@ export const insertLabourCost = async (dto: LabourCostDto): Promise<LabourCost> 
       .single();
 
     if (phaseData) {
-      await supabase.rpc('update_remaining_budget', {
-        project_id: phaseData.project_id,
-        amount_delta: -total
-      });
+      const { data: currentProject } = await supabase
+        .from('projects')
+        .select('remaining_budget')
+        .eq('id', phaseData.project_id)
+        .single();
+
+      if (currentProject) {
+        await supabase
+          .from('projects')
+          .update({ remaining_budget: currentProject.remaining_budget - total })
+          .eq('id', phaseData.project_id);
+      }
     }
 
     return data;
@@ -203,7 +202,6 @@ export const insertLabourCost = async (dto: LabourCostDto): Promise<LabourCost> 
   }
 };
 
-// AI cost estimation
 export const estimatePhaseCosts = async (phaseId: string): Promise<CostEstimate> => {
   try {
     const { data, error } = await supabase.functions.invoke('ai-cost-estimate', {
@@ -224,7 +222,6 @@ export const estimatePhaseCosts = async (phaseId: string): Promise<CostEstimate>
   }
 };
 
-// Mutation hooks
 export const useInsertMaterialCost = () => {
   const queryClient = useQueryClient();
   

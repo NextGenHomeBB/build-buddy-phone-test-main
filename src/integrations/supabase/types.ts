@@ -702,6 +702,10 @@ export type Database = {
         Args: { project_id_param: string }
         Returns: undefined
       }
+      update_remaining_budget: {
+        Args: { project_id_param: string; amount_delta: number }
+        Returns: undefined
+      }
       update_user_role: {
         Args: {
           target_user_id: string
