@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { MobileTabBar } from "./MobileTabBar";
@@ -21,9 +22,23 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, profile, signOut } = useAuth();
+  const [defaultOpen, setDefaultOpen] = useState(true);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      // iPad breakpoint is typically around 768px to 1024px
+      // We'll default to collapsed for tablet/iPad sizes (768px - 1023px)
+      const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+      setDefaultOpen(!isTablet);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         
