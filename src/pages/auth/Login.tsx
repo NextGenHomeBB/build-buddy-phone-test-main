@@ -194,14 +194,6 @@ export default function Login() {
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-2">
-          <div className="text-sm text-muted-foreground text-center">
-            Demo credentials: Use any email from the list below with password "password123"
-          </div>
-          <div className="text-xs text-muted-foreground text-center space-y-1">
-            <div>• admin@buildbuddy.com (Admin)</div>
-            <div>• manager@buildbuddy.com (Manager)</div> 
-            <div>• worker@buildbuddy.com (Worker)</div>
-          </div>
           <div className="text-sm text-center">
             Don't have an account?{' '}
             <Link to="/register" className="text-primary hover:underline">
