@@ -28,9 +28,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useUpdateProject } from '@/hooks/useProjects';
+import { useUpdateProject, useDeleteProject } from '@/hooks/useProjects';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
@@ -63,6 +63,7 @@ interface EditProjectDialogProps {
 export function EditProjectDialog({ children, project }: EditProjectDialogProps) {
   const [open, setOpen] = useState(false);
   const { mutate: updateProject, isPending } = useUpdateProject();
+  const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -107,6 +108,26 @@ export function EditProjectDialog({ children, project }: EditProjectDialogProps)
         },
       }
     );
+  };
+
+  const handleDelete = () => {
+    deleteProject(project.id, {
+      onSuccess: () => {
+        toast({
+          title: 'Success',
+          description: 'Project deleted successfully',
+        });
+        setOpen(false);
+      },
+      onError: (error) => {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete project',
+          variant: 'destructive',
+        });
+        console.error('Error deleting project:', error);
+      },
+    });
   };
 
   return (
@@ -263,19 +284,31 @@ export function EditProjectDialog({ children, project }: EditProjectDialogProps)
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-between pt-4">
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={isPending}
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isPending || isDeleting}
               >
-                Cancel
+                {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
               </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Update Project
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={isPending || isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isPending || isDeleting}>
+                  {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Update Project
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
