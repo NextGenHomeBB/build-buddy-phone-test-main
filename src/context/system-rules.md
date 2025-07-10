@@ -1,67 +1,77 @@
-# ===== developer (add below previous content) =====
-## Shared service-layer conventions
-- All data access lives in `src/services/*`.
-- Each service exports:
-  • `fetchXXX()` – online/offline via `useOfflineQuery`
-  • `mutateXXX()` – optimistic update, then `sendPush()`
-- Throw errors with `.code` property so UI can map to toast variants.
+/* --- developer section (EN) --- */
+# ===== developer (shared conventions) ======================================
+## 1. Service layer
+- Source folder:               src/services/*
+- Import alias:                @/services/…
+- Each service exports:  
+  • fetchX()   – read via useOfflineQuery (IndexedDB ↔ Supabase)  
+  • mutateX()  – optimistic cache → Supabase → sendPush()
+- Errors must expose error.code:  'RLS_DENIED' | 'NETWORK' | 'VALIDATION' | 'UNKNOWN'
 
-## Offline sync strategy
-- A singleton `sync.service.ts` manages IndexedDB ↔ Supabase.
-- Sync tables: projects, phases, tasks, phaseChecks, subcontractors.
-- Conflict rule: "last writer wins" (timestamp column `updated_at`).
+## 2. Offline sync
+- Singleton  @/services/sync.service.ts
+- Synced tables: projects, phases, tasks, phaseChecks, subcontractors
+- Conflict rule: **last-writer-wins** by `updated_at`
+- Started once in main.tsx
 
-## Router conventions
-- Public routes => no wrapper.
-- Auth routes => `<RequireAuth />`.
-- Admin routes => `<RequireAuth roles={['admin']} />`.
+## 3. Routing
+- React Router v6 in src/router.tsx  
+- Public → no wrapper  
+- Auth  → <RequireAuth />  
+- Admin → <RequireAuth roles={['admin']} />  
+- Extra ACL → <RequireAccess … />
+- Page files lazy-load; chunk prefix "page-"
 
-## Code splitting
-Lazy-load every page file in `src/pages` using `React.lazy()` + `Suspense`.
+## 4. Code-splitting pattern
+const Dashboard = React.lazy(() =>
+  import(/* webpackChunkName:"page-dashboard" */ '@/pages/Dashboard')
+);
+<Suspense fallback={<PageSkeleton/>}/>
 
-# ===== developer  (Access-control rules) =====
+# ===== developer (access control) ==========================================
 ## Roles
-- admin      → full access to all data
-- manager    → can view any project to which they are linked and create/update tasks
-- worker     → can view only assigned tasks and update their own task status
-- guest      → read-only demo
+admin | manager | worker | guest (demo read-only)
 
-## Data model  (all tables already created in Supabase)
-┌──────────────────────────┐
-│ user_project_role        │  -- row unique (user_id, project_id)
-│  id  (uuid)              │
-│  user_id    uuid FK      │
-│  project_id uuid FK      │
-│  role  enum  ('manager'|'worker') │
-└──────────────────────────┘
+## Schema
+user_project_role(user_id, project_id, role) UNIQUE  
+user_phase_role(upr_id → user_project_role.id, phase_id, role)
 
-┌──────────────────────────┐
-│ user_phase_role          │  -- optional fine-grain override
-│  id  (uuid)              │
-│  upr_id     uuid FK → user_project_role(id)
-│  phase_id   uuid FK      │
-│  role enum ('manager'|'worker') │
-└──────────────────────────┘
+## RLS summary
+project.select → row in user_project_role  
+phase.select   → upr.role ∈ {manager, worker}  
+task.select    → manager(any) | worker(assignee = uid)
 
-## Supabase Row-Level-Security snippets  (already deployed)
-- user can `select` project if exists user_project_role.user_id = auth.uid()
-- user can `select/update` phase if their upr_id matches project AND (role='manager' OR role='worker')
-- user can `select/update` tasks if:
-    • manager → any task in their phases
-    • worker  → tasks where `assignee = auth.uid()`
+## Front-end helpers
+- useAccess({projectId?, phaseId?, taskId?}) → {canView, canEdit, role}
+- <RequireAccess …/>
+- useUserRole()
 
-## Front-end helpers  (must exist in codebase)
-- `useAccess()`            // returns { canView, canEdit, role }
-- `RequireAccess` component
-- `useUserRole()`          // already exists
+# ===== developer (mobile & tablet UX) ======================================
+## Breakpoints & layout
+- Phone < 480 px → bottom-nav + sheet dialogs  
+- Tablet ≥ 768 px → side-rail + modal dialogs  
+- Wrappers: <MobileLayout/> / <TabletLayout/>  
+- Safe-area util: `pb-safe` = `pb-[env(safe-area-inset-bottom)]`
 
-### useAccess API
-useAccess({ projectId?: string, phaseId?: string, taskId?: string })
-→ { canView: boolean, canEdit: boolean, role: 'admin'|'manager'|'worker'|'guest' }
+## Touch & gestures
+- Min touch target 44×44 px
+- Long-press ⇒ BottomSheet · iOS swipe-back via useSwipeBack()
 
-## UI conventions
-- Any "lock" icon = <LockKeyhole className="text-muted-foreground" />
-- Routes that need access wrap with <RequireAccess projectId={id} />
+## Visual tokens
+- sm 480 | md 768 | lg 1024  
+- Typography: text-base (phone) · text-lg (tablet)  
+- Card: shadow-sm + rounded-2xl
 
-## Output contract
-When a prompt asks for code, return **one file only**, no commentary.
+## Performance
+- Lists ≥ 20 items → virtualise (`react-window`)  
+- Skeleton loaders if wait > 300 ms  
+- Avoid inline SVG > 40 KB on low-RAM phones
+
+# ===== developer (AI helpers) =============================================
+- AI utilities live in @/services/ai/*.service.ts
+- Provide manual fallback; never block UI > 2 s (use skeleton + cancel).
+
+# ===== developer (output contract) ========================================
+When you return code, output **one file only**, ≤ 120 chars/line, no commentary,
+and follow all mobile, access, and path rules above.
+/* --- end developer section --- */
