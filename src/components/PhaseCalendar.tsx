@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { format, addDays } from 'date-fns';
 import { usePhaseCalendar } from '@/hooks/usePhaseCalendar';
 import { usePhasePlanningMutation } from '@/services/phasePlanning.service';
-import { Calendar, GanttChart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, GanttChart, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { CreatePhaseDialog } from '@/components/project/CreatePhaseDialog';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 interface PhaseCalendarProps {
   projectId: string;
@@ -21,6 +23,7 @@ export function PhaseCalendar({ projectId }: PhaseCalendarProps) {
   const { phases, calendar, isLoading, checkDateOverlap } = usePhaseCalendar(projectId);
   const phasePlanningMutation = usePhasePlanningMutation();
   const { toast } = useToast();
+  const { canAddPhase } = useRoleAccess();
 
   // Simple Gantt representation using HTML/CSS
   const ganttPhases = phases.filter(phase => phase.start_date && phase.end_date);
@@ -89,10 +92,20 @@ export function PhaseCalendar({ projectId }: PhaseCalendarProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Phase Planning
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Phase Planning
+          </CardTitle>
+          {canAddPhase() && (
+            <CreatePhaseDialog projectId={projectId}>
+              <Button size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Phase
+              </Button>
+            </CreatePhaseDialog>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'gantt' | 'month')}>
