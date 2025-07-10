@@ -1,81 +1,74 @@
-export interface DefaultPhase {
-  name: string;
-  description: string;
-  order_index: number;
-  checklist: string[];
-}
-
-export const defaultPhases: DefaultPhase[] = [
+export const defaultPhases = [
   {
-    name: "Project Planning",
-    description: "Initial project setup and planning phase",
-    order_index: 1,
+    name: 'Bouwtekeningen',
     checklist: [
-      "Review project requirements and specifications",
-      "Conduct site survey and assessment",
-      "Obtain necessary permits and approvals",
-      "Finalize project timeline and milestones",
-      "Prepare detailed budget breakdown"
-    ]
+      'Plattegronden: Badkamer, Slaapkamer, Wasruimte, Meterkast, Woonkamer, Keuken',
+      'Installaties: wandcontactdozen, afvoeren, waterleidingen, elektra, vloerverwarmingsverdelers, spots, deurbel, thermostaat, TV, UTP-kabel, ventilatiekanalen, afzuigkap',
+      'AI-indeling & styling',
+    ],
   },
   {
-    name: "Site Preparation",
-    description: "Prepare the construction site for work",
-    order_index: 2,
+    name: 'Sloop / Strippen',
     checklist: [
-      "Clear and excavate the site",
-      "Set up temporary utilities",
-      "Install safety barriers and signage",
-      "Establish material storage areas",
-      "Conduct soil testing if required"
-    ]
+      'Vloeren, tegels en wanden verwijderen',
+      'Volg de nieuwe indeling',
+      'Leidingen afdoppen',
+      'WC en watervoorziening werkend houden',
+    ],
   },
   {
-    name: "Foundation Work",
-    description: "Foundation and structural groundwork",
-    order_index: 3,
+    name: 'Styling & Opmeten',
     checklist: [
-      "Layout foundation according to plans",
-      "Excavate foundation to required depth",
-      "Install foundation forms and reinforcement",
-      "Pour and cure concrete foundation",
-      "Conduct foundation inspection"
-    ]
+      'Alles opmeten',
+      'Let op verhoogde vloeren, tegeldikte en verlaagd plafond',
+      'Keukenmaten voor water- en afvoerleidingen',
+    ],
   },
   {
-    name: "Structural Work",
-    description: "Main structural construction",
-    order_index: 4,
+    name: 'Uitbouw / Opbouw',
     checklist: [
-      "Install structural framing",
-      "Complete electrical rough-in",
-      "Complete plumbing rough-in",
-      "Install HVAC system rough-in",
-      "Conduct structural inspection"
-    ]
+      'Bouwkundige tekening',
+      'Fundering',
+      'Staalconstructie',
+      'Balkon',
+    ],
   },
   {
-    name: "Finishing Work",
-    description: "Interior and exterior finishing",
-    order_index: 5,
+    name: 'Indeling Ruwe Afbouw',
     checklist: [
-      "Install insulation and drywall",
-      "Complete interior painting",
-      "Install flooring materials",
-      "Install fixtures and appliances",
-      "Complete exterior work and landscaping"
-    ]
+      'Houten of gipsblokken wanden',
+      'Isolatie',
+      'Standaard deuropeningen',
+    ],
   },
   {
-    name: "Final Inspection",
-    description: "Final inspections and project completion",
-    order_index: 6,
+    name: 'Betonboren & Sleuven',
     checklist: [
-      "Conduct final walkthrough",
-      "Complete all punch list items",
-      "Obtain final inspections and certificates",
-      "Deliver project documentation",
-      "Hand over keys and project to client"
-    ]
-  }
-];
+      'Sleuven voor installaties',
+      'Gaten voor afvoeren',
+      'Alles gereed voor installaties',
+    ],
+  },
+  {
+    name: 'Checkpoint',
+    checklist: [
+      'Site-inspectie met constructeur',
+      'Controleer betonboringen en sleuven op specificatie',
+      'Goedkeuring om verder te gaan met afwerking',
+    ],
+  },
+  {
+    name: 'Verlaagde Plafonds',
+    checklist: [
+      'Latjes, balken, schroeven, beugels',
+      'Houd voorgeschreven hoogte aan',
+      'Plafondranden afdichten met PUR-schuim',
+    ],
+  },
+  {
+    name: 'Kozijnen',
+    checklist: [
+      'Controleer alle sparingsmaten',
+    ],
+  },
+] as const;

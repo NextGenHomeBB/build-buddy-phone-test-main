@@ -115,7 +115,7 @@ export const projectService = {
           .insert({
             project_id: createdProject.id,
             name: phaseTemplate.name,
-            description: phaseTemplate.description,
+            description: `Phase: ${phaseTemplate.name}`,
             status: 'planning',
             progress: 0,
             budget: 0,
