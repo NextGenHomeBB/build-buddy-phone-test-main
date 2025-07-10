@@ -23,6 +23,7 @@ type MaterialCostForm = z.infer<typeof materialCostSchema>;
 
 interface MaterialCostSheetProps {
   phaseId: string;
+  open: boolean;
   onClose: () => void;
 }
 
@@ -56,7 +57,7 @@ const units = [
   'sheet'
 ];
 
-export function MaterialCostSheet({ phaseId, onClose }: MaterialCostSheetProps) {
+export function MaterialCostSheet({ phaseId, open, onClose }: MaterialCostSheetProps) {
   const [isCalculating, setIsCalculating] = useState(false);
   const { toast } = useToast();
   
@@ -141,7 +142,7 @@ export function MaterialCostSheet({ phaseId, onClose }: MaterialCostSheetProps) 
   const total = watch('qty') * watch('unit_price');
 
   return (
-    <BottomSheet>
+    <BottomSheet open={open} onOpenChange={onClose}>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Add Material Cost</h2>

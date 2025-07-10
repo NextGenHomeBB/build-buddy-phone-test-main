@@ -415,19 +415,17 @@ export default function PhaseDetail() {
       </div>
 
       {/* Cost Sheets */}
-      {showMaterialCostSheet && (
-        <MaterialCostSheet 
-          phaseId={phase.id} 
-          onClose={() => setShowMaterialCostSheet(false)} 
-        />
-      )}
+      <MaterialCostSheet 
+        phaseId={phase.id}
+        open={showMaterialCostSheet}
+        onClose={() => setShowMaterialCostSheet(false)} 
+      />
       
-      {showLabourCostSheet && (
-        <LabourCostSheet 
-          phaseId={phase.id} 
-          onClose={() => setShowLabourCostSheet(false)} 
-        />
-      )}
+      <LabourCostSheet 
+        phaseId={phase.id}
+        open={showLabourCostSheet}
+        onClose={() => setShowLabourCostSheet(false)} 
+      />
     </AppLayout>
   );
 }

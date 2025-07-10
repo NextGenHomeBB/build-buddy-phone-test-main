@@ -24,6 +24,7 @@ type LabourCostForm = z.infer<typeof labourCostSchema>;
 
 interface LabourCostSheetProps {
   phaseId: string;
+  open: boolean;
   onClose: () => void;
 }
 
@@ -39,7 +40,7 @@ const subcontractors = [
   { id: 'flooring-1', name: 'Premium Flooring Co.' },
 ];
 
-export function LabourCostSheet({ phaseId, onClose }: LabourCostSheetProps) {
+export function LabourCostSheet({ phaseId, open, onClose }: LabourCostSheetProps) {
   const [isCalculating, setIsCalculating] = useState(false);
   const { toast } = useToast();
   
@@ -128,7 +129,7 @@ export function LabourCostSheet({ phaseId, onClose }: LabourCostSheetProps) {
   const total = hours * rate;
 
   return (
-    <BottomSheet>
+    <BottomSheet open={open} onOpenChange={onClose}>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Add Labour Cost</h2>
