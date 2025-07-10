@@ -31,7 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { usePhaseBudget } from "@/hooks/usePhaseBudget";
-import { Bot, Calculator } from "lucide-react";
+import { Bot, Calculator, Trash2 } from "lucide-react";
 
 interface EditPhaseDialogProps {
   phase: {
@@ -117,6 +117,34 @@ export function EditPhaseDialog({ phase, projectId, children }: EditPhaseDialogP
       toast({
         title: "Error",
         description: error.message || "Failed to update phase",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePhaseMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('project_phases')
+        .delete()
+        .eq('id', phase.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'phases'] });
+      queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['phases', projectId, 'calendar'] });
+      toast({
+        title: "Phase deleted",
+        description: "The phase has been deleted successfully.",
+      });
+      setOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete phase",
         variant: "destructive",
       });
     },
@@ -374,13 +402,28 @@ export function EditPhaseDialog({ phase, projectId, children }: EditPhaseDialogP
               </div>
             </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={updatePhaseMutation.isPending}>
-                {updatePhaseMutation.isPending ? "Updating..." : "Update Phase"}
-              </Button>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => deletePhaseMutation.mutate()}
+                  disabled={deletePhaseMutation.isPending}
+                  className="flex-1 sm:flex-none"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {deletePhaseMutation.isPending ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
+              <div className="flex gap-2 flex-1">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updatePhaseMutation.isPending} className="flex-1">
+                  {updatePhaseMutation.isPending ? "Updating..." : "Update Phase"}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>
