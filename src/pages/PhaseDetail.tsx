@@ -239,9 +239,9 @@ export default function PhaseDetail() {
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link to={`/projects/${projectId}`}>
+            <Link to={`/projects/${projectId}?tab=phases`}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Project
+              Back to Phases
             </Link>
           </Button>
         </div>
