@@ -125,6 +125,14 @@ export function useUpdateChecklistItem() {
         .single();
 
       if (error) throw error;
+
+      // Update phase progress after task completion
+      const { error: progressError } = await supabase.rpc('update_phase_progress', {
+        phase_id_param: phaseId
+      });
+      
+      if (progressError) throw progressError;
+
       return data;
     },
     onMutate: async ({ phaseId, itemId, completed, completedBy }) => {
@@ -160,9 +168,16 @@ export function useUpdateChecklistItem() {
       // If the mutation fails, use the context returned from onMutate to roll back
       queryClient.setQueryData(['phases', phaseId], context?.previousPhase);
     },
-    onSettled: (_, __, { phaseId }) => {
+    onSettled: async (_, __, { phaseId }) => {
       // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['phases', phaseId] });
+      
+      // Also invalidate project phases queries to update the overview page
+      const phase = queryClient.getQueryData(['phases', phaseId]) as any;
+      if (phase?.project_id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', phase.project_id, 'phases'] });
+        queryClient.invalidateQueries({ queryKey: ['projects', phase.project_id] });
+      }
     },
   });
 }

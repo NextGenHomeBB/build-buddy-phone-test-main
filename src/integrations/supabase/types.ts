@@ -597,6 +597,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: string
       }
+      update_phase_progress: {
+        Args: { phase_id_param: string }
+        Returns: undefined
+      }
       update_user_role: {
         Args: {
           target_user_id: string
