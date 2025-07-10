@@ -85,11 +85,11 @@ export const projectService = {
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('Not authenticated');
+      return { data: null, error: new Error('Not authenticated') };
     }
 
     try {
-      // Start transaction by creating the project first
+      // Step 1: Create the project
       const { data: createdProject, error: projectError } = await supabase
         .from('projects')
         .insert(project)
@@ -98,18 +98,16 @@ export const projectService = {
       
       if (projectError) {
         console.error('❌ Project creation error:', projectError);
-        throw new Error(projectError.message || 'Failed to create project');
+        return { data: null, error: projectError };
       }
 
       console.log('📊 Project created:', createdProject);
 
-      // Assign creating user as manager
-      await upsertUserProjectRole(user.id, createdProject.id, 'manager');
-      console.log('👤 User assigned as manager');
-
-      // Create default phases and tasks
-      for (const phaseTemplate of defaultPhases) {
-        // Create the phase
+      // Step 2: Loop over defaultPhases and create phases with tasks
+      for (let index = 0; index < defaultPhases.length; index++) {
+        const phaseTemplate = defaultPhases[index];
+        
+        // Insert phase with order_index
         const { data: createdPhase, error: phaseError } = await supabase
           .from('project_phases')
           .insert({
@@ -126,44 +124,44 @@ export const projectService = {
 
         if (phaseError) {
           console.error('❌ Phase creation error:', phaseError);
-          throw new Error(`Failed to create phase: ${phaseTemplate.name}`);
+          return { data: null, error: phaseError };
         }
 
         console.log('📋 Phase created:', createdPhase);
 
         // Create tasks for each checklist item
-        const tasks = phaseTemplate.checklist.map((item, index) => ({
-          project_id: createdProject.id,
-          phase_id: createdPhase.id,
-          title: item,
-          description: `${phaseTemplate.name} - ${item}`,
-          status: 'todo' as const,
-          priority: 'medium' as const,
-          assigned_by: user.id
-        }));
-
-        if (tasks.length > 0) {
-          const { error: tasksError } = await supabase
+        for (const checklistItem of phaseTemplate.checklist) {
+          const { error: taskError } = await supabase
             .from('tasks')
-            .insert(tasks);
+            .insert({
+              project_id: createdProject.id,
+              phase_id: createdPhase.id,
+              title: checklistItem,
+              description: `${phaseTemplate.name} - ${checklistItem}`,
+              status: 'todo',
+              priority: 'medium',
+              assigned_by: user.id
+            });
 
-          if (tasksError) {
-            console.error('❌ Tasks creation error:', tasksError);
-            throw new Error(`Failed to create tasks for phase: ${phaseTemplate.name}`);
+          if (taskError) {
+            console.error('❌ Task creation error:', taskError);
+            return { data: null, error: taskError };
           }
-
-          console.log(`✅ Created ${tasks.length} tasks for ${phaseTemplate.name}`);
         }
+
+        console.log(`✅ Created ${phaseTemplate.checklist.length} tasks for ${phaseTemplate.name}`);
       }
 
+      // Step 3: Assign creating user as manager
+      await upsertUserProjectRole(user.id, createdProject.id, 'manager');
+      console.log('👤 User assigned as manager');
+
       console.log('🎉 Project created successfully with default phases and tasks');
-      return createdProject;
+      return { data: createdProject, error: null };
 
     } catch (error) {
       console.error('❌ Project creation transaction failed:', error);
-      // Note: Supabase doesn't support manual transactions in the client,
-      // but we can rely on individual operation failures to prevent partial state
-      throw error;
+      return { data: null, error: error as Error };
     }
   },
 
