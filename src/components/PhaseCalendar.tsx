@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { format, addDays } from 'date-fns';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { usePhaseCalendar } from '@/hooks/usePhaseCalendar';
 import { usePhasePlanningMutation } from '@/services/phasePlanning.service';
-import { Calendar, GanttChart, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Calendar, GanttChart, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -24,9 +26,40 @@ export function PhaseCalendar({ projectId }: PhaseCalendarProps) {
   const phasePlanningMutation = usePhasePlanningMutation();
   const { toast } = useToast();
   const { canAddPhase } = useRoleAccess();
+  const queryClient = useQueryClient();
 
   // Simple Gantt representation using HTML/CSS
   const ganttPhases = phases.filter(phase => phase.start_date && phase.end_date);
+
+  const deletePhase = useMutation({
+    mutationFn: async (phaseId: string) => {
+      const { error } = await supabase
+        .from('project_phases')
+        .delete()
+        .eq('id', phaseId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phases', projectId, 'calendar'] });
+      queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'phases'] });
+      toast({
+        title: "Phase deleted",
+        description: "Phase has been successfully deleted.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete phase",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeletePhase = (phaseId: string) => {
+    deletePhase.mutate(phaseId);
+  };
 
   const handleDateChange = (phaseId: string, newStartDate: string, newEndDate: string) => {
     // Check for overlaps
@@ -160,13 +193,14 @@ export function PhaseCalendar({ projectId }: PhaseCalendarProps) {
                     </div>
                   </div>
                   <div className="divide-y">
-                    {ganttPhases.map(phase => (
-                      <GanttRow 
-                        key={phase.id} 
-                        phase={phase} 
-                        onDateChange={handleDateChange}
-                        view={ganttView}
-                      />
+                     {ganttPhases.map(phase => (
+                       <GanttRow 
+                         key={phase.id} 
+                         phase={phase} 
+                         onDateChange={handleDateChange}
+                         onDelete={handleDeletePhase}
+                         view={ganttView}
+                       />
                     ))}
                   </div>
                 </div>
@@ -250,10 +284,11 @@ export function PhaseCalendar({ projectId }: PhaseCalendarProps) {
 interface GanttRowProps {
   phase: any;
   onDateChange: (phaseId: string, startDate: string, endDate: string) => void;
+  onDelete: (phaseId: string) => void;
   view: string;
 }
 
-function GanttRow({ phase, onDateChange, view }: GanttRowProps) {
+function GanttRow({ phase, onDateChange, onDelete, view }: GanttRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [startDate, setStartDate] = useState(phase.start_date);
   const [endDate, setEndDate] = useState(phase.end_date);
@@ -302,27 +337,44 @@ function GanttRow({ phase, onDateChange, view }: GanttRowProps) {
             />
             <Button size="sm" onClick={handleSave}>Save</Button>
             <Button size="sm" variant="outline" onClick={handleCancel}>Cancel</Button>
+            <Button 
+              size="sm" 
+              variant="destructive" 
+              onClick={() => onDelete(phase.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         ) : (
-          <div 
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => setIsEditing(true)}
-          >
-            <div className="text-sm text-muted-foreground">
-              {format(new Date(phase.start_date), 'MMM dd')} - {format(new Date(phase.end_date), 'MMM dd')}
-            </div>
-            <div className="flex-1 bg-muted rounded h-4 relative overflow-hidden">
-              <div 
-                className="h-full rounded transition-all"
-                style={{ 
-                  backgroundColor: getPhaseColor(phase.status),
-                  width: `${phase.progress}%`
-                }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-medium">
-                {phase.progress}%
+          <div className="flex items-center gap-2">
+            <div 
+              className="flex items-center gap-2 cursor-pointer flex-1"
+              onClick={() => setIsEditing(true)}
+            >
+              <div className="text-sm text-muted-foreground">
+                {format(new Date(phase.start_date), 'MMM dd')} - {format(new Date(phase.end_date), 'MMM dd')}
+              </div>
+              <div className="flex-1 bg-muted rounded h-4 relative overflow-hidden">
+                <div 
+                  className="h-full rounded transition-all"
+                  style={{ 
+                    backgroundColor: getPhaseColor(phase.status),
+                    width: `${phase.progress}%`
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center text-xs text-white font-medium">
+                  {phase.progress}%
+                </div>
               </div>
             </div>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => onDelete(phase.id)}
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>
