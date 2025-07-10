@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectService } from '@/services/projectService';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Hook to fetch all projects (admin/manager view)
@@ -58,9 +59,43 @@ export function usePhase(phaseId: string) {
   return useQuery({
     queryKey: ['phases', phaseId],
     queryFn: async () => {
-      // For now, return mock data - this would need to be implemented
-      // when we add project phases functionality
-      return null;
+      const { data: phase, error: phaseError } = await supabase
+        .from('project_phases')
+        .select('*')
+        .eq('id', phaseId)
+        .single();
+
+      if (phaseError) throw phaseError;
+      if (!phase) return null;
+
+      // Fetch tasks for this phase
+      const { data: tasks, error: tasksError } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('phase_id', phaseId)
+        .order('created_at');
+
+      if (tasksError) throw tasksError;
+
+      // Transform tasks to checklist items format
+      const checklist = (tasks || []).map(task => ({
+        id: task.id,
+        title: task.title,
+        description: task.description || '',
+        completed: task.status === 'completed',
+        completedBy: task.assigned_to || undefined,
+        completedAt: task.updated_at,
+        priority: task.priority === 'urgent' ? 'high' : task.priority as 'low' | 'medium' | 'high',
+        category: 'General',
+        estimatedHours: task.estimated_hours ? Number(task.estimated_hours) : undefined,
+      }));
+
+      return {
+        ...phase,
+        startDate: phase.start_date,
+        endDate: phase.end_date,
+        checklist,
+      };
     },
     enabled: !!phaseId,
   });
@@ -79,9 +114,18 @@ export function useUpdateChecklistItem() {
       completed: boolean; 
       completedBy?: string; 
     }) => {
-      // For now, return mock success - this would need to be implemented
-      // when we add checklist functionality
-      return { success: true };
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ 
+          status: completed ? 'completed' : 'todo',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', itemId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: (_, { phaseId }) => {
       // Invalidate phase query to refresh data
