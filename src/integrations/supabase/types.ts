@@ -686,6 +686,10 @@ export type Database = {
         }
         Returns: string
       }
+      estimate_phase_costs: {
+        Args: { p_phase_id: string }
+        Returns: Json
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]

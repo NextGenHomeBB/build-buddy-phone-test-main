@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { BudgetBadge } from '@/components/BudgetBadge';
+import { PhaseCostDisplay } from '@/components/PhaseCostDisplay';
+import { MaterialCostSheet } from '@/components/MaterialCostSheet';
+import { LabourCostSheet } from '@/components/LabourCostSheet';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -46,6 +49,9 @@ export default function PhaseDetail() {
   const { toast } = useToast();
   const updateChecklistItem = useUpdateChecklistItem();
   const [swipingItemId, setSwipingItemId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'checklist' | 'costs'>('checklist');
+  const [showMaterialCostSheet, setShowMaterialCostSheet] = useState(false);
+  const [showLabourCostSheet, setShowLabourCostSheet] = useState(false);
 
   if (isLoading) {
     return (
@@ -348,31 +354,80 @@ export default function PhaseDetail() {
           </div>
         </div>
 
-        {/* Checklist */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Phase Checklist</h2>
-              <p className="text-sm text-muted-foreground">
-                Swipe left on any task to mark it complete
-              </p>
-            </div>
-            <Button size="sm">Add Task</Button>
-          </div>
-
-          <div className="space-y-3">
-            {phase.checklist.map((item) => (
-              <ChecklistItemComponent key={item.id} item={item} />
-            ))}
-            
-            {phase.checklist.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No checklist items found for this phase.
-              </div>
-            )}
-          </div>
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-4 border-b">
+          <button
+            onClick={() => setActiveTab('checklist')}
+            className={`pb-2 px-1 border-b-2 transition-colors ${
+              activeTab === 'checklist'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Phase Checklist
+          </button>
+          <button
+            onClick={() => setActiveTab('costs')}
+            className={`pb-2 px-1 border-b-2 transition-colors ${
+              activeTab === 'costs'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Cost Management
+          </button>
         </div>
+
+        {/* Tab Content */}
+        {activeTab === 'checklist' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Phase Checklist</h2>
+                <p className="text-sm text-muted-foreground">
+                  Swipe left on any task to mark it complete
+                </p>
+              </div>
+              <Button size="sm">Add Task</Button>
+            </div>
+
+            <div className="space-y-3">
+              {phase.checklist.map((item) => (
+                <ChecklistItemComponent key={item.id} item={item} />
+              ))}
+              
+              {phase.checklist.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No checklist items found for this phase.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'costs' && (
+          <PhaseCostDisplay
+            phaseId={phase.id}
+            onAddMaterialCost={() => setShowMaterialCostSheet(true)}
+            onAddLabourCost={() => setShowLabourCostSheet(true)}
+          />
+        )}
       </div>
+
+      {/* Cost Sheets */}
+      {showMaterialCostSheet && (
+        <MaterialCostSheet 
+          phaseId={phase.id} 
+          onClose={() => setShowMaterialCostSheet(false)} 
+        />
+      )}
+      
+      {showLabourCostSheet && (
+        <LabourCostSheet 
+          phaseId={phase.id} 
+          onClose={() => setShowLabourCostSheet(false)} 
+        />
+      )}
     </AppLayout>
   );
 }

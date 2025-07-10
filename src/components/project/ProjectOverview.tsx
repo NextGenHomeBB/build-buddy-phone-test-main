@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { ProjectCostOverview } from '@/components/ProjectCostOverview';
 import { 
   Calendar, 
   BarChart3,
@@ -175,6 +176,9 @@ export function ProjectOverview({ project, phases }: ProjectOverviewProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Cost Overview */}
+      <ProjectCostOverview projectId={project.id} />
     </div>
   );
 }

@@ -204,17 +204,18 @@ export const insertLabourCost = async (dto: LabourCostDto): Promise<LabourCost> 
 
 export const estimatePhaseCosts = async (phaseId: string): Promise<CostEstimate> => {
   try {
-    const { data, error } = await supabase.functions.invoke('ai-cost-estimate', {
-      body: { phase_id: phaseId }
+    const { data, error } = await supabase.rpc('estimate_phase_costs', {
+      p_phase_id: phaseId
     });
 
     if (error) {
       throw { code: 'NETWORK', message: 'AI estimation service unavailable' };
     }
 
+    const result = data as any;
     return {
-      materials: data?.materials || 0,
-      labour: data?.labour || 0
+      materials: result?.materials || 0,
+      labour: result?.labour || 0
     };
   } catch (error: any) {
     if (error.code) throw error;

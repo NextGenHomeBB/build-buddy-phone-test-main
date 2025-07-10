@@ -234,7 +234,7 @@ export function ProjectMaterials({ projectId }: ProjectMaterialsProps) {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -257,7 +257,7 @@ export function ProjectMaterials({ projectId }: ProjectMaterialsProps) {
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Total Cost</div>
-                <div className="text-lg font-semibold">${totalCost.toLocaleString()}</div>
+                <div className="text-lg font-semibold">€{totalCost.toLocaleString()}</div>
               </div>
             </div>
           </CardContent>
@@ -271,7 +271,23 @@ export function ProjectMaterials({ projectId }: ProjectMaterialsProps) {
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Used Cost</div>
-                <div className="text-lg font-semibold">${totalUsedCost.toLocaleString()}</div>
+                <div className="text-lg font-semibold">€{totalUsedCost.toLocaleString()}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-accent/10 rounded-lg">
+                <Calculator className="h-4 w-4 text-accent-foreground" />
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Efficiency</div>
+                <div className="text-lg font-semibold">
+                  {totalCost > 0 ? Math.round((totalUsedCost / totalCost) * 100) : 0}%
+                </div>
               </div>
             </div>
           </CardContent>
