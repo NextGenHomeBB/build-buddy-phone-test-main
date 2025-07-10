@@ -42,7 +42,7 @@ export function MobileTabBar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="sticky bottom-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50 shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50 shadow-lg">
       <div className="flex items-center justify-around py-1 px-2 safe-area-bottom">
         {tabItems.map((item) => (
           <NavLink
