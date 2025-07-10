@@ -71,6 +71,26 @@ task.select    → manager(any) | worker(assignee = uid)
 - AI utilities live in @/services/ai/*.service.ts
 - Provide manual fallback; never block UI > 2 s (use skeleton + cancel).
 
+# ===== developer (budget & cost rules) =====================================
+## Data model (already in Supabase)
+table material_costs(id, phase_id, category, qty, unit, unit_price, total)
+table labour_costs(id, phase_id, task, subcontractor_id, hours, rate, total)
+projects.remaining_budget (decimal)  -- already exists
+
+## Business rules
+1. total_material = Σ material_costs.total   per phase
+2. total_labour   = Σ labour_costs.total     per phase
+3. On insert/update/delete of a cost row:
+   Δ = (new_total - old_total)
+   projects.remaining_budget -= Δ     -- all in one transaction
+4. AI helper   estimatePhaseCosts(phase_id) →
+   { materials: €, labour: € }  (must return <2 s; show skeleton)
+
+## Front-end helpers
+- usePhaseCosts(phaseId)      // { rows, totalMaterial, totalLabour, remainingBudget }
+- useBudgetMutation()         // insert / update / delete rows (optimistic)
+- <BudgetBadge amount={remainingBudget}/>  // green if ≥0, red if <0
+
 # ===== developer (output contract) ========================================
 When you return code, output **one file only**, ≤ 120 chars/line, no commentary,
 and follow all mobile, access, and path rules above.
