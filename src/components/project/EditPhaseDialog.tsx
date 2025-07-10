@@ -19,12 +19,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { usePhaseBudget } from "@/hooks/usePhaseBudget";
-import { Bot, Calculator } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -32,8 +26,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { usePhaseBudget } from "@/hooks/usePhaseBudget";
+import { Bot, Calculator } from "lucide-react";
 
-interface CreatePhaseDialogProps {
+interface EditPhaseDialogProps {
+  phase: {
+    id: string;
+    name: string;
+    description?: string;
+    start_date?: string;
+    end_date?: string;
+    budget: number;
+    material_cost?: number;
+    labour_cost?: number;
+    status: string;
+  };
   projectId: string;
   children: React.ReactNode;
 }
@@ -45,9 +56,10 @@ interface PhaseFormData {
   end_date?: string;
   material_cost: number;
   labour_cost: number;
+  status: string;
 }
 
-export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProps) {
+export function EditPhaseDialog({ phase, projectId, children }: EditPhaseDialogProps) {
   const [open, setOpen] = useState(false);
   const [showAIEstimate, setShowAIEstimate] = useState(false);
   const [estimateParams, setEstimateParams] = useState({
@@ -62,52 +74,49 @@ export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProp
 
   const form = useForm<PhaseFormData>({
     defaultValues: {
-      name: "",
-      description: "",
-      start_date: "",
-      end_date: "",
-      material_cost: 0,
-      labour_cost: 0,
+      name: phase.name,
+      description: phase.description || "",
+      start_date: phase.start_date || "",
+      end_date: phase.end_date || "",
+      material_cost: phase.material_cost || 0,
+      labour_cost: phase.labour_cost || 0,
+      status: phase.status,
     },
   });
 
-  const createPhaseMutation = useMutation({
+  const updatePhaseMutation = useMutation({
     mutationFn: async (data: PhaseFormData) => {
-      const { data: phase, error } = await supabase
+      const { data: updatedPhase, error } = await supabase
         .from('project_phases')
-        .insert({
-          project_id: projectId,
+        .update({
           name: data.name,
           description: data.description,
           start_date: data.start_date || null,
           end_date: data.end_date || null,
           material_cost: data.material_cost,
           labour_cost: data.labour_cost,
-          budget: data.material_cost + data.labour_cost,
-          status: 'planning',
-          progress: 0,
-          spent: 0,
+          status: data.status as any,
         })
+        .eq('id', phase.id)
         .select()
         .single();
 
       if (error) throw error;
-      return phase;
+      return updatedPhase;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'phases'] });
       queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
       toast({
-        title: "Phase created",
-        description: "The new phase has been added to the project.",
+        title: "Phase updated",
+        description: "The phase has been updated successfully.",
       });
       setOpen(false);
-      form.reset();
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to create phase",
+        description: error.message || "Failed to update phase",
         variant: "destructive",
       });
     },
@@ -142,17 +151,17 @@ export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProp
       });
       return;
     }
-    createPhaseMutation.mutate(data);
+    updatePhaseMutation.mutate(data);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Add New Phase</DialogTitle>
+          <DialogTitle>Edit Phase</DialogTitle>
           <DialogDescription>
-            Create a new phase for this project. You can always edit details later.
+            Update phase details, planning, and costs.
           </DialogDescription>
         </DialogHeader>
         
@@ -178,25 +187,22 @@ export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProp
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Brief description of this phase..."
-                      {...field}
-                    />
+                    <Textarea placeholder="Brief description of this phase..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="start_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Date (Optional)</FormLabel>
+                    <FormLabel>Start Date</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -210,10 +216,35 @@ export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProp
                 name="end_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End Date (Optional)</FormLabel>
+                    <FormLabel>End Date</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="planning">Planning</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="on-hold">On Hold</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -300,10 +331,7 @@ export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProp
                 <FormField
                   control={form.control}
                   name="material_cost"
-                  rules={{ 
-                    required: "Material cost is required",
-                    min: { value: 0, message: "Cost must be positive" }
-                  }}
+                  rules={{ min: { value: 0, message: "Cost must be positive" } }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Material Cost ($)</FormLabel>
@@ -323,10 +351,7 @@ export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProp
                 <FormField
                   control={form.control}
                   name="labour_cost"
-                  rules={{ 
-                    required: "Labour cost is required",
-                    min: { value: 0, message: "Cost must be positive" }
-                  }}
+                  rules={{ min: { value: 0, message: "Cost must be positive" } }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Labour Cost ($)</FormLabel>
@@ -350,18 +375,11 @@ export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProp
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
-                disabled={createPhaseMutation.isPending}
-              >
-                {createPhaseMutation.isPending ? "Creating..." : "Create Phase"}
+              <Button type="submit" disabled={updatePhaseMutation.isPending}>
+                {updatePhaseMutation.isPending ? "Updating..." : "Update Phase"}
               </Button>
             </DialogFooter>
           </form>

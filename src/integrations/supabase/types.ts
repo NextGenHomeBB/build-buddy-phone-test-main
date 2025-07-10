@@ -218,6 +218,8 @@ export type Database = {
           description: string | null
           end_date: string | null
           id: string
+          labour_cost: number | null
+          material_cost: number | null
           name: string
           progress: number
           project_id: string
@@ -232,6 +234,8 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
+          labour_cost?: number | null
+          material_cost?: number | null
           name: string
           progress?: number
           project_id: string
@@ -246,6 +250,8 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
+          labour_cost?: number | null
+          material_cost?: number | null
           name?: string
           progress?: number
           project_id?: string

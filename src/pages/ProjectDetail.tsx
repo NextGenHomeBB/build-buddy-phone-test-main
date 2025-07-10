@@ -24,7 +24,8 @@ import {
   AlertCircle,
   Pause,
   ChevronDown,
-  Sprout
+  Sprout,
+  Settings
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
@@ -33,6 +34,7 @@ import { ProjectManagerSelector } from '@/components/project/ProjectManagerSelec
 import { ProjectOverview } from '@/components/project/ProjectOverview';
 import { ProjectTeamTab } from './ProjectTeamTab';
 import { CreatePhaseDialog } from '@/components/project/CreatePhaseDialog';
+import { EditPhaseDialog } from '@/components/project/EditPhaseDialog';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +46,7 @@ export default function ProjectDetail() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: project, isLoading: projectLoading, refetch: refetchProject } = useProject(id!);
   const { data: phases, isLoading: phasesLoading } = useProjectPhases(id!);
-  const { canEditProject, canAddPhase, canViewReports } = useRoleAccess();
+  const { canEditProject, canAddPhase, canEditPhase, canViewReports } = useRoleAccess();
   const { toast } = useToast();
   const seedPhases = useProjectSeeding(id!);
 
@@ -416,7 +418,7 @@ export default function ProjectDetail() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <DollarSign className="h-3 w-3" />
-                                ${(phase.spent / 1000).toFixed(0)}k / ${(phase.budget / 1000).toFixed(0)}k
+                                ${((phase.material_cost || 0) + (phase.labour_cost || 0)).toLocaleString()} / ${phase.budget.toLocaleString()}
                               </span>
                               <span className="flex items-center gap-1">
                                 <CheckCircle className="h-3 w-3" />
@@ -429,6 +431,17 @@ export default function ProjectDetail() {
                               <div className="text-sm font-medium">{phase.progress}%</div>
                               <Progress value={phase.progress} className="w-20" />
                             </div>
+                            {canEditPhase() && (
+                              <EditPhaseDialog phase={phase} projectId={id!}>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Settings className="h-4 w-4" />
+                                </Button>
+                              </EditPhaseDialog>
+                            )}
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           </div>
                         </div>
