@@ -530,7 +530,22 @@ export default function AdminUserAccess() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Project Access</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Project Access</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={selectedProjects.length === projects.length && projects.length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedProjects(projects.map(p => p.id));
+                          } else {
+                            setSelectedProjects([]);
+                          }
+                        }}
+                      />
+                      <label className="text-sm font-medium">Select All</label>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
