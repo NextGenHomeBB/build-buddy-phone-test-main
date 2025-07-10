@@ -23,7 +23,8 @@ import {
   CheckCircle,
   AlertCircle,
   Pause,
-  ChevronDown
+  ChevronDown,
+  Sprout
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
@@ -35,6 +36,7 @@ import { CreatePhaseDialog } from '@/components/project/CreatePhaseDialog';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useProjectSeeding } from '@/hooks/useProjectSeeding';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -43,6 +45,7 @@ export default function ProjectDetail() {
   const { data: phases, isLoading: phasesLoading } = useProjectPhases(id!);
   const { canEditProject, canAddPhase, canViewReports } = useRoleAccess();
   const { toast } = useToast();
+  const seedPhases = useProjectSeeding(id!);
 
   if (projectLoading) {
     return (
@@ -333,13 +336,31 @@ export default function ProjectDetail() {
           <TabsContent value="phases" className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Project Phases</h3>
-              {canAddPhase() && (
-                <CreatePhaseDialog projectId={id!}>
-                  <Button size="sm">
-                    Add Phase
+              <div className="flex items-center gap-2">
+                {!phasesLoading && phases?.length === 0 && canAddPhase() && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => seedPhases.mutate()}
+                    disabled={seedPhases.isPending}
+                    className="gap-2"
+                  >
+                    {seedPhases.isPending ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                    ) : (
+                      <Sprout className="h-3 w-3" />
+                    )}
+                    {seedPhases.isPending ? 'Creating...' : 'Create Default Phases'}
                   </Button>
-                </CreatePhaseDialog>
-              )}
+                )}
+                {canAddPhase() && (
+                  <CreatePhaseDialog projectId={id!}>
+                    <Button size="sm">
+                      Add Phase
+                    </Button>
+                  </CreatePhaseDialog>
+                )}
+              </div>
             </div>
             
             {phasesLoading ? (
@@ -348,55 +369,83 @@ export default function ProjectDetail() {
               </div>
             ) : (
               <div className="space-y-3">
-                {phases?.map((phase) => (
-                  <Link key={phase.id} to={`/projects/${id}/phase/${phase.id}`}>
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-2">
+                {phases && phases.length > 0 ? (
+                  phases.map((phase) => (
+                    <Link key={phase.id} to={`/projects/${id}/phase/${phase.id}`}>
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-3">
+                                {(() => {
+                                  const Icon = getPhaseStatusIcon(phase.status);
+                                  return <Icon className="h-4 w-4" />;
+                                })()}
+                                <h4 className="font-semibold">{phase.name}</h4>
+                                <Badge variant="outline" className={getStatusColor(phase.status)}>
+                                  {phase.status}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {phase.description}
+                              </p>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {phase.start_date && phase.end_date ? `${format(new Date(phase.start_date), 'MMM dd')} - ${format(new Date(phase.end_date), 'MMM dd')}` : 'No dates'}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <DollarSign className="h-3 w-3" />
+                                  ${(phase.spent / 1000).toFixed(0)}k / ${(phase.budget / 1000).toFixed(0)}k
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  0 / 0 tasks
+                                </span>
+                              </div>
+                            </div>
                             <div className="flex items-center gap-3">
-                              {(() => {
-                                const Icon = getPhaseStatusIcon(phase.status);
-                                return <Icon className="h-4 w-4" />;
-                              })()}
-                              <h4 className="font-semibold">{phase.name}</h4>
-                              <Badge variant="outline" className={getStatusColor(phase.status)}>
-                                {phase.status}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {phase.description}
-                            </p>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {phase.start_date && phase.end_date ? `${format(new Date(phase.start_date), 'MMM dd')} - ${format(new Date(phase.end_date), 'MMM dd')}` : 'No dates'}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <DollarSign className="h-3 w-3" />
-                                ${(phase.spent / 1000).toFixed(0)}k / ${(phase.budget / 1000).toFixed(0)}k
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <CheckCircle className="h-3 w-3" />
-                                0 / 0 tasks
-                              </span>
+                              <div className="text-right space-y-1">
+                                <div className="text-sm font-medium">{phase.progress}%</div>
+                                <Progress value={phase.progress} className="w-20" />
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <div className="text-right space-y-1">
-                              <div className="text-sm font-medium">{phase.progress}%</div>
-                              <Progress value={phase.progress} className="w-20" />
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))
+                ) : (
+                  <Card>
+                    <CardContent className="p-8">
+                      <div className="text-center space-y-4">
+                        <div className="mx-auto w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                          <Sprout className="h-6 w-6 text-muted-foreground" />
                         </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                )) || (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No phases found for this project.
-                  </div>
+                        <div>
+                          <h4 className="text-lg font-medium">No phases found</h4>
+                          <p className="text-sm text-muted-foreground">
+                            This project doesn't have any phases yet. Create the default construction phases to get started.
+                          </p>
+                        </div>
+                        {canAddPhase() && (
+                          <Button 
+                            onClick={() => seedPhases.mutate()}
+                            disabled={seedPhases.isPending}
+                            className="gap-2"
+                          >
+                            {seedPhases.isPending ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
+                            ) : (
+                              <Sprout className="h-4 w-4" />
+                            )}
+                            {seedPhases.isPending ? 'Creating phases...' : 'Create Default Phases'}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
             )}
