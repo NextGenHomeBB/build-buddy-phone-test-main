@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ const statusConfig = {
 
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
   const [isPressed, setIsPressed] = useState(false);
+  const navigate = useNavigate();
   const status = statusConfig[project.status];
 
   const handleTouchStart = () => setIsPressed(true);
@@ -110,7 +112,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
           className="w-full mt-4 hover:bg-primary hover:text-primary-foreground transition-colors"
           onClick={(e) => {
             e.stopPropagation();
-            onClick?.();
+            navigate(`/projects/${project.id}`);
           }}
         >
           View Details
