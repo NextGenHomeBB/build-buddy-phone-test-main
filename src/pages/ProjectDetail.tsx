@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -21,7 +22,8 @@ import {
   ChevronRight,
   CheckCircle,
   AlertCircle,
-  Pause
+  Pause,
+  ChevronDown
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
@@ -31,13 +33,16 @@ import { ProjectOverview } from '@/components/project/ProjectOverview';
 import { ProjectTeamTab } from './ProjectTeamTab';
 import { CreatePhaseDialog } from '@/components/project/CreatePhaseDialog';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: project, isLoading: projectLoading } = useProject(id!);
+  const { data: project, isLoading: projectLoading, refetch: refetchProject } = useProject(id!);
   const { data: phases, isLoading: phasesLoading } = useProjectPhases(id!);
   const { canEditProject, canAddPhase, canViewReports } = useRoleAccess();
+  const { toast } = useToast();
 
   if (projectLoading) {
     return (
@@ -74,6 +79,70 @@ export default function ProjectDetail() {
     }
   };
 
+  const updateProjectStatus = async (newStatus: 'planning' | 'active' | 'on-hold' | 'completed' | 'cancelled') => {
+    if (!canEditProject()) {
+      toast({
+        title: "Permission denied",
+        description: "You don't have permission to update project status.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await refetchProject();
+      toast({
+        title: "Status updated",
+        description: `Project status changed to ${newStatus}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update project status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateProjectType = async (newType: 'residential' | 'commercial' | 'infrastructure' | 'renovation') => {
+    if (!canEditProject()) {
+      toast({
+        title: "Permission denied",
+        description: "You don't have permission to update project type.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ type: newType })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await refetchProject();
+      toast({
+        title: "Type updated",
+        description: `Project type changed to ${newType}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update project type",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   return (
     <AppLayout>
@@ -96,9 +165,65 @@ export default function ProjectDetail() {
                 <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
                   {project.name}
                 </h1>
-                <Badge className={getStatusColor(project.status)}>
-                  {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
-                </Badge>
+                {canEditProject() ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className={`${getStatusColor(project.status)} cursor-pointer`}>
+                        {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                        <ChevronDown className="h-3 w-3 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => updateProjectStatus('planning')}>
+                        Planning
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateProjectStatus('active')}>
+                        Active
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateProjectStatus('on-hold')}>
+                        On Hold
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateProjectStatus('completed')}>
+                        Completed
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateProjectStatus('cancelled')}>
+                        Cancelled
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Badge className={getStatusColor(project.status)}>
+                    {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                  </Badge>
+                )}
+                {canEditProject() ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        {project.type.charAt(0).toUpperCase() + project.type.slice(1)}
+                        <ChevronDown className="h-3 w-3 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => updateProjectType('residential')}>
+                        Residential
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateProjectType('commercial')}>
+                        Commercial
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateProjectType('infrastructure')}>
+                        Infrastructure
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateProjectType('renovation')}>
+                        Renovation
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Badge variant="outline">
+                    {project.type.charAt(0).toUpperCase() + project.type.slice(1)}
+                  </Badge>
+                )}
               </div>
               <p className="text-muted-foreground">
                 {project.description}
