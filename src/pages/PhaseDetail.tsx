@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { BudgetBadge } from '@/components/BudgetBadge';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -23,6 +24,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
+import { usePhaseCosts } from '@/services/phaseCosts.service';
 
 interface ChecklistItem {
   id: string;
@@ -39,6 +41,7 @@ interface ChecklistItem {
 export default function PhaseDetail() {
   const { id: projectId, phaseId } = useParams<{ id: string; phaseId: string }>();
   const { data: phase, isLoading } = usePhase(phaseId!);
+  const { data: phaseCosts } = usePhaseCosts(phaseId!);
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const updateChecklistItem = useUpdateChecklistItem();
@@ -263,7 +266,10 @@ export default function PhaseDetail() {
               </p>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              {phaseCosts && (
+                <BudgetBadge amount={phaseCosts.remainingBudget} />
+              )}
               <Button variant="outline" size="sm">
                 Edit Phase
               </Button>
