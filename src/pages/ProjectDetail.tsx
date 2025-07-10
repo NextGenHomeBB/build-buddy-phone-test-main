@@ -36,6 +36,7 @@ import { ProjectTeamTab } from './ProjectTeamTab';
 import { CreatePhaseDialog } from '@/components/project/CreatePhaseDialog';
 import { EditPhaseDialog } from '@/components/project/EditPhaseDialog';
 import { PhaseCalendar } from '@/components/PhaseCalendar';
+import { ProjectMaterials } from '@/components/project/ProjectMaterials';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -495,19 +496,7 @@ export default function ProjectDetail() {
 
           {/* Other tabs with placeholder content */}
           <TabsContent value="materials">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Materials & Supplies
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Materials management coming soon...
-                </div>
-              </CardContent>
-            </Card>
+            <ProjectMaterials projectId={id!} />
           </TabsContent>
 
           <TabsContent value="labour">
