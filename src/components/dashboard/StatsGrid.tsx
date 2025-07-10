@@ -1,36 +1,59 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const stats = [
-  {
-    title: "Active Projects",
-    value: "12",
-    change: "+2 from last month",
-    variant: "primary" as const,
-  },
-  {
-    title: "Completed Phases",
-    value: "47",
-    change: "+5 this week",
-    variant: "success" as const,
-  },
-  {
-    title: "Pending Tasks",
-    value: "23",
-    change: "3 urgent",
-    variant: "warning" as const,
-  },
-  {
-    title: "Total Workers",
-    value: "156",
-    change: "+8 new hires",
-    variant: "secondary" as const,
-  },
-];
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 export function StatsGrid() {
+  const { data: stats, isLoading } = useDashboardStats();
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="pb-3">
+              <div className="h-4 bg-muted rounded w-24"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-muted rounded w-16 mb-2"></div>
+              <div className="h-3 bg-muted rounded w-20"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!stats) return null;
+
+  const statItems = [
+    {
+      title: "Active Projects",
+      value: stats.activeProjects.toString(),
+      change: stats.monthlyChange.projects,
+      variant: "primary" as const,
+    },
+    {
+      title: "Completed Phases",
+      value: stats.completedPhases.toString(),
+      change: stats.monthlyChange.phases,
+      variant: "success" as const,
+    },
+    {
+      title: "Pending Tasks",
+      value: stats.pendingTasks.toString(),
+      change: stats.monthlyChange.tasks,
+      variant: "warning" as const,
+    },
+    {
+      title: "Total Workers",
+      value: stats.totalWorkers.toString(),
+      change: stats.monthlyChange.workers,
+      variant: "secondary" as const,
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-      {stats.map((stat) => (
+      {statItems.map((stat) => (
         <Card key={stat.title} className="relative overflow-hidden">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
