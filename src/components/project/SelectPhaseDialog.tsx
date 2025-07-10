@@ -40,8 +40,17 @@ export function SelectPhaseDialog({ projectId, children }: SelectPhaseDialogProp
 
   const addPhasesMutation = useMutation({
     mutationFn: async (phaseIndices: number[]) => {
-      const phasesToAdd = phaseIndices.map(index => {
+      const today = new Date();
+      const phasesToAdd = phaseIndices.map((index, sequenceIndex) => {
         const phase = defaultPhases[index];
+        
+        // Set sequential default dates: each phase starts 2 weeks after the previous one
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() + (sequenceIndex * 14)); // 2 weeks apart
+        
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 13); // 2 weeks duration by default
+        
         return {
           project_id: projectId,
           name: phase.name,
@@ -52,6 +61,8 @@ export function SelectPhaseDialog({ projectId, children }: SelectPhaseDialogProp
           spent: 0,
           material_cost: 0,
           labour_cost: 0,
+          start_date: startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+          end_date: endDate.toISOString().split('T')[0],
         };
       });
 
