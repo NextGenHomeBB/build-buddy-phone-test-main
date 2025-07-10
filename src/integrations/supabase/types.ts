@@ -601,6 +601,10 @@ export type Database = {
         Args: { phase_id_param: string }
         Returns: undefined
       }
+      update_project_progress: {
+        Args: { project_id_param: string }
+        Returns: undefined
+      }
       update_user_role: {
         Args: {
           target_user_id: string
