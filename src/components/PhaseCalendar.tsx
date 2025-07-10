@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { CreatePhaseDialog } from '@/components/project/CreatePhaseDialog';
+import { SelectPhaseDialog } from '@/components/project/SelectPhaseDialog';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 interface PhaseCalendarProps {
@@ -98,12 +98,12 @@ export function PhaseCalendar({ projectId }: PhaseCalendarProps) {
             Phase Planning
           </CardTitle>
           {canAddPhase() && (
-            <CreatePhaseDialog projectId={projectId}>
+            <SelectPhaseDialog projectId={projectId}>
               <Button size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />
                 Choose Phase
               </Button>
-            </CreatePhaseDialog>
+            </SelectPhaseDialog>
           )}
         </div>
       </CardHeader>
