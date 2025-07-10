@@ -604,7 +604,33 @@ export default function AdminUserAccess() {
                           {/* Phase Access */}
                           {isExpanded && project.phases && project.phases.length > 0 && (
                             <div className="mt-4 ml-6 space-y-2">
-                              <h4 className="text-sm font-medium text-muted-foreground">Phases</h4>
+                              <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-medium text-muted-foreground">Phases</h4>
+                                <div className="flex items-center space-x-4">
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                      checked={project.phases.every(phase => hasPhaseRole(phase.id, 'manager'))}
+                                      onCheckedChange={(checked) => {
+                                        project.phases.forEach(phase => {
+                                          handlePhaseRoleChange(phase.id, 'manager', !!checked);
+                                        });
+                                      }}
+                                    />
+                                    <label className="text-xs">All Manager</label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                      checked={project.phases.every(phase => hasPhaseRole(phase.id, 'worker'))}
+                                      onCheckedChange={(checked) => {
+                                        project.phases.forEach(phase => {
+                                          handlePhaseRoleChange(phase.id, 'worker', !!checked);
+                                        });
+                                      }}
+                                    />
+                                    <label className="text-xs">All Worker</label>
+                                  </div>
+                                </div>
+                              </div>
                               {project.phases.map((phase) => (
                                 <div key={phase.id} className="flex items-center justify-between py-2 px-3 bg-muted rounded">
                                   <span className="text-sm">{phase.name}</span>
