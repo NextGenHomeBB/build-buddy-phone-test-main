@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useProject, useProjectPhases } from '@/hooks/useProjects';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,11 +41,28 @@ import { useProjectSeeding } from '@/hooks/useProjectSeeding';
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: project, isLoading: projectLoading, refetch: refetchProject } = useProject(id!);
   const { data: phases, isLoading: phasesLoading } = useProjectPhases(id!);
   const { canEditProject, canAddPhase, canViewReports } = useRoleAccess();
   const { toast } = useToast();
   const seedPhases = useProjectSeeding(id!);
+
+  // Get current tab from URL or default to overview
+  const currentTab = searchParams.get('tab') || 'overview';
+  const validTabs = ['overview', 'phases', 'materials', 'labour', 'team', 'docs', 'activity'];
+  const activeTab = validTabs.includes(currentTab) ? currentTab : 'overview';
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (value === 'overview') {
+      newSearchParams.delete('tab');
+    } else {
+      newSearchParams.set('tab', value);
+    }
+    setSearchParams(newSearchParams);
+  };
 
   if (projectLoading) {
     return (
@@ -318,7 +335,7 @@ export default function ProjectDetail() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="grid w-full grid-cols-7 sm:grid-cols-7">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="phases" className="text-xs sm:text-sm">Phases</TabsTrigger>
