@@ -102,7 +102,7 @@ export function usePhase(phaseId: string) {
 }
 
 /**
- * Hook to update checklist item
+ * Hook to update checklist item with optimistic updates
  */
 export function useUpdateChecklistItem() {
   const queryClient = useQueryClient();
@@ -127,8 +127,41 @@ export function useUpdateChecklistItem() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, { phaseId }) => {
-      // Invalidate phase query to refresh data
+    onMutate: async ({ phaseId, itemId, completed, completedBy }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['phases', phaseId] });
+
+      // Snapshot the previous value
+      const previousPhase = queryClient.getQueryData(['phases', phaseId]);
+
+      // Optimistically update the cache
+      queryClient.setQueryData(['phases', phaseId], (old: any) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          checklist: old.checklist.map((item: any) => 
+            item.id === itemId 
+              ? { 
+                  ...item, 
+                  completed,
+                  completedBy: completed ? completedBy : undefined,
+                  completedAt: completed ? new Date().toISOString() : undefined,
+                }
+              : item
+          ),
+        };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousPhase };
+    },
+    onError: (err, { phaseId }, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(['phases', phaseId], context?.previousPhase);
+    },
+    onSettled: (_, __, { phaseId }) => {
+      // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['phases', phaseId] });
     },
   });
