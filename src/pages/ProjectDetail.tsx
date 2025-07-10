@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useProject, useProjectPhases } from '@/hooks/useProjects';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +33,7 @@ import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-he
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: project, isLoading: projectLoading } = useProject(id!);
   const { data: phases, isLoading: phasesLoading } = useProjectPhases(id!);
   const { canEditProject, canAddPhase, canViewReports } = useRoleAccess();
@@ -112,8 +113,10 @@ export default function ProjectDetail() {
                 </EditProjectDialog>
               )}
               {canViewReports() && (
-                <Button size="sm">
-                  View Reports
+                <Button size="sm" asChild>
+                  <Link to={`/projects/${id}/reports`}>
+                    View Reports
+                  </Link>
                 </Button>
               )}
             </div>
@@ -205,7 +208,18 @@ export default function ProjectDetail() {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Project Phases</h3>
               {canAddPhase() && (
-                <Button size="sm">Add Phase</Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    // For now, navigate to a create phase page or open a dialog
+                    // This could be expanded to show a CreatePhaseDialog
+                    console.log('Add phase clicked for project:', id);
+                    // Placeholder: navigate to create phase page
+                    navigate(`/projects/${id}/phases/create`);
+                  }}
+                >
+                  Add Phase
+                </Button>
               )}
             </div>
             
