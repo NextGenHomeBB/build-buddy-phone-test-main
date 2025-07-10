@@ -29,6 +29,7 @@ import { EditProjectDialog } from '@/components/project/EditProjectDialog';
 import { ProjectManagerSelector } from '@/components/project/ProjectManagerSelector';
 import { ProjectOverview } from '@/components/project/ProjectOverview';
 import { ProjectTeamTab } from './ProjectTeamTab';
+import { CreatePhaseDialog } from '@/components/project/CreatePhaseDialog';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 
 export default function ProjectDetail() {
@@ -208,18 +209,11 @@ export default function ProjectDetail() {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Project Phases</h3>
               {canAddPhase() && (
-                <Button 
-                  size="sm" 
-                  onClick={() => {
-                    // For now, navigate to a create phase page or open a dialog
-                    // This could be expanded to show a CreatePhaseDialog
-                    console.log('Add phase clicked for project:', id);
-                    // Placeholder: navigate to create phase page
-                    navigate(`/projects/${id}/phases/create`);
-                  }}
-                >
-                  Add Phase
-                </Button>
+                <CreatePhaseDialog projectId={id!}>
+                  <Button size="sm">
+                    Add Phase
+                  </Button>
+                </CreatePhaseDialog>
               )}
             </div>
             
