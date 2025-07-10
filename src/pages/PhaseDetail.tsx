@@ -267,8 +267,10 @@ export default function PhaseDetail() {
               <Button variant="outline" size="sm">
                 Edit Phase
               </Button>
-              <Button size="sm">
-                View Timeline
+              <Button size="sm" asChild>
+                <Link to={`/projects/${projectId}?tab=calendar`}>
+                  View Timeline
+                </Link>
               </Button>
             </div>
           </div>
