@@ -73,6 +73,7 @@ export const projectService = {
         )
       `)
       .eq('id', id)
+      .order('created_at', { ascending: true, referencedTable: 'project_phases' })
       .single();
     
     if (error) throw error;
