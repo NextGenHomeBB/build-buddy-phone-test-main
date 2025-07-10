@@ -1,36 +1,43 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, FolderOpen, CheckSquare, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-const tabItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-    badge: null,
-  },
-  {
-    title: "Projects",
-    url: "/projects", 
-    icon: FolderOpen,
-    badge: "12",
-  },
-  {
-    title: "Tasks",
-    url: "/my-tasks",
-    icon: CheckSquare,
-    badge: "3",
-  },
-  {
-    title: "Reports",
-    url: "/reports",
-    icon: BarChart3,
-    badge: null,
-  },
-];
+import { useProjects } from "@/hooks/useProjects";
+import { useTasks } from "@/hooks/useTasks";
 
 export function MobileTabBar() {
   const location = useLocation();
+  const { data: projects } = useProjects();
+  const { data: tasks } = useTasks();
+  
+  const projectCount = projects?.length || 0;
+  const taskCount = tasks?.filter(task => task.status !== 'completed').length || 0;
+
+  const tabItems = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: Home,
+      badge: null,
+    },
+    {
+      title: "Projects",
+      url: "/projects", 
+      icon: FolderOpen,
+      badge: projectCount > 0 ? projectCount.toString() : null,
+    },
+    {
+      title: "Tasks",
+      url: "/my-tasks",
+      icon: CheckSquare,
+      badge: taskCount > 0 ? taskCount.toString() : null,
+    },
+    {
+      title: "Reports",
+      url: "/reports",
+      icon: BarChart3,
+      badge: null,
+    },
+  ];
 
   const isActive = (path: string) => location.pathname === path;
 
