@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ProjectCostOverview } from '@/components/ProjectCostOverview';
+import { ExportCostsButton } from '@/components/ExportCostsButton';
 import { 
   Calendar, 
   BarChart3,
@@ -173,6 +174,13 @@ export function ProjectOverview({ project, phases }: ProjectOverviewProps) {
               </div>
               <div className="text-xs text-muted-foreground">Remaining</div>
             </div>
+          </div>
+          
+          <div className="mt-4">
+            <ExportCostsButton 
+              projectId={project.id} 
+              projectName={project.name} 
+            />
           </div>
         </CardContent>
       </Card>
