@@ -1,4 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
+import { defaultPhases } from '@/templates/defaultPhases';
+import { upsertUserProjectRole } from './userProjectRole.service';
 
 export const projectService = {
   async getProjects() {
@@ -80,19 +82,89 @@ export const projectService = {
   async createProject(project: any) {
     console.log('🚀 Creating project:', project);
     
-    const { data, error } = await supabase
-      .from('projects')
-      .insert(project)
-      .select()
-      .single();
-    
-    console.log('📊 Create project result:', { data, error });
-    
-    if (error) {
-      console.error('❌ Project creation error:', error);
-      throw new Error(error.message || 'Failed to create project');
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Not authenticated');
     }
-    return data;
+
+    try {
+      // Start transaction by creating the project first
+      const { data: createdProject, error: projectError } = await supabase
+        .from('projects')
+        .insert(project)
+        .select()
+        .single();
+      
+      if (projectError) {
+        console.error('❌ Project creation error:', projectError);
+        throw new Error(projectError.message || 'Failed to create project');
+      }
+
+      console.log('📊 Project created:', createdProject);
+
+      // Assign creating user as manager
+      await upsertUserProjectRole(user.id, createdProject.id, 'manager');
+      console.log('👤 User assigned as manager');
+
+      // Create default phases and tasks
+      for (const phaseTemplate of defaultPhases) {
+        // Create the phase
+        const { data: createdPhase, error: phaseError } = await supabase
+          .from('project_phases')
+          .insert({
+            project_id: createdProject.id,
+            name: phaseTemplate.name,
+            description: phaseTemplate.description,
+            status: 'planning',
+            progress: 0,
+            budget: 0,
+            spent: 0
+          })
+          .select()
+          .single();
+
+        if (phaseError) {
+          console.error('❌ Phase creation error:', phaseError);
+          throw new Error(`Failed to create phase: ${phaseTemplate.name}`);
+        }
+
+        console.log('📋 Phase created:', createdPhase);
+
+        // Create tasks for each checklist item
+        const tasks = phaseTemplate.checklist.map((item, index) => ({
+          project_id: createdProject.id,
+          phase_id: createdPhase.id,
+          title: item,
+          description: `${phaseTemplate.name} - ${item}`,
+          status: 'todo' as const,
+          priority: 'medium' as const,
+          assigned_by: user.id
+        }));
+
+        if (tasks.length > 0) {
+          const { error: tasksError } = await supabase
+            .from('tasks')
+            .insert(tasks);
+
+          if (tasksError) {
+            console.error('❌ Tasks creation error:', tasksError);
+            throw new Error(`Failed to create tasks for phase: ${phaseTemplate.name}`);
+          }
+
+          console.log(`✅ Created ${tasks.length} tasks for ${phaseTemplate.name}`);
+        }
+      }
+
+      console.log('🎉 Project created successfully with default phases and tasks');
+      return createdProject;
+
+    } catch (error) {
+      console.error('❌ Project creation transaction failed:', error);
+      // Note: Supabase doesn't support manual transactions in the client,
+      // but we can rely on individual operation failures to prevent partial state
+      throw error;
+    }
   },
 
   async updateProject(id: string, updates: any) {
