@@ -55,6 +55,94 @@ export type Database = {
           },
         ]
       }
+      labour_costs: {
+        Row: {
+          created_at: string
+          hours: number
+          id: string
+          phase_id: string
+          rate: number
+          subcontractor_id: string | null
+          task: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hours?: number
+          id?: string
+          phase_id: string
+          rate?: number
+          subcontractor_id?: string | null
+          task: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hours?: number
+          id?: string
+          phase_id?: string
+          rate?: number
+          subcontractor_id?: string | null
+          task?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_costs_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_costs: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          phase_id: string
+          qty: number
+          total: number
+          unit: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          phase_id: string
+          qty?: number
+          total?: number
+          unit: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          phase_id?: string
+          qty?: number
+          total?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_costs_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           created_at: string
@@ -281,6 +369,7 @@ export type Database = {
           manager_id: string | null
           name: string
           progress: number
+          remaining_budget: number
           spent: number
           start_date: string
           status: Database["public"]["Enums"]["project_status"]
@@ -297,6 +386,7 @@ export type Database = {
           manager_id?: string | null
           name: string
           progress?: number
+          remaining_budget?: number
           spent?: number
           start_date: string
           status?: Database["public"]["Enums"]["project_status"]
@@ -313,6 +403,7 @@ export type Database = {
           manager_id?: string | null
           name?: string
           progress?: number
+          remaining_budget?: number
           spent?: number
           start_date?: string
           status?: Database["public"]["Enums"]["project_status"]

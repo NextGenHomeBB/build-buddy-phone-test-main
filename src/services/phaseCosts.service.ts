@@ -9,6 +9,8 @@ interface MaterialCost {
   unit: string;
   unit_price: number;
   total: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface LabourCost {
@@ -19,6 +21,8 @@ interface LabourCost {
   hours: number;
   rate: number;
   total: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface PhaseCosts {
@@ -148,10 +152,10 @@ export const insertMaterialCost = async (dto: MaterialCostDto): Promise<Material
       .single();
 
     if (phaseData) {
-      await supabase
-        .from('projects')
-        .update({ remaining_budget: supabase.sql`remaining_budget - ${total}` })
-        .eq('id', phaseData.project_id);
+      await supabase.rpc('update_remaining_budget', {
+        project_id: phaseData.project_id,
+        amount_delta: -total
+      });
     }
 
     return data;
@@ -186,10 +190,10 @@ export const insertLabourCost = async (dto: LabourCostDto): Promise<LabourCost> 
       .single();
 
     if (phaseData) {
-      await supabase
-        .from('projects')
-        .update({ remaining_budget: supabase.sql`remaining_budget - ${total}` })
-        .eq('id', phaseData.project_id);
+      await supabase.rpc('update_remaining_budget', {
+        project_id: phaseData.project_id,
+        amount_delta: -total
+      });
     }
 
     return data;
@@ -202,20 +206,17 @@ export const insertLabourCost = async (dto: LabourCostDto): Promise<LabourCost> 
 // AI cost estimation
 export const estimatePhaseCosts = async (phaseId: string): Promise<CostEstimate> => {
   try {
-    const response = await fetch('/api/ai/costs/estimate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phase_id: phaseId }),
+    const { data, error } = await supabase.functions.invoke('ai-cost-estimate', {
+      body: { phase_id: phaseId }
     });
 
-    if (!response.ok) {
+    if (error) {
       throw { code: 'NETWORK', message: 'AI estimation service unavailable' };
     }
 
-    const data = await response.json();
     return {
-      materials: data.materials || 0,
-      labour: data.labour || 0
+      materials: data?.materials || 0,
+      labour: data?.labour || 0
     };
   } catch (error: any) {
     if (error.code) throw error;
