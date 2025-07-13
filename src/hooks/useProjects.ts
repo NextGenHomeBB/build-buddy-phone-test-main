@@ -251,14 +251,22 @@ export function useCreateTask() {
       return data;
     },
     onSuccess: (data) => {
+      console.log('Task creation success, invalidating queries for:', data);
+      
       // Invalidate phase queries to refresh checklist
       if (data.phase_id) {
         queryClient.invalidateQueries({ queryKey: ['phases', data.phase_id] });
+        queryClient.refetchQueries({ queryKey: ['phases', data.phase_id] });
       }
       
       // Invalidate project queries
       queryClient.invalidateQueries({ queryKey: ['projects', data.project_id] });
       queryClient.invalidateQueries({ queryKey: ['projects', data.project_id, 'phases'] });
+      
+      // Force immediate refetch of the phase data
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['phases', data.phase_id] });
+      }, 100);
     },
   });
 }

@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useSwipeable } from 'react-swipeable';
 import { usePhase, useUpdateChecklistItem } from '@/hooks/useProjects';
 import { AddTaskDialog } from '@/components/project/AddTaskDialog';
+import { QuickAddTask } from '@/components/project/QuickAddTask';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -397,9 +398,13 @@ export default function PhaseDetail() {
                 <ChecklistItemComponent key={item.id} item={item} />
               ))}
               
+              {/* Quick Add Input */}
+              <QuickAddTask projectId={projectId!} phaseId={phase.id} />
+              
               {phase.checklist.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  No checklist items found for this phase.
+                  <p>No checklist items found for this phase.</p>
+                  <p className="text-xs mt-2">Use the "Add Task" button above or quick add below to get started.</p>
                 </div>
               )}
             </div>

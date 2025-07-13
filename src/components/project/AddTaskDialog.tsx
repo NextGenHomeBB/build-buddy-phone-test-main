@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useCreateTask } from '@/hooks/useProjects';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, CheckCircle } from 'lucide-react';
 
 interface AddTaskDialogProps {
   projectId: string;
@@ -22,6 +22,7 @@ export function AddTaskDialog({ projectId, phaseId, children }: AddTaskDialogPro
     description: '',
     priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
     estimatedHours: '',
+    category: '',
   });
 
   const { mutate: createTask, isPending } = useCreateTask();
@@ -39,6 +40,15 @@ export function AddTaskDialog({ projectId, phaseId, children }: AddTaskDialogPro
       return;
     }
 
+    console.log('Creating task with data:', {
+      title: formData.title,
+      description: formData.description || undefined,
+      priority: formData.priority,
+      estimated_hours: formData.estimatedHours ? Number(formData.estimatedHours) : undefined,
+      project_id: projectId,
+      phase_id: phaseId,
+    });
+
     createTask({
       title: formData.title,
       description: formData.description || undefined,
@@ -47,10 +57,12 @@ export function AddTaskDialog({ projectId, phaseId, children }: AddTaskDialogPro
       project_id: projectId,
       phase_id: phaseId,
     }, {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.log('Task created successfully:', data);
         toast({
           title: 'Success',
-          description: 'Task added successfully',
+          description: 'Checklist item added successfully',
+          action: <CheckCircle className="h-4 w-4" />,
         });
         setOpen(false);
         setFormData({
@@ -58,15 +70,16 @@ export function AddTaskDialog({ projectId, phaseId, children }: AddTaskDialogPro
           description: '',
           priority: 'medium',
           estimatedHours: '',
+          category: '',
         });
       },
       onError: (error) => {
+        console.error('Error creating task:', error);
         toast({
           title: 'Error',
-          description: 'Failed to add task. Please try again.',
+          description: error.message || 'Failed to add checklist item. Please try again.',
           variant: 'destructive',
         });
-        console.error('Error creating task:', error);
       },
     });
   };
@@ -83,16 +96,28 @@ export function AddTaskDialog({ projectId, phaseId, children }: AddTaskDialogPro
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Task</DialogTitle>
+          <DialogTitle>Add New Checklist Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">Task Title *</Label>
+            <Label htmlFor="title">Checklist Item Title *</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter task title"
+              placeholder="Enter checklist item title"
+              disabled={isPending}
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="category">Category</Label>
+            <Input
+              id="category"
+              value={formData.category}
+              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+              placeholder="e.g. Foundation, Electrical, Plumbing"
               disabled={isPending}
             />
           </div>
@@ -103,9 +128,9 @@ export function AddTaskDialog({ projectId, phaseId, children }: AddTaskDialogPro
               id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter task description (optional)"
+              placeholder="Enter checklist item description (optional)"
               disabled={isPending}
-              rows={3}
+              rows={2}
             />
           </div>
 
@@ -153,9 +178,9 @@ export function AddTaskDialog({ projectId, phaseId, children }: AddTaskDialogPro
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || !formData.title.trim()}>
               {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Add Task
+              Add to Checklist
             </Button>
           </div>
         </form>
