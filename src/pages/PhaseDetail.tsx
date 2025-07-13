@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useSwipeable } from 'react-swipeable';
 import { usePhase, useUpdateChecklistItem } from '@/hooks/useProjects';
+import { AddTaskDialog } from '@/components/project/AddTaskDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -388,7 +389,7 @@ export default function PhaseDetail() {
                   Swipe left on any task to mark it complete
                 </p>
               </div>
-              <Button size="sm">Add Task</Button>
+              <AddTaskDialog projectId={projectId!} phaseId={phase.id} />
             </div>
 
             <div className="space-y-3">

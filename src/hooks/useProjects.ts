@@ -214,6 +214,56 @@ export function useUpdateProject() {
 }
 
 /**
+ * Hook to create a new task
+ */
+export function useCreateTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskData: {
+      title: string;
+      description?: string;
+      priority: 'low' | 'medium' | 'high' | 'urgent';
+      estimated_hours?: number;
+      project_id: string;
+      phase_id?: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({
+          ...taskData,
+          status: 'todo',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update phase progress after task creation
+      if (taskData.phase_id) {
+        const { error: progressError } = await supabase.rpc('update_phase_progress', {
+          phase_id_param: taskData.phase_id
+        });
+        
+        if (progressError) throw progressError;
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      // Invalidate phase queries to refresh checklist
+      if (data.phase_id) {
+        queryClient.invalidateQueries({ queryKey: ['phases', data.phase_id] });
+      }
+      
+      // Invalidate project queries
+      queryClient.invalidateQueries({ queryKey: ['projects', data.project_id] });
+      queryClient.invalidateQueries({ queryKey: ['projects', data.project_id, 'phases'] });
+    },
+  });
+}
+
+/**
  * Hook to delete a project
  */
 export function useDeleteProject() {
