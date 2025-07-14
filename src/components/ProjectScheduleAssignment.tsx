@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, Clock, Users, CheckCircle, AlertCircle } from 'lucide-react';
@@ -12,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { ScheduleItem } from '@/hooks/schedule';
 
 interface ProjectScheduleAssignmentProps {
-  scheduleItem: ScheduleItem;
+  scheduleItem: ScheduleItem | null;
   workerIds: string[];
   workerNames: string[];
   open: boolean;
@@ -50,6 +51,11 @@ export function ProjectScheduleAssignment({
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Don't render anything if scheduleItem is null
+  if (!scheduleItem) {
+    return null;
+  }
 
   const fetchProjectDetails = async () => {
     if (!scheduleItem.project_id) return;
