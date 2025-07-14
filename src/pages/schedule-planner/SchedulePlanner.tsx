@@ -99,7 +99,7 @@ function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, 
       >
         <Badge
           variant={worker.is_assistant ? "outline" : isFromSchedule ? "default" : "secondary"}
-          className="w-full p-3 cursor-grab hover:cursor-grabbing transition-all duration-300 hover-scale bg-gradient-to-r from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 border-2 hover:border-blue-300 shadow-md hover:shadow-lg"
+          className="w-full p-3 cursor-grab hover:cursor-grabbing transition-all duration-300 bg-gradient-to-r from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 border-2 hover:border-blue-300 shadow-md hover:shadow-lg"
         >
           <span className="flex items-center gap-2">
             <span className="text-lg">👤</span>
@@ -114,7 +114,7 @@ function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, 
       {onClick && (
         <button
           onClick={handleTaskClick}
-          className="opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 hover:bg-gradient-to-r hover:from-purple-100 hover:to-blue-100 rounded-full shrink-0 hover-scale border-2 border-transparent hover:border-purple-300 shadow-sm hover:shadow-md"
+          className="opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 hover:bg-gradient-to-r hover:from-purple-100 hover:to-blue-100 rounded-full shrink-0 border-2 border-transparent hover:border-purple-300 shadow-sm hover:shadow-md"
           title="✨ Click to assign magical tasks!"
         >
           <Settings className="h-4 w-4 text-purple-600" />
@@ -143,9 +143,9 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign }: {
 
   return (
     <div ref={setNodeRef}>
-      <Card className={`h-fit transition-all duration-300 hover-scale ${
+      <Card className={`h-fit transition-all duration-300 ${
         isOver 
-          ? 'ring-4 ring-purple-400 bg-gradient-to-br from-purple-100 to-blue-100 shadow-2xl transform scale-105' 
+          ? 'ring-4 ring-purple-400 bg-gradient-to-br from-purple-100 to-blue-100 shadow-2xl' 
           : 'hover:shadow-xl bg-gradient-to-br from-white to-gray-50 border-2 hover:border-purple-200'
       }`}>
       <CardHeader className="pb-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg">
@@ -163,7 +163,7 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign }: {
                     onWorkerClick(item);
                   }
                 }}
-                className="h-7 w-7 p-0 hover-scale transition-all duration-300 hover:bg-purple-100 rounded-full"
+                className="h-7 w-7 p-0 transition-all duration-300 hover:bg-purple-100 rounded-full"
                 title="✨ Assign magical tasks to workers!"
               >
                 <ExternalLink className="h-4 w-4 text-purple-600" />
@@ -175,7 +175,7 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign }: {
             {item.start_time} - {item.end_time}
           </div>
           {item.project_id && (
-            <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full inline-flex items-center gap-1 animate-pulse">
+            <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full inline-flex items-center gap-1">
               <span>🏗️</span>
               Project linked - Tap workers for task magic!
             </div>
@@ -187,29 +187,24 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign }: {
           items={item.workers.map((w: any) => w.user_id)}
           strategy={verticalListSortingStrategy}
         >
-          {item.workers.map((worker: any, index: number) => (
-            <div 
+          {item.workers.map((worker: any) => (
+            <DraggableWorkerBadge
               key={`${item.id}-${worker.user_id}`}
-              className="animate-scale-in"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <DraggableWorkerBadge
-                worker={worker}
-                isFromSchedule={true}
-                scheduleItemId={item.id}
-                onClick={() => {
-                  if (item.project_id) {
-                    onWorkerTaskAssign(worker, item.project_id);
-                  }
-                }}
-              />
-            </div>
+              worker={worker}
+              isFromSchedule={true}
+              scheduleItemId={item.id}
+              onClick={() => {
+                if (item.project_id) {
+                  onWorkerTaskAssign(worker, item.project_id);
+                }
+              }}
+            />
           ))}
         </SortableContext>
         
         {item.workers.length === 0 && (
-          <div className="text-sm text-center py-8 border-3 border-dashed border-purple-300 rounded-xl transition-all duration-300 hover:border-purple-400 bg-gradient-to-br from-purple-50 to-blue-50 animate-pulse">
-            <Users className="h-12 w-12 mx-auto mb-3 opacity-60 animate-bounce text-purple-400" />
+          <div className="text-sm text-center py-8 border-3 border-dashed border-purple-300 rounded-xl transition-all duration-300 hover:border-purple-400 bg-gradient-to-br from-purple-50 to-blue-50">
+            <Users className="h-12 w-12 mx-auto mb-3 opacity-60 text-purple-400" />
             <div className="space-y-1">
               <p className="font-medium text-purple-600">🎯 Drop Zone Active!</p>
               <p className="text-xs text-purple-500">Drag workers here to assign them</p>
@@ -424,38 +419,38 @@ export default function SchedulePlanner() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-        <div className="container mx-auto p-4 space-y-6 animate-fade-in">
+        <div className="container mx-auto p-4 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between animate-scale-in">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 hover-scale transition-all duration-300 hover:bg-primary/10"
+              className="flex items-center gap-2 transition-all duration-300 hover:bg-primary/10"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
-            <div className="animate-slide-in-right">
+            <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 🎯 Schedule Planner
               </h1>
-              <p className="text-muted-foreground animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <p className="text-muted-foreground">
                 ✨ Drag, drop & assign with style! Tap workers to assign tasks 📱
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 animate-slide-in-right" style={{ animationDelay: '0.3s' }}>
+          <div className="flex items-center gap-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[200px] justify-start text-left font-normal hover-scale transition-all duration-300 hover:shadow-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50">
+                <Button variant="outline" className="w-[200px] justify-start text-left font-normal transition-all duration-300 hover:shadow-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50">
                   <Calendar className="mr-2 h-4 w-4" />
                   {format(selectedDate, 'MMM d, yyyy')}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 animate-scale-in" align="end">
+              <PopoverContent className="w-auto p-0" align="end">
                 <CalendarComponent
                   mode="single"
                   selected={selectedDate}
@@ -469,7 +464,7 @@ export default function SchedulePlanner() {
               onClick={() => setProjectSelectionOpen(true)}
               disabled={isCreatingSample}
               variant="outline"
-              className="hover-scale transition-all duration-300 hover:shadow-lg hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50"
+              className="transition-all duration-300 hover:shadow-lg hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50"
             >
               {isCreatingSample ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -481,7 +476,7 @@ export default function SchedulePlanner() {
             
             <Button 
               onClick={() => setPasteModalOpen(true)}
-              className="hover-scale transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+              className="transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
             >
               <FileText className="mr-2 h-4 w-4" />
               📋 Paste Schedule
@@ -490,15 +485,15 @@ export default function SchedulePlanner() {
         </div>
 
         {/* Planner Board */}
-        <div className="grid grid-cols-12 gap-6 min-h-[600px] animate-fade-in" style={{ animationDelay: '0.4s' }}>
+        <div className="grid grid-cols-12 gap-6 min-h-[600px]">
           {/* Unassigned Workers Column */}
           <div className="col-span-12 lg:col-span-3">
-            <Card className="h-full hover-scale transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+            <Card className="h-full transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
               <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-t-lg">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="h-5 w-5 animate-pulse" />
+                  <Users className="h-5 w-5" />
                   🚀 Available Workers
-                  <Badge variant="secondary" className="bg-white/20 text-white hover-scale">{unassignedWorkers.length}</Badge>
+                  <Badge variant="secondary" className="bg-white/20 text-white">{unassignedWorkers.length}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent 
@@ -506,31 +501,26 @@ export default function SchedulePlanner() {
                 id="unassigned-workers"
                 data-droppable="true"
               >
-                <div className="text-sm text-center mb-4 p-3 bg-white/50 rounded-lg border-2 border-dashed border-blue-300 animate-pulse">
+                <div className="text-sm text-center mb-4 p-3 bg-white/50 rounded-lg border-2 border-dashed border-blue-300">
                   ✨ Tap workers to assign magical tasks! ✨
                 </div>
                 <SortableContext 
                   items={unassignedWorkers.map(w => w.user_id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {unassignedWorkers.map((worker, index) => (
-                    <div 
+                  {unassignedWorkers.map((worker) => (
+                    <DraggableWorkerBadge
                       key={worker.user_id}
-                      className="animate-scale-in hover-scale"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <DraggableWorkerBadge
-                        worker={worker}
-                        isFromSchedule={false}
-                        onClick={() => {
-                          setWorkerTaskAssignmentModal({
-                            open: true,
-                            worker: worker,
-                            projectId: undefined
-                          });
-                        }}
-                      />
-                    </div>
+                      worker={worker}
+                      isFromSchedule={false}
+                      onClick={() => {
+                        setWorkerTaskAssignmentModal({
+                          open: true,
+                          worker: worker,
+                          projectId: undefined
+                        });
+                      }}
+                    />
                   ))}
                 </SortableContext>
                 
@@ -554,23 +544,19 @@ export default function SchedulePlanner() {
                 items={schedule?.items.map(item => item.id) || []}
                 strategy={verticalListSortingStrategy}
               >
-                {schedule?.items.map((item, index) => (
-                  <div 
+                {schedule?.items.map((item) => (
+                  <DroppableScheduleItem
                     key={item.id}
-                    className="animate-scale-in hover-scale"
-                    style={{ animationDelay: `${0.5 + index * 0.1}s` }}
-                  >
-                    <DroppableScheduleItem
-                      item={item}
-                      onWorkerClick={(itemOrWorker) => {
-                        if (itemOrWorker.workers) {
-                          // Clicked on item header
-                          setProjectAssignmentModal({
-                            open: true,
-                            scheduleItem: itemOrWorker,
-                            workerIds: itemOrWorker.workers.map((w: any) => w.user_id),
-                            workerNames: itemOrWorker.workers.map((w: any) => w.profiles.name)
-                          });
+                    item={item}
+                    onWorkerClick={(itemOrWorker) => {
+                      if (itemOrWorker.workers) {
+                        // Clicked on item header
+                        setProjectAssignmentModal({
+                          open: true,
+                          scheduleItem: itemOrWorker,
+                          workerIds: itemOrWorker.workers.map((w: any) => w.user_id),
+                          workerNames: itemOrWorker.workers.map((w: any) => w.profiles.name)
+                        });
                       } else {
                         // Clicked on individual worker
                         setProjectAssignmentModal({
@@ -589,14 +575,13 @@ export default function SchedulePlanner() {
                       });
                     }}
                   />
-                  </div>
                 ))}
               </SortableContext>
               
               {(!schedule?.items || schedule.items.length === 0) && (
-                <Card className="col-span-1 lg:col-span-2 hover-scale transition-all duration-300 border-2 border-dashed border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
-                  <CardContent className="flex flex-col items-center justify-center py-12 animate-fade-in">
-                    <Calendar className="h-16 w-16 text-purple-400 mb-4 animate-bounce" />
+                <Card className="col-span-1 lg:col-span-2 transition-all duration-300 border-2 border-dashed border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <Calendar className="h-16 w-16 text-purple-400 mb-4" />
                     <h3 className="text-xl font-semibold text-purple-600 mb-2">🎨 Ready to Create Magic?</h3>
                     <p className="text-sm text-muted-foreground mt-2 text-center mb-6 max-w-md">
                       ✨ Start building your perfect schedule! Create amazing schedule items from your projects to unlock the drag & drop superpowers! 🚀
@@ -606,7 +591,7 @@ export default function SchedulePlanner() {
                         onClick={() => setProjectSelectionOpen(true)}
                         disabled={isCreatingSample}
                         size="lg"
-                        className="hover-scale transition-all duration-300 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
+                        className="transition-all duration-300 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
                       >
                         {isCreatingSample ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -619,7 +604,7 @@ export default function SchedulePlanner() {
                         onClick={() => setPasteModalOpen(true)}
                         variant="outline"
                         size="lg"
-                        className="hover-scale transition-all duration-300 border-purple-300 hover:bg-purple-50"
+                        className="transition-all duration-300 border-purple-300 hover:bg-purple-50"
                       >
                         <FileText className="mr-2 h-4 w-4" />
                         📋 Paste Schedule
@@ -636,11 +621,11 @@ export default function SchedulePlanner() {
       {/* Drag Overlay */}
       <DragOverlay>
         {activeWorker && (
-          <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl border-2 border-white shadow-2xl animate-scale-in transform rotate-3">
+          <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl border-2 border-white shadow-2xl">
             <div className="text-sm font-medium flex items-center gap-2 text-white">
               ✨ {activeWorker.name}
               {activeWorker.isAssistant && (
-                <Badge variant="secondary" className="text-xs bg-white/20 text-white animate-pulse">
+                <Badge variant="secondary" className="text-xs bg-white/20 text-white">
                   🎯 assist
                 </Badge>
               )}
