@@ -42,6 +42,7 @@ const ScheduleDayView = lazy(() => import("./pages/schedule/ScheduleDayView"));
 const SchedulePlanner = lazy(() => import("./pages/schedule-planner/SchedulePlanner"));
 const ShiftScreen = lazy(() => import("./pages/ShiftScreen"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Forbidden = lazy(() => import("./pages/Forbidden"));
 
 // Wrapper components to access route params for RequireAccess
 const ProjectDetailWrapper = () => {
@@ -146,6 +147,9 @@ const App = () => (
               <Route path="/admin/reports" element={<RequireAuth roles={['admin']}><AdminReports /></RequireAuth>} />
               <Route path="/admin/access" element={<RequireAuth roles={['admin']}><AdminUserAccess /></RequireAuth>} />
               <Route path="/admin/feedback" element={<RequireAuth roles={['admin']}><FeedbackAdminList /></RequireAuth>} />
+              
+              {/* Error pages */}
+              <Route path="/403" element={<Forbidden />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
