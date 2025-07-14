@@ -52,13 +52,8 @@ export function ProjectScheduleAssignment({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Don't render anything if scheduleItem is null
-  if (!scheduleItem) {
-    return null;
-  }
-
   const fetchProjectDetails = async () => {
-    if (!scheduleItem.project_id) return;
+    if (!scheduleItem?.project_id) return;
     
     setLoading(true);
     try {
@@ -154,9 +149,9 @@ export function ProjectScheduleAssignment({
             user_id: assignment.userId,
             is_primary: assignment.isPrimary,
             schedule_context: {
-              address: scheduleItem.address,
-              date: scheduleItem.start_time,
-              category: scheduleItem.category
+              address: scheduleItem?.address,
+              date: scheduleItem?.start_time,
+              category: scheduleItem?.category
             }
           }
         });
@@ -183,7 +178,7 @@ export function ProjectScheduleAssignment({
 
   const handleOpen = (open: boolean) => {
     onOpenChange(open);
-    if (open && scheduleItem.project_id) {
+    if (open && scheduleItem?.project_id) {
       fetchProjectDetails();
     }
     if (!open) {
@@ -221,6 +216,11 @@ export function ProjectScheduleAssignment({
       default: return 'default';
     }
   };
+
+  // Return early only after all hooks have been declared
+  if (!scheduleItem) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
