@@ -25,7 +25,7 @@ export default function FeedbackAdminList() {
       <div className="container mx-auto py-6">
         <Button 
           variant="ghost" 
-          onClick={() => navigate('/admin')}
+          onClick={() => navigate('/dashboard')}
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -50,7 +50,7 @@ export default function FeedbackAdminList() {
     <div className="container mx-auto py-6">
       <Button 
         variant="ghost" 
-        onClick={() => navigate('/admin')}
+        onClick={() => navigate('/dashboard')}
         className="mb-4"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
