@@ -30,6 +30,7 @@ import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
 import { PasteScheduleModal } from './PasteScheduleModal';
 import { ProjectScheduleAssignment } from '@/components/ProjectScheduleAssignment';
 import { ProjectSelectionDialog } from '@/components/ProjectSelectionDialog';
+import { WorkerTaskAssignment } from '@/components/WorkerTaskAssignment';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useDebouncedCallback } from 'use-debounce';
@@ -74,19 +75,28 @@ function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, 
 
   const displayName = worker.profiles?.name || worker.name;
 
+  const handleClick = (e: React.MouseEvent) => {
+    // Only trigger click if we're not dragging
+    if (!isDragging && onClick) {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick();
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      onClick={onClick}
     >
       <Badge
         variant={worker.is_assistant ? "outline" : isFromSchedule ? "default" : "secondary"}
         className={`p-2 cursor-grab hover:bg-secondary/80 transition-colors block ${
           onClick ? 'cursor-pointer hover:opacity-80' : ''
         }`}
+        onClick={handleClick}
       >
         {displayName}
         {worker.is_assistant && " (assist)"}
@@ -97,9 +107,10 @@ function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, 
 }
 
 // Droppable Schedule Item Component
-function DroppableScheduleItem({ item, onWorkerClick }: {
+function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign }: {
   item: any;
   onWorkerClick: (worker: any) => void;
+  onWorkerTaskAssign: (worker: any, projectId?: string) => void;
 }) {
   const {
     setNodeRef,
@@ -163,7 +174,7 @@ function DroppableScheduleItem({ item, onWorkerClick }: {
               scheduleItemId={item.id}
               onClick={() => {
                 if (item.project_id) {
-                  onWorkerClick({ ...item, workers: [worker] });
+                  onWorkerTaskAssign(worker, item.project_id);
                 }
               }}
             />
@@ -198,6 +209,15 @@ export default function SchedulePlanner() {
     scheduleItem: null,
     workerIds: [],
     workerNames: []
+  });
+  const [workerTaskAssignmentModal, setWorkerTaskAssignmentModal] = useState<{
+    open: boolean;
+    worker: any;
+    projectId?: string;
+  }>({
+    open: false,
+    worker: null,
+    projectId: undefined
   });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -391,7 +411,7 @@ export default function SchedulePlanner() {
             <div>
               <h1 className="text-3xl font-bold">Schedule Planner</h1>
               <p className="text-muted-foreground">
-                Drag and drop workers to assign them to schedule items
+                Drag and drop workers to assign them to schedule items, or click workers to assign tasks
               </p>
             </div>
           </div>
@@ -451,6 +471,9 @@ export default function SchedulePlanner() {
                 id="unassigned-workers"
                 data-droppable="true"
               >
+                <div className="text-xs text-muted-foreground mb-2 text-center">
+                  Click workers to assign tasks
+                </div>
                 <SortableContext 
                   items={unassignedWorkers.map(w => w.user_id)}
                   strategy={verticalListSortingStrategy}
@@ -460,6 +483,13 @@ export default function SchedulePlanner() {
                       key={worker.user_id}
                       worker={worker}
                       isFromSchedule={false}
+                      onClick={() => {
+                        setWorkerTaskAssignmentModal({
+                          open: true,
+                          worker: worker,
+                          projectId: undefined
+                        });
+                      }}
                     />
                   ))}
                 </SortableContext>
@@ -503,6 +533,13 @@ export default function SchedulePlanner() {
                           workerNames: [itemOrWorker.workers[0].profiles.name]
                         });
                       }
+                    }}
+                    onWorkerTaskAssign={(worker, projectId) => {
+                      setWorkerTaskAssignmentModal({
+                        open: true,
+                        worker: worker,
+                        projectId: projectId
+                      });
                     }}
                   />
                 ))}
@@ -585,6 +622,16 @@ export default function SchedulePlanner() {
         onOpenChange={(open) => 
           setProjectAssignmentModal(prev => ({ ...prev, open }))
         }
+      />
+
+      {/* Worker Task Assignment Modal */}
+      <WorkerTaskAssignment
+        open={workerTaskAssignmentModal.open}
+        onOpenChange={(open) => 
+          setWorkerTaskAssignmentModal(prev => ({ ...prev, open }))
+        }
+        worker={workerTaskAssignmentModal.worker}
+        projectId={workerTaskAssignmentModal.projectId}
       />
     </DndContext>
   );
