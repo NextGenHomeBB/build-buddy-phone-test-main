@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Users, MapPin, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, Users, MapPin, ArrowLeft, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,11 +9,15 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
 import { useSchedule } from '@/hooks/schedule';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { PasteScheduleModal } from '../schedule-planner/PasteScheduleModal';
 
 export default function ScheduleDayView() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showImportModal, setShowImportModal] = useState(false);
   const navigate = useNavigate();
   const { data: schedule, isLoading, error } = useSchedule(selectedDate);
+  const { hasAdminAccess } = useRoleAccess();
 
   const groupedItems = schedule?.items.reduce((acc, item) => {
     const key = `${item.address}-${item.category}`;
@@ -61,22 +65,34 @@ export default function ScheduleDayView() {
           </div>
         </div>
         
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
-              <Calendar className="mr-2 h-4 w-4" />
-              {format(selectedDate, 'MMM d, yyyy')}
+        <div className="flex items-center gap-3">
+          {hasAdminAccess() && (
+            <Button 
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Import Schedule
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <CalendarComponent
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+          )}
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
+                <Calendar className="mr-2 h-4 w-4" />
+                {format(selectedDate, 'MMM d, yyyy')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <CalendarComponent
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       {!schedule || Object.keys(groupedItems).length === 0 ? (
@@ -151,6 +167,11 @@ export default function ScheduleDayView() {
           })}
         </div>
       )}
+
+      <PasteScheduleModal 
+        open={showImportModal} 
+        onOpenChange={setShowImportModal}
+      />
     </div>
   );
 }
