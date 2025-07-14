@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus, TrendingUp, Building2, Activity, DollarSign, Calendar, MapPin } from "lucide-react";
+import { Plus, TrendingUp, Building2, Activity, DollarSign, Calendar, MapPin, ArrowLeft } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAdminStats } from "@/hooks/useAdminStats";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { t } from "@/lib/i18n";
 import {
   Form,
@@ -36,6 +37,7 @@ const projectSchema = z.object({
 type ProjectFormData = z.infer<typeof projectSchema>;
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: stats, isLoading } = useAdminStats();
@@ -108,6 +110,15 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background pb-24 p-4">
+      <Button 
+        variant="ghost" 
+        onClick={() => navigate('/dashboard')}
+        className="mb-4"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
+      </Button>
+      
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground mb-2">{t("Admin Dashboard")}</h1>
