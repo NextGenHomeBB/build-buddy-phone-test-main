@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
+import { ShiftCard } from "@/components/dashboard/ShiftCard";
 import { ProjectCard } from "@/components/project/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,13 @@ export default function Dashboard() {
           </Button>
         )}
       </div>
+
+      {/* Shift Card - Only for workers */}
+      {isWorker() && (
+        <div className="max-w-sm">
+          <ShiftCard />
+        </div>
+      )}
 
       {/* Stats Grid */}
       <StatsGrid />

@@ -63,6 +63,28 @@ function TaskCard({ task, onStatusUpdate }: { task: Task; onStatusUpdate: (taskI
     }
   };
 
+  const handlePlayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (task.status === 'todo') {
+      onStatusUpdate(task.id, 'in-progress');
+      toast({
+        title: "Task Started",
+        description: "Task is now in progress!",
+      });
+    }
+  };
+
+  const handleCompleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (task.status !== 'completed') {
+      onStatusUpdate(task.id, 'completed');
+      toast({
+        title: "Task Completed",
+        description: "Task has been marked as completed!",
+      });
+    }
+  };
+
   const swipeHandlers = useSwipeable({
     onSwipedRight: handleSwipeRight,
     trackMouse: true,
@@ -76,10 +98,37 @@ function TaskCard({ task, onStatusUpdate }: { task: Task; onStatusUpdate: (taskI
   return (
     <Card 
       {...swipeHandlers}
-      className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
+      className={`relative cursor-pointer hover:shadow-md transition-all duration-200 ${
         isOverdue ? 'border-red-200 bg-red-50' : ''
       } ${isDueToday ? 'border-orange-200 bg-orange-50' : ''}`}
     >
+      {/* Play Button Overlay */}
+      {task.status === 'todo' && (
+        <div className="absolute top-3 right-3 z-10">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handlePlayClick}
+            className="h-8 w-8 p-0 rounded-full bg-primary/10 hover:bg-primary/20"
+          >
+            <Play className="h-4 w-4 text-primary" fill="currentColor" />
+          </Button>
+        </div>
+      )}
+      
+      {/* Complete Button Overlay */}
+      {task.status === 'in-progress' && (
+        <div className="absolute top-3 right-3 z-10">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleCompleteClick}
+            className="h-8 w-8 p-0 rounded-full bg-green-100 hover:bg-green-200"
+          >
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </Button>
+        </div>
+      )}
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">

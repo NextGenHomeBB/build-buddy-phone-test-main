@@ -40,6 +40,7 @@ const FeedbackHome = lazy(() => import("./pages/feedback/FeedbackHome"));
 const FeedbackAdminList = lazy(() => import("./pages/feedback/FeedbackAdminList"));
 const ScheduleDayView = lazy(() => import("./pages/schedule/ScheduleDayView"));
 const SchedulePlanner = lazy(() => import("./pages/schedule-planner/SchedulePlanner"));
+const ShiftScreen = lazy(() => import("./pages/ShiftScreen"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Wrapper components to access route params for RequireAccess
@@ -121,6 +122,7 @@ const App = () => (
               <Route path="/checklists/new" element={<RequireAuth roles={['admin', 'manager']}><ChecklistCreator /></RequireAuth>} />
               <Route path="/subcontractors/:id" element={<RequireAuth><SubcontractorPage /></RequireAuth>} />
               <Route path="/my-tasks" element={<RequireAuth><MyTasks /></RequireAuth>} />
+              <Route path="/shift" element={<RequireAuth><ShiftScreen /></RequireAuth>} />
               <Route path="/time-sheet" element={<RequireAuth><TimeSheet /></RequireAuth>} />
               <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth roles={['admin', 'manager']}><Settings /></RequireAuth>} />

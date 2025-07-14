@@ -785,6 +785,70 @@ export type Database = {
           },
         ]
       }
+      timesheets: {
+        Row: {
+          approved: boolean | null
+          created_at: string | null
+          duration_generated: number | null
+          end_time: string | null
+          id: string
+          phase_id: string | null
+          project_id: string | null
+          schedule_item_id: string | null
+          start_time: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          approved?: boolean | null
+          created_at?: string | null
+          duration_generated?: number | null
+          end_time?: string | null
+          id?: string
+          phase_id?: string | null
+          project_id?: string | null
+          schedule_item_id?: string | null
+          start_time?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          approved?: boolean | null
+          created_at?: string | null
+          duration_generated?: number | null
+          end_time?: string | null
+          id?: string
+          phase_id?: string | null
+          project_id?: string | null
+          schedule_item_id?: string | null
+          start_time?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheets_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheets_schedule_item_id_fkey"
+            columns: ["schedule_item_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_phase_role: {
         Row: {
           created_at: string
@@ -860,6 +924,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_unassigned_tasks: {
+        Args: { work_date: string }
+        Returns: undefined
+      }
       create_user_profile: {
         Args: {
           user_email: string
