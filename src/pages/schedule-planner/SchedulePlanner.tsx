@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { 
   DndContext, 
   DragEndEvent, 
@@ -15,7 +16,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy 
 } from '@dnd-kit/sortable';
-import { Calendar, Plus, FileText, Users } from 'lucide-react';
+import { Calendar, Plus, FileText, Users, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,7 @@ export default function SchedulePlanner() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [pasteModalOpen, setPasteModalOpen] = useState(false);
   const [activeWorker, setActiveWorker] = useState<DraggableWorker | null>(null);
+  const navigate = useNavigate();
 
   const { data: schedule, isLoading } = useSchedule(selectedDate);
   const { data: unassignedWorkers = [] } = useUnassignedWorkers(selectedDate);
@@ -118,14 +120,25 @@ export default function SchedulePlanner() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="container mx-auto p-6 space-y-6">
+        <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Schedule Planner</h1>
-            <p className="text-muted-foreground">
-              Drag and drop workers to assign them to schedule items
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Schedule Planner</h1>
+              <p className="text-muted-foreground">
+                Drag and drop workers to assign them to schedule items
+              </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
