@@ -1,11 +1,24 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { SubmitFeedbackForm } from './SubmitFeedbackForm'
 import { MyFeedbackList } from './MyFeedbackList'
 
 export default function FeedbackHome() {
+  const navigate = useNavigate()
+
   return (
     <div className="container mx-auto py-6 space-y-6">
+      <Button 
+        variant="ghost" 
+        onClick={() => navigate(-1)}
+        className="mb-4"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
+      </Button>
       <div>
         <h1 className="text-3xl font-bold">Feedback</h1>
         <p className="text-muted-foreground">
