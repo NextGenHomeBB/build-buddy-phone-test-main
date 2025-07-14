@@ -526,7 +526,7 @@ export default function SchedulePlanner() {
                 
                 {unassignedWorkers.length === 0 && (
                   <div className="text-sm text-muted-foreground text-center py-8 border-2 border-dashed border-blue-300 rounded-lg bg-white/30 animate-pulse">
-                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50 animate-bounce" />
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50 text-purple-400" />
                     <div className="space-y-1">
                       <p className="font-medium">🎉 All workers are busy!</p>
                       <p className="text-xs">{schedule?.items.length ? "Everyone's assigned" : "No workers available"}</p>
