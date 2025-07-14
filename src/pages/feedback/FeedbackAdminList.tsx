@@ -136,9 +136,24 @@ export default function FeedbackAdminList() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="open" className="text-red-600 focus:text-red-700">
+                        <span className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                          Open
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="in_progress" className="text-yellow-600 focus:text-yellow-700">
+                        <span className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                          In Progress
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="resolved" className="text-green-600 focus:text-green-700">
+                        <span className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          Resolved
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </TableCell>
