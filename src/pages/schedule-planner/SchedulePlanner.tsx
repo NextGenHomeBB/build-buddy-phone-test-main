@@ -16,7 +16,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy 
 } from '@dnd-kit/sortable';
-import { Calendar, Plus, FileText, Users, ArrowLeft } from 'lucide-react';
+import { Calendar, Plus, FileText, Users, ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useSchedule, useUnassignedWorkers, useUpdateWorkerAssignment } from '@/hooks/schedule';
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
 import { PasteScheduleModal } from './PasteScheduleModal';
+import { ProjectScheduleAssignment } from '@/components/ProjectScheduleAssignment';
 import { useDebouncedCallback } from 'use-debounce';
 
 interface DraggableWorker {
@@ -38,6 +39,17 @@ export default function SchedulePlanner() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [pasteModalOpen, setPasteModalOpen] = useState(false);
   const [activeWorker, setActiveWorker] = useState<DraggableWorker | null>(null);
+  const [projectAssignmentModal, setProjectAssignmentModal] = useState<{
+    open: boolean;
+    scheduleItem: any;
+    workerIds: string[];
+    workerNames: string[];
+  }>({
+    open: false,
+    scheduleItem: null,
+    workerIds: [],
+    workerNames: []
+  });
   const navigate = useNavigate();
 
   const { data: schedule, isLoading } = useSchedule(selectedDate);
@@ -97,6 +109,29 @@ export default function SchedulePlanner() {
 
       // Assign to new schedule item
       debouncedUpdate(scheduleItemId, userId, isAssistant, 'assign');
+      
+      // Check if this schedule item has a project and trigger project assignment modal
+      const targetItem = schedule?.items.find(item => item.id === scheduleItemId);
+      if (targetItem?.project_id) {
+        // Get all workers currently assigned to this schedule item
+        setTimeout(() => {
+          const currentWorkers = targetItem.workers.map(w => ({
+            id: w.user_id,
+            name: w.profiles.name
+          }));
+          
+          // Add the newly assigned worker
+          const newWorker = { id: userId, name: activeData.name };
+          const allWorkers = [...currentWorkers, newWorker];
+          
+          setProjectAssignmentModal({
+            open: true,
+            scheduleItem: targetItem,
+            workerIds: allWorkers.map(w => w.id),
+            workerNames: allWorkers.map(w => w.name)
+          });
+        }, 1500); // Small delay to allow assignment to complete
+      }
     }
 
     // Handle drop back to unassigned (if dragging from a schedule item)
@@ -217,10 +252,35 @@ export default function SchedulePlanner() {
                       <div className="flex items-center gap-2">
                         <CardTitle className="text-base">{item.address}</CardTitle>
                         <ScheduleCategoryBadge category={item.category} />
+                        {item.project_id && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (item.workers.length > 0) {
+                                setProjectAssignmentModal({
+                                  open: true,
+                                  scheduleItem: item,
+                                  workerIds: item.workers.map(w => w.user_id),
+                                  workerNames: item.workers.map(w => w.profiles.name)
+                                });
+                              }
+                            }}
+                            className="h-6 w-6 p-0"
+                            title="Assign tasks to workers"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {item.start_time} - {item.end_time}
                       </div>
+                      {item.project_id && (
+                        <div className="text-xs text-muted-foreground">
+                          🏗️ Project linked - Click workers to assign tasks
+                        </div>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent 
@@ -233,10 +293,25 @@ export default function SchedulePlanner() {
                       <Badge
                         key={`${item.id}-${worker.user_id}`}
                         variant={worker.is_assistant ? "outline" : "default"}
-                        className="p-2 cursor-grab hover:opacity-80 transition-opacity block"
+                        className={`p-2 transition-opacity block ${
+                          item.project_id 
+                            ? 'cursor-pointer hover:opacity-80 hover:bg-primary/80' 
+                            : 'cursor-grab hover:opacity-80'
+                        }`}
+                        onClick={() => {
+                          if (item.project_id) {
+                            setProjectAssignmentModal({
+                              open: true,
+                              scheduleItem: item,
+                              workerIds: [worker.user_id],
+                              workerNames: [worker.profiles.name]
+                            });
+                          }
+                        }}
                       >
                         {worker.profiles.name}
                         {worker.is_assistant && " (assist)"}
+                        {item.project_id && " 🔗"}
                       </Badge>
                     ))}
                     
@@ -283,6 +358,17 @@ export default function SchedulePlanner() {
       <PasteScheduleModal 
         open={pasteModalOpen}
         onOpenChange={setPasteModalOpen}
+      />
+
+      {/* Project Assignment Modal */}
+      <ProjectScheduleAssignment
+        scheduleItem={projectAssignmentModal.scheduleItem}
+        workerIds={projectAssignmentModal.workerIds}
+        workerNames={projectAssignmentModal.workerNames}
+        open={projectAssignmentModal.open}
+        onOpenChange={(open) => 
+          setProjectAssignmentModal(prev => ({ ...prev, open }))
+        }
       />
     </DndContext>
   );

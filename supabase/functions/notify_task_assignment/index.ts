@@ -5,6 +5,11 @@ interface TaskAssignmentPayload {
   task_id: string
   user_id: string
   is_primary: boolean
+  schedule_context?: {
+    address: string
+    date: string
+    category: string
+  }
 }
 
 Deno.serve(async (req) => {
@@ -60,14 +65,20 @@ Deno.serve(async (req) => {
     // Send Slack notification
     const slackWebhook = Deno.env.get('SLACK_TASK_ASSIGN_WEBHOOK')
     if (slackWebhook) {
+      let messageText = `*Task:* ${taskData.title}\n*Project:* ${taskData.project?.name || 'Unknown'}\n*Phase:* ${taskData.phase?.name || 'Unknown'}\n*Assignees:* ${assigneeNames}`
+      
+      if (payload.schedule_context) {
+        messageText += `\n\n📍 *Schedule Details:*\n*Location:* ${payload.schedule_context.address}\n*Time:* ${payload.schedule_context.date}\n*Category:* ${payload.schedule_context.category}`
+      }
+
       const slackMessage = {
-        text: `🔧 Task Assigned`,
+        text: `🔧 Task Assigned from Schedule`,
         blocks: [
           {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `*Task:* ${taskData.title}\n*Project:* ${taskData.project?.name || 'Unknown'}\n*Phase:* ${taskData.phase?.name || 'Unknown'}\n*Assignees:* ${assigneeNames}`
+              text: messageText
             }
           }
         ]
@@ -92,16 +103,23 @@ Deno.serve(async (req) => {
     if (oneSignalAppId && oneSignalApiKey && assignees) {
       for (const assignee of assignees) {
         try {
+          let notificationContent = `You've been assigned to: ${taskData.title}${assignee.is_primary ? ' (Primary)' : ''}`
+          
+          if (payload.schedule_context) {
+            notificationContent += `\n📍 ${payload.schedule_context.address} at ${payload.schedule_context.date}`
+          }
+
           const pushData = {
             app_id: oneSignalAppId,
             include_external_user_ids: [assignee.user_id],
-            headings: { en: 'New Task Assignment' },
+            headings: { en: 'New Task Assignment from Schedule' },
             contents: { 
-              en: `You've been assigned to: ${taskData.title}${assignee.is_primary ? ' (Primary)' : ''}` 
+              en: notificationContent
             },
             data: {
               task_id: payload.task_id,
-              type: 'task_assignment'
+              type: 'task_assignment',
+              schedule_context: payload.schedule_context
             }
           }
 
