@@ -518,6 +518,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_schedule_item_workers_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "schedule_item_workers_schedule_item_id_fkey"
             columns: ["schedule_item_id"]
             isOneToOne: false
