@@ -130,6 +130,16 @@ export const useEndShift = () => {
 
   return useMutation({
     mutationFn: async (shiftId: string) => {
+      console.log('Attempting to end shift:', shiftId);
+      
+      // First verify the user is authenticated
+      const { data: user } = await supabase.auth.getUser()
+      if (!user.user) {
+        throw new Error('Not authenticated')
+      }
+      
+      console.log('User authenticated:', user.user.id);
+
       const { data, error } = await supabase
         .from('timesheets')
         .update({ end_time: new Date().toISOString() })
@@ -137,7 +147,12 @@ export const useEndShift = () => {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Error ending shift:', error);
+        throw error;
+      }
+      
+      console.log('Shift ended successfully:', data);
       return data as Timesheet
     },
     onSuccess: (data) => {
@@ -148,10 +163,12 @@ export const useEndShift = () => {
         description: `Shift completed. Duration: ${hours.toFixed(2)} hours`,
       })
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('End shift mutation error:', error);
+      const errorMessage = error?.message || error?.details || "Unknown error occurred";
       toast({
         title: "Error",
-        description: "Failed to end shift. Please try again.",
+        description: `Failed to end shift: ${errorMessage}`,
         variant: "destructive"
       })
     },
