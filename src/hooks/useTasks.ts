@@ -3,6 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskService } from '@/services/taskService';
 import { useAuth } from '@/contexts/AuthContext';
 
+export interface WorkerSummary {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  is_primary: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -23,6 +30,11 @@ export interface Task {
   tags?: string[];
   attachments?: string[];
   comments?: TaskComment[];
+  // New approval fields
+  approved_at?: string | null;
+  approved_by?: string | null;
+  signature_url?: string | null;
+  workers?: WorkerSummary[];
 }
 
 export interface TaskComment {
@@ -105,6 +117,80 @@ export function useTasks(filters?: TaskFilters) {
     addComment,
     isUpdating: updateTaskMutation.isPending || addCommentMutation.isPending,
   };
+}
+
+/**
+ * Hook for assigning workers to tasks
+ */
+export function useAssignWorkers() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ taskId, userIds, primaryId }: { 
+      taskId: string; 
+      userIds: string[]; 
+      primaryId: string;
+    }) => {
+      return taskService.assignWorkers(taskId, userIds, primaryId);
+    },
+    onSuccess: (_, { taskId }) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+    },
+    onError: (error) => {
+      console.error('Failed to assign workers:', error);
+    }
+  });
+}
+
+/**
+ * Hook for approving tasks with signature
+ */
+export function useApproveTask() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ taskId, signatureBlob }: { 
+      taskId: string; 
+      signatureBlob?: Blob;
+    }) => {
+      return taskService.approveTask(taskId, user?.id, signatureBlob);
+    },
+    onSuccess: (_, { taskId }) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['approval-queue'] });
+    },
+    onError: (error) => {
+      console.error('Failed to approve task:', error);
+    }
+  });
+}
+
+/**
+ * Hook for bulk task assignment
+ */
+export function useBulkAssign() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ assignments }: { 
+      assignments: Array<{
+        taskId: string;
+        userIds: string[];
+        primaryId: string;
+      }>;
+    }) => {
+      return taskService.bulkAssignWorkers(assignments);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: (error) => {
+      console.error('Failed to bulk assign workers:', error);
+    }
+  });
 }
 
 /**

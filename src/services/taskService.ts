@@ -11,6 +11,12 @@ export const taskService = {
         phase:project_phases(name),
         assigned_user:profiles!assigned_to(name),
         assigned_by_user:profiles!assigned_by(name),
+        workers:task_workers(
+          id,
+          is_primary,
+          user_id,
+          user_profile:profiles(id, name, avatar_url)
+        ),
         comments:task_comments(
           *,
           user:profiles(name)
@@ -35,6 +41,27 @@ export const taskService = {
 
     if (filters?.search) {
       query = query.ilike('title', `%${filters.search}%`);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getUnassignedTasks(projectId?: string) {
+    let query = supabase
+      .from('tasks')
+      .select(`
+        *,
+        project:projects(name),
+        phase:project_phases(name)
+      `)
+      .is('assigned_to', null)
+      .eq('status', 'todo');
+
+    if (projectId) {
+      query = query.eq('project_id', projectId);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -89,6 +116,124 @@ export const taskService = {
       .select()
       .single();
     
+    if (error) throw error;
+    return data;
+  },
+
+  async assignWorkers(taskId: string, userIds: string[], primaryId: string) {
+    // Delete existing assignments
+    await supabase
+      .from('task_workers')
+      .delete()
+      .eq('task_id', taskId);
+
+    // Insert new assignments
+    const assignments = userIds.map(userId => ({
+      task_id: taskId,
+      user_id: userId,
+      is_primary: userId === primaryId
+    }));
+
+    const { data, error } = await supabase
+      .from('task_workers')
+      .insert(assignments)
+      .select();
+    
+    if (error) throw error;
+
+    // Trigger notification for assignments
+    try {
+      await supabase.functions.invoke('notify_task_assignment', {
+        body: {
+          task_id: taskId,
+          assigned_users: userIds,
+          primary_user: primaryId
+        }
+      });
+    } catch (notificationError) {
+      console.error('Notification error:', notificationError);
+    }
+
+    return data;
+  },
+
+  async approveTask(taskId: string, approverId?: string, signatureBlob?: Blob) {
+    let signatureUrl = null;
+
+    // Upload signature if provided
+    if (signatureBlob) {
+      // Convert to JPEG for optimization (0.6 quality = ~70% size reduction)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      const compressedBlob = await new Promise<Blob>((resolve) => {
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx?.drawImage(img, 0, 0);
+          canvas.toBlob(resolve, 'image/jpeg', 0.6);
+        };
+        img.src = URL.createObjectURL(signatureBlob);
+      });
+
+      const fileName = `signature_${taskId}_${Date.now()}.jpg`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('signatures')
+        .upload(fileName, compressedBlob!, {
+          contentType: 'image/jpeg',
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('signatures')
+        .getPublicUrl(fileName);
+      
+      signatureUrl = urlData.publicUrl;
+    }
+
+    // Update task with approval information
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({
+        approved_at: new Date().toISOString(),
+        approved_by: approverId,
+        signature_url: signatureUrl
+      })
+      .eq('id', taskId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Trigger notification
+    try {
+      await supabase.functions.invoke('notify_task_approved', {
+        body: {
+          task_id: taskId,
+          approved_by: approverId,
+          approved_at: new Date().toISOString()
+        }
+      });
+    } catch (notificationError) {
+      console.error('Notification error:', notificationError);
+    }
+
+    return data;
+  },
+
+  async bulkAssignWorkers(assignments: Array<{
+    taskId: string;
+    userIds: string[];
+    primaryId: string;
+  }>) {
+    // Use edge function for bulk operations to handle 1000+ tasks efficiently
+    const { data, error } = await supabase.functions.invoke('assign_workers_bulk', {
+      body: { assignments }
+    });
+
     if (error) throw error;
     return data;
   },
