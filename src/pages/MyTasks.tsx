@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTasks, useTaskStats, Task, TaskFilters } from '@/hooks/useTasks';
+import { TaskCard } from '@/components/TaskCard';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Search, 
@@ -48,165 +49,6 @@ const statusIcons = {
   completed: CheckCircle,
 };
 
-function TaskCard({ task, onStatusUpdate }: { task: Task; onStatusUpdate: (taskId: string, status: Task['status']) => void }) {
-  const { toast } = useToast();
-  
-  const handleSwipeRight = () => {
-    if (task.status !== 'completed') {
-      const nextStatus = task.status === 'todo' ? 'in-progress' : 
-                        task.status === 'in-progress' ? 'review' : 'completed';
-      onStatusUpdate(task.id, nextStatus);
-      toast({
-        title: "Task Updated",
-        description: `Task moved to ${nextStatus.replace('-', ' ')}`,
-      });
-    }
-  };
-
-  const handlePlayClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (task.status === 'todo') {
-      onStatusUpdate(task.id, 'in-progress');
-      toast({
-        title: "Task Started",
-        description: "Task is now in progress!",
-      });
-    }
-  };
-
-  const handleCompleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (task.status !== 'completed') {
-      onStatusUpdate(task.id, 'completed');
-      toast({
-        title: "Task Completed",
-        description: "Task has been marked as completed!",
-      });
-    }
-  };
-
-  const swipeHandlers = useSwipeable({
-    onSwipedRight: handleSwipeRight,
-    trackMouse: true,
-    delta: 50,
-  });
-
-  const isOverdue = task.dueDate && isPast(new Date(task.dueDate)) && task.status !== 'completed';
-  const isDueToday = task.dueDate && isToday(new Date(task.dueDate));
-  const StatusIcon = statusIcons[task.status];
-
-  return (
-    <Card 
-      {...swipeHandlers}
-      className={`relative cursor-pointer hover:shadow-md transition-all duration-200 ${
-        isOverdue ? 'border-red-200 bg-red-50' : ''
-      } ${isDueToday ? 'border-orange-200 bg-orange-50' : ''}`}
-    >
-      {/* Play Button Overlay */}
-      {task.status === 'todo' && (
-        <div className="absolute top-3 right-3 z-10">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handlePlayClick}
-            className="h-8 w-8 p-0 rounded-full bg-primary/10 hover:bg-primary/20"
-          >
-            <Play className="h-4 w-4 text-primary" fill="currentColor" />
-          </Button>
-        </div>
-      )}
-      
-      {/* Complete Button Overlay */}
-      {task.status === 'in-progress' && (
-        <div className="absolute top-3 right-3 z-10">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleCompleteClick}
-            className="h-8 w-8 p-0 rounded-full bg-green-100 hover:bg-green-200"
-          >
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </Button>
-        </div>
-      )}
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg font-semibold text-foreground truncate">
-              {task.title}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {task.projectName} {task.phaseName && `• ${task.phaseName}`}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 ml-4">
-            <Badge className={priorityColors[task.priority]} variant="outline">
-              {task.priority}
-            </Badge>
-            <Badge className={statusColors[task.status]} variant="outline">
-              <StatusIcon className="w-3 h-3 mr-1" />
-              {task.status.replace('-', ' ')}
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-3">
-        {task.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {task.description}
-          </p>
-        )}
-        
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-4">
-            {task.dueDate && (
-              <div className={`flex items-center gap-1 ${
-                isOverdue ? 'text-red-600' : isDueToday ? 'text-orange-600' : 'text-muted-foreground'
-              }`}>
-                <Calendar className="w-4 h-4" />
-                <span>
-                  {isToday(new Date(task.dueDate)) 
-                    ? 'Due Today' 
-                    : format(new Date(task.dueDate), 'MMM d')}
-                </span>
-              </div>
-            )}
-            
-            {task.estimatedHours && (
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>{task.estimatedHours}h</span>
-              </div>
-            )}
-          </div>
-          
-          {isOverdue && (
-            <Badge variant="destructive" className="text-xs">
-              <AlertCircle className="w-3 h-3 mr-1" />
-              Overdue
-            </Badge>
-          )}
-        </div>
-        
-        {task.tags && task.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {task.tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {task.tags.length > 3 && (
-              <Badge variant="secondary" className="text-xs">
-                +{task.tags.length - 3}
-              </Badge>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function MyTasks() {
   const [filters, setFilters] = useState<TaskFilters>({});
@@ -423,27 +265,36 @@ export default function MyTasks() {
                   {filteredTasks.map((task) => (
                     <TaskCard 
                       key={task.id} 
-                      task={{
-                        ...task,
-                        projectId: task.project_id,
-                        projectName: task.project?.name || 'Unknown Project',
-                        phaseId: task.phase_id,
-                        phaseName: task.phase?.name,
-                        assignedTo: task.assigned_to,
-                        assignedBy: task.assigned_by,
-                        dueDate: task.due_date,
-                        createdAt: task.created_at,
-                        updatedAt: task.updated_at,
-                        estimatedHours: task.estimated_hours,
-                        actualHours: task.actual_hours,
-                        comments: (task.comments || []).map((comment: any) => ({
-                          id: comment.id,
-                          taskId: comment.task_id,
-                          user: comment.user?.name || 'Unknown User',
-                          message: comment.message,
-                          createdAt: comment.created_at
-                        }))
-                      }} 
+                       task={{
+                         ...task,
+                         projectId: task.project_id,
+                         projectName: task.project?.name || 'Unknown Project',
+                         phaseId: task.phase_id,
+                         phaseName: task.phase?.name,
+                         assignedTo: task.assigned_to,
+                         assignedBy: task.assigned_by,
+                         dueDate: task.due_date,
+                         createdAt: task.created_at,
+                         updatedAt: task.updated_at,
+                         estimatedHours: task.estimated_hours,
+                         actualHours: task.actual_hours,
+                         approved_at: task.approved_at,
+                         approved_by: task.approved_by,
+                         signature_url: task.signature_url,
+                         workers: (task.workers || []).map((worker: any) => ({
+                           id: worker.user_profile?.id || worker.user_id || 'unknown',
+                           name: worker.user_profile?.name || 'Unknown Worker',
+                           avatar_url: worker.user_profile?.avatar_url || null,
+                           is_primary: worker.is_primary || false
+                         })),
+                         comments: (task.comments || []).map((comment: any) => ({
+                           id: comment.id,
+                           taskId: comment.task_id,
+                           user: comment.user?.name || 'Unknown User',
+                           message: comment.message,
+                           createdAt: comment.created_at
+                         }))
+                       }}
                       onStatusUpdate={handleStatusUpdate}
                     />
                   ))}

@@ -41,19 +41,20 @@ export function SignatureDialog({ taskId, open, onClose, onSuccess }: SignatureD
     setIsLoading(true);
 
     try {
-      // Get the signature as a data URL
-      const signatureDataURL = sigCanvasRef.current.toDataURL();
-      
-      // Convert data URL to blob
-      const response = await fetch(signatureDataURL);
-      const blob = await response.blob();
+      // Get the signature as compressed JPEG (70% size reduction)
+      const canvas = sigCanvasRef.current.getCanvas();
+      const compressedBlob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+        }, 'image/jpeg', 0.6); // 60% quality for optimal compression
+      });
 
       // Upload signature to Supabase Storage
-      const fileName = `signature_${taskId}_${Date.now()}.png`;
+      const fileName = `signature_${taskId}_${Date.now()}.jpg`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('signatures')
-        .upload(fileName, blob, {
-          contentType: 'image/png',
+        .upload(fileName, compressedBlob, {
+          contentType: 'image/jpeg',
           upsert: true,
         });
 
