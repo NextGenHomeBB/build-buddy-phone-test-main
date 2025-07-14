@@ -19,7 +19,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Calendar, Plus, FileText, Users, ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
+import { Calendar, Plus, FileText, Users, ArrowLeft, ExternalLink, Loader2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -75,11 +75,12 @@ function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, 
 
   const displayName = worker.profiles?.name || worker.name;
 
-  const handleClick = (e: React.MouseEvent) => {
-    // Only trigger click if we're not dragging
-    if (!isDragging && onClick) {
-      e.preventDefault();
-      e.stopPropagation();
+  // Separate click handler for the task assignment button
+  const handleTaskClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Task assignment clicked for worker:', worker);
+    if (onClick) {
       onClick();
     }
   };
@@ -90,18 +91,26 @@ function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, 
       style={style}
       {...attributes}
       {...listeners}
+      className="flex items-center gap-1 group"
     >
       <Badge
         variant={worker.is_assistant ? "outline" : isFromSchedule ? "default" : "secondary"}
-        className={`p-2 cursor-grab hover:bg-secondary/80 transition-colors block ${
-          onClick ? 'cursor-pointer hover:opacity-80' : ''
-        }`}
-        onClick={handleClick}
+        className="flex-1 p-2 cursor-grab hover:bg-secondary/80 transition-colors"
       >
         {displayName}
         {worker.is_assistant && " (assist)"}
         {isFromSchedule && scheduleItemId && " 🔗"}
       </Badge>
+      
+      {onClick && (
+        <button
+          onClick={handleTaskClick}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-secondary rounded-full"
+          title="Click to assign tasks"
+        >
+          <Settings className="h-3 w-3" />
+        </button>
+      )}
     </div>
   );
 }
