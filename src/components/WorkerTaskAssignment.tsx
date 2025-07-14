@@ -82,14 +82,10 @@ export function WorkerTaskAssignment({
     ? projects.filter(p => p.id === projectId)
     : projects;
 
-  // Get checklists for all available projects
-  const projectChecklistQueries = availableProjects.map(project => 
-    useProjectChecklists(project.id)
+  // Get checklists for the first available project (or all if no specific project)
+  const { data: checklists = [] } = useProjectChecklists(
+    projectId || (availableProjects.length > 0 ? availableProjects[0].id : '')
   );
-
-  const allChecklists = projectChecklistQueries
-    .filter(query => query.data)
-    .flatMap(query => query.data || []);
 
   // Transform tasks to assignable items
   const assignableTasks: AssignableItem[] = tasks
@@ -109,9 +105,10 @@ export function WorkerTaskAssignment({
     }));
 
   // Transform checklist items to assignable items
-  const assignableChecklistItems: AssignableItem[] = allChecklists
-    .flatMap(checklist => 
-      checklist.items
+  const assignableChecklistItems: AssignableItem[] = checklists
+    .flatMap(checklist => {
+      const items = Array.isArray(checklist.items) ? checklist.items : [];
+      return items
         .filter((item: any) => !item.completed)
         .map((item: any) => ({
           id: `${checklist.id}-${item.id}`,
@@ -123,7 +120,7 @@ export function WorkerTaskAssignment({
           priority: item.priority || 'medium',
           estimatedHours: item.estimatedHours,
         }))
-    );
+    });
 
   const handleItemSelect = (itemId: string, selected: boolean) => {
     setSelectedItems(prev => 
