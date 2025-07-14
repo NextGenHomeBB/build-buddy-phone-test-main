@@ -9,7 +9,8 @@ import {
   KeyboardSensor,
   PointerSensor,
   useSensor,
-  useSensors
+  useSensors,
+  DragStartEvent
 } from '@dnd-kit/core';
 import { 
   SortableContext, 
@@ -18,17 +19,18 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Calendar, Plus, FileText, Users, ArrowLeft, ExternalLink } from 'lucide-react';
+import { Calendar, Plus, FileText, Users, ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useSchedule, useUnassignedWorkers, useUpdateWorkerAssignment } from '@/hooks/schedule';
+import { useSchedule, useUnassignedWorkers, useUpdateWorkerAssignment, useUpsertSchedule } from '@/hooks/schedule';
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
 import { PasteScheduleModal } from './PasteScheduleModal';
 import { ProjectScheduleAssignment } from '@/components/ProjectScheduleAssignment';
 import { useDebouncedCallback } from 'use-debounce';
+import { useToast } from '@/hooks/use-toast';
 
 interface DraggableWorker {
   id: string;
@@ -110,7 +112,11 @@ function DroppableScheduleItem({ item, onWorkerClick }: {
 
   return (
     <div ref={setNodeRef}>
-      <Card className={`h-fit ${isOver ? 'ring-2 ring-primary' : ''}`}>
+      <Card className={`h-fit transition-all duration-200 ${
+        isOver 
+          ? 'ring-2 ring-primary bg-primary/5 shadow-lg' 
+          : 'hover:shadow-md'
+      }`}>
       <CardHeader className="pb-3">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -163,7 +169,8 @@ function DroppableScheduleItem({ item, onWorkerClick }: {
         </SortableContext>
         
         {item.workers.length === 0 && (
-          <div className="text-sm text-muted-foreground text-center py-6 border-2 border-dashed border-muted rounded-lg">
+          <div className="text-sm text-muted-foreground text-center py-6 border-2 border-dashed border-muted rounded-lg transition-colors hover:border-primary/50">
+            <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
             Drop workers here
           </div>
         )}
@@ -177,6 +184,7 @@ export default function SchedulePlanner() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [pasteModalOpen, setPasteModalOpen] = useState(false);
   const [activeWorker, setActiveWorker] = useState<DraggableWorker | null>(null);
+  const [isCreatingSample, setIsCreatingSample] = useState(false);
   const [projectAssignmentModal, setProjectAssignmentModal] = useState<{
     open: boolean;
     scheduleItem: any;
@@ -189,10 +197,12 @@ export default function SchedulePlanner() {
     workerNames: []
   });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { data: schedule, isLoading } = useSchedule(selectedDate);
   const { data: unassignedWorkers = [] } = useUnassignedWorkers(selectedDate);
   const updateWorkerAssignment = useUpdateWorkerAssignment();
+  const upsertSchedule = useUpsertSchedule();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -213,12 +223,60 @@ export default function SchedulePlanner() {
     1000
   );
 
-  const handleDragStart = useCallback((event: any) => {
+  // Create sample schedule for testing
+  const createSampleSchedule = useCallback(async () => {
+    setIsCreatingSample(true);
+    try {
+      const sampleData = {
+        workDate: selectedDate,
+        items: [
+          {
+            address: "123 Main Street, Downtown",
+            category: 'normal' as const,
+            startTime: "09:00",
+            endTime: "12:00",
+            workers: []
+          },
+          {
+            address: "456 Oak Avenue, Suburbs", 
+            category: 'materials' as const,
+            startTime: "13:00",
+            endTime: "17:00",
+            workers: []
+          },
+          {
+            address: "789 Pine Road, Industrial",
+            category: 'specials' as const,
+            startTime: "08:00",
+            endTime: "16:00",
+            workers: []
+          }
+        ],
+        absences: []
+      };
+
+      await upsertSchedule.mutateAsync(sampleData);
+      toast({
+        title: "Sample schedule created",
+        description: "You can now test drag & drop functionality"
+      });
+    } catch (error) {
+      toast({
+        title: "Error creating sample schedule",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingSample(false);
+    }
+  }, [selectedDate, upsertSchedule, toast]);
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     const activeData = active.data.current;
     
     setActiveWorker({
-      id: active.id,
+      id: String(active.id),
       name: activeData.name,
       isAssistant: activeData.isAssistant,
       scheduleItemId: activeData.scheduleItemId
@@ -234,11 +292,18 @@ export default function SchedulePlanner() {
     const activeData = active.data.current;
     const overData = over.data.current;
 
+    console.log('Drag end:', { activeData, overData, overId: over.id });
+
     // Handle drop on schedule item
     if (overData?.type === 'schedule-item') {
       const scheduleItemId = overData.scheduleItemId;
       const userId = activeData.userId;
       const isAssistant = activeData.isAssistant || false;
+
+      toast({
+        title: "Assigning worker...",
+        description: `Moving ${activeData.name} to schedule item`
+      });
 
       // If worker was previously assigned, unassign first
       if (activeData.scheduleItemId) {
@@ -274,9 +339,13 @@ export default function SchedulePlanner() {
 
     // Handle drop back to unassigned (if dragging from a schedule item)
     if (over.id === 'unassigned-workers' && activeData.scheduleItemId) {
+      toast({
+        title: "Unassigning worker...",
+        description: `Moving ${activeData.name} back to unassigned`
+      });
       debouncedUpdate(activeData.scheduleItemId, activeData.userId, activeData.isAssistant, 'unassign');
     }
-  }, [debouncedUpdate]);
+  }, [debouncedUpdate, schedule?.items, toast]);
 
   if (isLoading) {
     return (
@@ -332,6 +401,19 @@ export default function SchedulePlanner() {
               </PopoverContent>
             </Popover>
             
+            <Button 
+              onClick={createSampleSchedule}
+              disabled={isCreatingSample}
+              variant="outline"
+            >
+              {isCreatingSample ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="mr-2 h-4 w-4" />
+              )}
+              Create Sample
+            </Button>
+            
             <Button onClick={() => setPasteModalOpen(true)}>
               <FileText className="mr-2 h-4 w-4" />
               Paste Schedule
@@ -352,7 +434,7 @@ export default function SchedulePlanner() {
                 </CardTitle>
               </CardHeader>
               <CardContent 
-                className="space-y-2"
+                className="space-y-2 min-h-[200px]"
                 id="unassigned-workers"
                 data-droppable="true"
               >
@@ -370,8 +452,9 @@ export default function SchedulePlanner() {
                 </SortableContext>
                 
                 {unassignedWorkers.length === 0 && (
-                  <div className="text-sm text-muted-foreground text-center py-8">
-                    All workers are assigned
+                  <div className="text-sm text-muted-foreground text-center py-8 border-2 border-dashed border-muted rounded-lg">
+                    <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    {schedule?.items.length ? "All workers are assigned" : "No unassigned workers"}
                   </div>
                 )}
               </CardContent>
@@ -417,9 +500,31 @@ export default function SchedulePlanner() {
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold text-muted-foreground">No Schedule Items</h3>
-                    <p className="text-sm text-muted-foreground mt-2 text-center">
-                      Use the "Paste Schedule" button to import a schedule for this date.
+                    <p className="text-sm text-muted-foreground mt-2 text-center mb-4">
+                      Create some schedule items to test drag & drop functionality.
                     </p>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={createSampleSchedule}
+                        disabled={isCreatingSample}
+                        size="sm"
+                      >
+                        {isCreatingSample ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Plus className="mr-2 h-4 w-4" />
+                        )}
+                        Create Sample Schedule
+                      </Button>
+                      <Button 
+                        onClick={() => setPasteModalOpen(true)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        Paste Schedule
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )}
