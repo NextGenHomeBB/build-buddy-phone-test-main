@@ -14,8 +14,10 @@ import {
 import { 
   SortableContext, 
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy 
+  verticalListSortingStrategy,
+  useSortable
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Calendar, Plus, FileText, Users, ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +35,142 @@ interface DraggableWorker {
   name: string;
   isAssistant?: boolean;
   scheduleItemId?: string;
+}
+
+// Draggable Worker Component
+function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, onClick }: {
+  worker: { user_id: string; name: string; is_assistant?: boolean; profiles?: { name: string } };
+  isFromSchedule?: boolean;
+  scheduleItemId?: string;
+  onClick?: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: worker.user_id,
+    data: {
+      userId: worker.user_id,
+      name: worker.profiles?.name || worker.name,
+      isAssistant: worker.is_assistant || false,
+      scheduleItemId: scheduleItemId,
+      type: isFromSchedule ? 'assigned-worker' : 'unassigned-worker'
+    }
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const displayName = worker.profiles?.name || worker.name;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+    >
+      <Badge
+        variant={worker.is_assistant ? "outline" : isFromSchedule ? "default" : "secondary"}
+        className={`p-2 cursor-grab hover:bg-secondary/80 transition-colors block ${
+          onClick ? 'cursor-pointer hover:opacity-80' : ''
+        }`}
+      >
+        {displayName}
+        {worker.is_assistant && " (assist)"}
+        {isFromSchedule && scheduleItemId && " 🔗"}
+      </Badge>
+    </div>
+  );
+}
+
+// Droppable Schedule Item Component
+function DroppableScheduleItem({ item, onWorkerClick }: {
+  item: any;
+  onWorkerClick: (worker: any) => void;
+}) {
+  const {
+    setNodeRef,
+    isOver,
+  } = useSortable({
+    id: item.id,
+    data: {
+      type: 'schedule-item',
+      scheduleItemId: item.id
+    }
+  });
+
+  return (
+    <div ref={setNodeRef}>
+      <Card className={`h-fit ${isOver ? 'ring-2 ring-primary' : ''}`}>
+      <CardHeader className="pb-3">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">{item.address}</CardTitle>
+            <ScheduleCategoryBadge category={item.category} />
+            {item.project_id && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (item.workers.length > 0) {
+                    onWorkerClick(item);
+                  }
+                }}
+                className="h-6 w-6 p-0"
+                title="Assign tasks to workers"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {item.start_time} - {item.end_time}
+          </div>
+          {item.project_id && (
+            <div className="text-xs text-muted-foreground">
+              🏗️ Project linked - Click workers to assign tasks
+            </div>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2 min-h-[100px]">
+        <SortableContext 
+          items={item.workers.map((w: any) => w.user_id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {item.workers.map((worker: any) => (
+            <DraggableWorkerBadge
+              key={`${item.id}-${worker.user_id}`}
+              worker={worker}
+              isFromSchedule={true}
+              scheduleItemId={item.id}
+              onClick={() => {
+                if (item.project_id) {
+                  onWorkerClick({ ...item, workers: [worker] });
+                }
+              }}
+            />
+          ))}
+        </SortableContext>
+        
+        {item.workers.length === 0 && (
+          <div className="text-sm text-muted-foreground text-center py-6 border-2 border-dashed border-muted rounded-lg">
+            Drop workers here
+          </div>
+        )}
+      </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 export default function SchedulePlanner() {
@@ -135,7 +273,7 @@ export default function SchedulePlanner() {
     }
 
     // Handle drop back to unassigned (if dragging from a schedule item)
-    if (overData?.type === 'unassigned' && activeData.scheduleItemId) {
+    if (over.id === 'unassigned-workers' && activeData.scheduleItemId) {
       debouncedUpdate(activeData.scheduleItemId, activeData.userId, activeData.isAssistant, 'unassign');
     }
   }, [debouncedUpdate]);
@@ -215,21 +353,19 @@ export default function SchedulePlanner() {
               </CardHeader>
               <CardContent 
                 className="space-y-2"
+                id="unassigned-workers"
                 data-droppable="true"
-                data-type="unassigned"
               >
                 <SortableContext 
                   items={unassignedWorkers.map(w => w.user_id)}
                   strategy={verticalListSortingStrategy}
                 >
                   {unassignedWorkers.map((worker) => (
-                    <Badge
+                    <DraggableWorkerBadge
                       key={worker.user_id}
-                      variant="secondary"
-                      className="p-2 cursor-grab hover:bg-secondary/80 transition-colors block"
-                    >
-                      {worker.name}
-                    </Badge>
+                      worker={worker}
+                      isFromSchedule={false}
+                    />
                   ))}
                 </SortableContext>
                 
@@ -245,84 +381,38 @@ export default function SchedulePlanner() {
           {/* Schedule Items Columns */}
           <div className="col-span-9">
             <div className="grid grid-cols-2 gap-4 h-full">
-              {schedule?.items.map((item) => (
-                <Card key={item.id} className="h-fit">
-                  <CardHeader className="pb-3">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-base">{item.address}</CardTitle>
-                        <ScheduleCategoryBadge category={item.category} />
-                        {item.project_id && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (item.workers.length > 0) {
-                                setProjectAssignmentModal({
-                                  open: true,
-                                  scheduleItem: item,
-                                  workerIds: item.workers.map(w => w.user_id),
-                                  workerNames: item.workers.map(w => w.profiles.name)
-                                });
-                              }
-                            }}
-                            className="h-6 w-6 p-0"
-                            title="Assign tasks to workers"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.start_time} - {item.end_time}
-                      </div>
-                      {item.project_id && (
-                        <div className="text-xs text-muted-foreground">
-                          🏗️ Project linked - Click workers to assign tasks
-                        </div>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent 
-                    className="space-y-2 min-h-[100px]"
-                    data-droppable="true"
-                    data-type="schedule-item"
-                    data-schedule-item-id={item.id}
-                  >
-                    {item.workers.map((worker) => (
-                      <Badge
-                        key={`${item.id}-${worker.user_id}`}
-                        variant={worker.is_assistant ? "outline" : "default"}
-                        className={`p-2 transition-opacity block ${
-                          item.project_id 
-                            ? 'cursor-pointer hover:opacity-80 hover:bg-primary/80' 
-                            : 'cursor-grab hover:opacity-80'
-                        }`}
-                        onClick={() => {
-                          if (item.project_id) {
-                            setProjectAssignmentModal({
-                              open: true,
-                              scheduleItem: item,
-                              workerIds: [worker.user_id],
-                              workerNames: [worker.profiles.name]
-                            });
-                          }
-                        }}
-                      >
-                        {worker.profiles.name}
-                        {worker.is_assistant && " (assist)"}
-                        {item.project_id && " 🔗"}
-                      </Badge>
-                    ))}
-                    
-                    {item.workers.length === 0 && (
-                      <div className="text-sm text-muted-foreground text-center py-6 border-2 border-dashed border-muted rounded-lg">
-                        Drop workers here
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )) || (
+              <SortableContext 
+                items={schedule?.items.map(item => item.id) || []}
+                strategy={verticalListSortingStrategy}
+              >
+                {schedule?.items.map((item) => (
+                  <DroppableScheduleItem
+                    key={item.id}
+                    item={item}
+                    onWorkerClick={(itemOrWorker) => {
+                      if (itemOrWorker.workers) {
+                        // Clicked on item header
+                        setProjectAssignmentModal({
+                          open: true,
+                          scheduleItem: itemOrWorker,
+                          workerIds: itemOrWorker.workers.map((w: any) => w.user_id),
+                          workerNames: itemOrWorker.workers.map((w: any) => w.profiles.name)
+                        });
+                      } else {
+                        // Clicked on individual worker
+                        setProjectAssignmentModal({
+                          open: true,
+                          scheduleItem: item,
+                          workerIds: [itemOrWorker.workers[0].user_id],
+                          workerNames: [itemOrWorker.workers[0].profiles.name]
+                        });
+                      }
+                    }}
+                  />
+                ))}
+              </SortableContext>
+              
+              {(!schedule?.items || schedule.items.length === 0) && (
                 <Card className="col-span-2">
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
