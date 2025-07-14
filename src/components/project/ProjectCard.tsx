@@ -42,7 +42,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
       className={`relative cursor-pointer transition-all duration-200 hover:shadow-md border border-border/60 ${
         isPressed ? 'scale-95 shadow-lg' : 'hover:border-border'
       }`}
-      onClick={onClick}
+      onClick={() => navigate(`/projects/${project.id}`)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onMouseLeave={handleTouchEnd}
