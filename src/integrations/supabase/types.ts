@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      absences: {
+        Row: {
+          created_at: string | null
+          id: string
+          reason: string | null
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
       checklists: {
         Row: {
           created_at: string
@@ -470,6 +494,107 @@ export type Database = {
           },
         ]
       }
+      schedule_item_workers: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_assistant: boolean | null
+          schedule_item_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_assistant?: boolean | null
+          schedule_item_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_assistant?: boolean | null
+          schedule_item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_item_workers_schedule_item_id_fkey"
+            columns: ["schedule_item_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_items: {
+        Row: {
+          address: string
+          category: string
+          created_at: string | null
+          end_time: string
+          id: string
+          project_id: string | null
+          schedule_id: string
+          start_time: string
+        }
+        Insert: {
+          address: string
+          category: string
+          created_at?: string | null
+          end_time: string
+          id?: string
+          project_id?: string | null
+          schedule_id: string
+          start_time: string
+        }
+        Update: {
+          address?: string
+          category?: string
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          project_id?: string | null
+          schedule_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_items_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedules: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
       task_comments: {
         Row: {
           created_at: string
@@ -743,6 +868,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_current_user_role_from_jwt: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_user_global_role: {
         Args: { user_id_param: string }

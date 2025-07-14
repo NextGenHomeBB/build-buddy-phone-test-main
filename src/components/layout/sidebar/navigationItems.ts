@@ -1,4 +1,4 @@
-import { Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield, Package, MessageSquarePlus } from "lucide-react";
+import { Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield, Package, MessageSquarePlus, CalendarDays } from "lucide-react";
 
 export const navigationItems = [
   {
@@ -18,6 +18,12 @@ export const navigationItems = [
     url: "/my-tasks",
     icon: CheckSquare,
     badge: "3",
+  },
+  {
+    title: "Schedule",
+    url: "/schedule",
+    icon: CalendarDays,
+    badge: null,
   },
   {
     title: "Reports",
@@ -62,6 +68,12 @@ export const adminItems = [
     title: "Feedback Admin",
     url: "/admin/feedback",
     icon: MessageSquarePlus,
+    badge: null,
+  },
+  {
+    title: "Schedule Planner",
+    url: "/admin/schedule-planner",
+    icon: CalendarDays,
     badge: null,
   },
 ];

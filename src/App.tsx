@@ -38,6 +38,8 @@ const TeamPage = lazy(() => import("./pages/TeamPage"));
 const Onboarding = lazy(() => import("./pages/auth/Onboarding"));
 const FeedbackHome = lazy(() => import("./pages/feedback/FeedbackHome"));
 const FeedbackAdminList = lazy(() => import("./pages/feedback/FeedbackAdminList"));
+const ScheduleDayView = lazy(() => import("./pages/schedule/ScheduleDayView"));
+const SchedulePlanner = lazy(() => import("./pages/schedule-planner/SchedulePlanner"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Wrapper components to access route params for RequireAccess
@@ -129,7 +131,11 @@ const App = () => (
               {/* Feedback routes */}
               <Route path="/feedback" element={<RequireAuth><FeedbackHome /></RequireAuth>} />
               
+              {/* Schedule routes */}
+              <Route path="/schedule" element={<RequireAuth><ScheduleDayView /></RequireAuth>} />
+              
               {/* Admin routes - Admin only */}
+              <Route path="/admin/schedule-planner" element={<RequireAuth roles={['admin', 'manager']}><SchedulePlanner /></RequireAuth>} />
               <Route path="/admin" element={<RequireAuth roles={['admin']}><AdminDashboard /></RequireAuth>} />
               <Route path="/admin/users" element={<RequireAuth roles={['admin']}><UserManagement /></RequireAuth>} />
               <Route path="/admin/projects" element={<RequireAuth roles={['admin']}><ProjectSettings /></RequireAuth>} />
