@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -10,6 +11,7 @@ import { useUpsertSchedule } from '@/hooks/schedule';
 import { format } from 'date-fns';
 import { CheckCircle, AlertCircle, Clock, Users, MapPin } from 'lucide-react';
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
+import { useToast } from '@/hooks/use-toast';
 
 interface PasteScheduleModalProps {
   open: boolean;
@@ -22,38 +24,79 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
   const [parseError, setParseError] = useState<string | null>(null);
   
   const upsertSchedule = useUpsertSchedule();
+  const { toast } = useToast();
 
   const handleParseSchedule = () => {
+    console.log('🔍 Parsing schedule text:', scheduleText.length, 'characters');
     try {
       const parsed = parseDagschema(scheduleText);
+      console.log('✅ Schedule parsed successfully:', parsed);
       setParsedSchedule(parsed);
       setParseError(null);
+      toast({
+        title: "Schedule parsed successfully",
+        description: `Found ${parsed.items.length} schedule items and ${parsed.absences.length} absences`,
+      });
     } catch (error) {
-      setParseError(error instanceof Error ? error.message : 'Failed to parse schedule');
+      const errorMsg = error instanceof Error ? error.message : 'Failed to parse schedule';
+      console.error('❌ Parse error:', error);
+      setParseError(errorMsg);
       setParsedSchedule(null);
+      toast({
+        title: "Parse error",
+        description: errorMsg,
+        variant: "destructive",
+      });
     }
   };
 
   const handleImportSchedule = async () => {
-    if (!parsedSchedule) return;
+    if (!parsedSchedule) {
+      console.log('❌ No parsed schedule to import');
+      return;
+    }
 
+    console.log('🚀 Starting schedule import...', parsedSchedule);
+    
     try {
       await upsertSchedule.mutateAsync(parsedSchedule);
-      onOpenChange(false);
-      setScheduleText('');
-      setParsedSchedule(null);
-      setParseError(null);
+      console.log('✅ Schedule imported successfully');
+      
+      toast({
+        title: "Schedule imported successfully",
+        description: `Imported ${parsedSchedule.items.length} schedule items for ${format(parsedSchedule.workDate, 'MMM d, yyyy')}`,
+      });
+      
+      // Reset form and close modal
+      handleClose();
     } catch (error) {
-      setParseError(error instanceof Error ? error.message : 'Failed to import schedule');
+      const errorMsg = error instanceof Error ? error.message : 'Failed to import schedule';
+      console.error('❌ Import error:', error);
+      setParseError(errorMsg);
+      toast({
+        title: "Import failed",
+        description: errorMsg,
+        variant: "destructive",
+      });
     }
   };
 
   const handleClose = () => {
+    console.log('🔄 Closing modal and resetting form');
     onOpenChange(false);
     setScheduleText('');
     setParsedSchedule(null);
     setParseError(null);
   };
+
+  // Debug logging
+  console.log('🔍 Modal state:', {
+    open,
+    hasScheduleText: !!scheduleText.trim(),
+    hasParsedSchedule: !!parsedSchedule,
+    isImporting: upsertSchedule.isPending,
+    parseError
+  });
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
