@@ -11,6 +11,7 @@ export interface ParsedScheduleItem {
   startTime: string;
   endTime: string;
   workers: ParsedWorker[];
+  projectId?: string; // Optional project ID for linking to projects
 }
 
 export interface ParsedAbsence {

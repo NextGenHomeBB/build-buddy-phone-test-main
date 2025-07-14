@@ -29,8 +29,9 @@ import { useSchedule, useUnassignedWorkers, useUpdateWorkerAssignment, useUpsert
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
 import { PasteScheduleModal } from './PasteScheduleModal';
 import { ProjectScheduleAssignment } from '@/components/ProjectScheduleAssignment';
-import { useDebouncedCallback } from 'use-debounce';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useDebouncedCallback } from 'use-debounce';
 
 interface DraggableWorker {
   id: string;
@@ -223,46 +224,55 @@ export default function SchedulePlanner() {
     1000
   );
 
-  // Create sample schedule for testing
-  const createSampleSchedule = useCallback(async () => {
+  // Create schedule from real projects
+  const createScheduleFromProjects = useCallback(async () => {
     setIsCreatingSample(true);
     try {
-      const sampleData = {
+      // Fetch real projects from database
+      const { data: projects, error } = await supabase
+        .from('projects')
+        .select('id, name, location, status')
+        .in('status', ['planning', 'active'])
+        .limit(3);
+
+      if (error) throw error;
+
+      if (!projects || projects.length === 0) {
+        toast({
+          title: "No projects found",
+          description: "Create some projects first to generate schedule items",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const scheduleItems = projects.map((project, index) => ({
+        address: project.location,
+        category: index === 0 ? 'normal' as const : 
+                 index === 1 ? 'materials' as const : 'specials' as const,
+        startTime: index === 0 ? "09:00" : 
+                  index === 1 ? "13:00" : "08:00",
+        endTime: index === 0 ? "12:00" : 
+                index === 1 ? "17:00" : "16:00",
+        workers: [],
+        projectId: project.id // Add project reference
+      }));
+
+      const scheduleData = {
         workDate: selectedDate,
-        items: [
-          {
-            address: "123 Main Street, Downtown",
-            category: 'normal' as const,
-            startTime: "09:00",
-            endTime: "12:00",
-            workers: []
-          },
-          {
-            address: "456 Oak Avenue, Suburbs", 
-            category: 'materials' as const,
-            startTime: "13:00",
-            endTime: "17:00",
-            workers: []
-          },
-          {
-            address: "789 Pine Road, Industrial",
-            category: 'specials' as const,
-            startTime: "08:00",
-            endTime: "16:00",
-            workers: []
-          }
-        ],
+        items: scheduleItems,
         absences: []
       };
 
-      await upsertSchedule.mutateAsync(sampleData);
+      await upsertSchedule.mutateAsync(scheduleData);
       toast({
-        title: "Sample schedule created",
-        description: "You can now test drag & drop functionality"
+        title: "Schedule created from projects",
+        description: `Created ${projects.length} schedule items from real projects`
       });
     } catch (error) {
+      console.error('Error creating schedule:', error);
       toast({
-        title: "Error creating sample schedule",
+        title: "Error creating schedule",
         description: "Please try again",
         variant: "destructive"
       });
@@ -402,7 +412,7 @@ export default function SchedulePlanner() {
             </Popover>
             
             <Button 
-              onClick={createSampleSchedule}
+              onClick={createScheduleFromProjects}
               disabled={isCreatingSample}
               variant="outline"
             >
@@ -411,7 +421,7 @@ export default function SchedulePlanner() {
               ) : (
                 <Plus className="mr-2 h-4 w-4" />
               )}
-              Create Sample
+              Create from Projects
             </Button>
             
             <Button onClick={() => setPasteModalOpen(true)}>
@@ -505,7 +515,7 @@ export default function SchedulePlanner() {
                     </p>
                     <div className="flex gap-2">
                       <Button 
-                        onClick={createSampleSchedule}
+                        onClick={createScheduleFromProjects}
                         disabled={isCreatingSample}
                         size="sm"
                       >
@@ -514,7 +524,7 @@ export default function SchedulePlanner() {
                         ) : (
                           <Plus className="mr-2 h-4 w-4" />
                         )}
-                        Create Sample Schedule
+                        Create from Projects
                       </Button>
                       <Button 
                         onClick={() => setPasteModalOpen(true)}

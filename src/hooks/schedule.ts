@@ -117,6 +117,7 @@ export function useUpsertSchedule() {
           .from('schedule_items')
           .insert({
             schedule_id: schedule.id,
+            project_id: item.projectId || null,
             address: item.address,
             category: item.category,
             start_time: item.startTime,
