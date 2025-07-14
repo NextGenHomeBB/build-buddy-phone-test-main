@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar, Clock, Users, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, Clock, Users, MapPin, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { useSchedule } from '@/hooks/schedule';
 
 export default function ScheduleDayView() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const navigate = useNavigate();
   const { data: schedule, isLoading, error } = useSchedule(selectedDate);
 
   const groupedItems = schedule?.items.reduce((acc, item) => {
@@ -41,11 +43,22 @@ export default function ScheduleDayView() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Daily Schedule</h1>
-          <p className="text-muted-foreground">
-            View your work assignments for {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Daily Schedule</h1>
+            <p className="text-muted-foreground">
+              View your work assignments for {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+            </p>
+          </div>
         </div>
         
         <Popover>
