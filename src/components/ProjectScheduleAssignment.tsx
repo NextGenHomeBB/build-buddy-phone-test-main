@@ -217,18 +217,13 @@ export function ProjectScheduleAssignment({
     }
   };
 
-  // Return early only after all hooks have been declared
-  if (!scheduleItem) {
-    return null;
-  }
-
   return (
-    <Dialog open={open} onOpenChange={handleOpen}>
+    <Dialog open={open && !!scheduleItem} onOpenChange={handleOpen}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            {scheduleItem.address}
+            {scheduleItem?.address || 'Loading...'}
           </DialogTitle>
         </DialogHeader>
 
@@ -236,18 +231,18 @@ export function ProjectScheduleAssignment({
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">
-              {scheduleItem.start_time} - {scheduleItem.end_time}
+              {scheduleItem?.start_time || 'N/A'} - {scheduleItem?.end_time || 'N/A'}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">
-              Assigned: {workerNames.join(', ')}
+              Assigned: {workerNames.join(', ') || 'None'}
             </span>
           </div>
         </div>
 
-        {!scheduleItem.project_id ? (
+        {!scheduleItem?.project_id ? (
           <Card>
             <CardContent className="flex items-center justify-center py-8">
               <div className="text-center">
