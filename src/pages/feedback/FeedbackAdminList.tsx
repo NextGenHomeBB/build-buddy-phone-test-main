@@ -1,12 +1,14 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { FeedbackStatusBadge } from '@/components/ui/FeedbackStatusBadge'
 import { useFeedbackList, useUpdateFeedbackStatus } from '@/hooks/feedback'
 import { format } from 'date-fns'
 
 export default function FeedbackAdminList() {
+  const navigate = useNavigate()
   const { data: feedbackList, isLoading } = useFeedbackList({ all: true })
   const updateStatus = useUpdateFeedbackStatus()
 
@@ -20,14 +22,41 @@ export default function FeedbackAdminList() {
 
   if (!feedbackList || feedbackList.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p>No feedback submissions found.</p>
+      <div className="container mx-auto py-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/admin')}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Feedback Administration</h1>
+          <p className="text-muted-foreground">
+            Manage all user feedback submissions
+          </p>
+        </div>
+        
+        <div className="text-center py-8 text-muted-foreground">
+          <p>No feedback submissions found.</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="container mx-auto py-6">
+      <Button 
+        variant="ghost" 
+        onClick={() => navigate('/admin')}
+        className="mb-4"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
+      </Button>
+      
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Feedback Administration</h1>
         <p className="text-muted-foreground">
