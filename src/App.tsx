@@ -36,6 +36,8 @@ const ChecklistCreator = lazy(() => import("./pages/ChecklistCreator"));
 const SubcontractorPage = lazy(() => import("./pages/SubcontractorPage"));
 const TeamPage = lazy(() => import("./pages/TeamPage"));
 const Onboarding = lazy(() => import("./pages/auth/Onboarding"));
+const FeedbackHome = lazy(() => import("./pages/feedback/FeedbackHome"));
+const FeedbackAdminList = lazy(() => import("./pages/feedback/FeedbackAdminList"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Wrapper components to access route params for RequireAccess
@@ -124,6 +126,9 @@ const App = () => (
               <Route path="/reports/overview" element={<RequireAuth roles={['admin', 'manager']}><ReportsOverview /></RequireAuth>} />
               <Route path="/reports/materials" element={<RequireAuth roles={['admin', 'manager']}><ReportsMaterials /></RequireAuth>} />
               
+              {/* Feedback routes */}
+              <Route path="/feedback" element={<RequireAuth><FeedbackHome /></RequireAuth>} />
+              
               {/* Admin routes - Admin only */}
               <Route path="/admin" element={<RequireAuth roles={['admin']}><AdminDashboard /></RequireAuth>} />
               <Route path="/admin/users" element={<RequireAuth roles={['admin']}><UserManagement /></RequireAuth>} />
@@ -132,6 +137,7 @@ const App = () => (
               <Route path="/admin/materials" element={<RequireAuth roles={['admin']}><AdminMaterials /></RequireAuth>} />
               <Route path="/admin/reports" element={<RequireAuth roles={['admin']}><AdminReports /></RequireAuth>} />
               <Route path="/admin/access" element={<RequireAuth roles={['admin']}><AdminUserAccess /></RequireAuth>} />
+              <Route path="/admin/feedback" element={<RequireAuth roles={['admin']}><FeedbackAdminList /></RequireAuth>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

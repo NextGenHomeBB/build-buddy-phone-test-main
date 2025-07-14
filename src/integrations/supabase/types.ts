@@ -55,6 +55,56 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          attachment_url: string | null
+          category: string
+          created_at: string
+          external_issue_url: string | null
+          id: string
+          message: string
+          project_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          category: string
+          created_at?: string
+          external_issue_url?: string | null
+          id?: string
+          message: string
+          project_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attachment_url?: string | null
+          category?: string
+          created_at?: string
+          external_issue_url?: string | null
+          id?: string
+          message?: string
+          project_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labour_costs: {
         Row: {
           created_at: string

@@ -1,4 +1,4 @@
-import { Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield, Package } from "lucide-react";
+import { Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield, Package, MessageSquarePlus } from "lucide-react";
 
 export const navigationItems = [
   {
@@ -23,6 +23,12 @@ export const navigationItems = [
     title: "Reports",
     url: "/reports",
     icon: BarChart3,
+    badge: null,
+  },
+  {
+    title: "Feedback",
+    url: "/feedback",
+    icon: MessageSquarePlus,
     badge: null,
   },
 ];
@@ -50,6 +56,12 @@ export const adminItems = [
     title: "Project Settings",
     url: "/admin/projects",
     icon: Settings,
+    badge: null,
+  },
+  {
+    title: "Feedback Admin",
+    url: "/admin/feedback",
+    icon: MessageSquarePlus,
     badge: null,
   },
 ];
