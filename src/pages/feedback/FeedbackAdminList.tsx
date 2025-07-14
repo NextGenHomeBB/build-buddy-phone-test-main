@@ -145,7 +145,7 @@ export default function FeedbackAdminList() {
                       <SelectItem value="in_progress" className="text-yellow-600 focus:text-yellow-700">
                         <span className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                          In Progress
+                          Progress
                         </span>
                       </SelectItem>
                       <SelectItem value="resolved" className="text-green-600 focus:text-green-700">
