@@ -7,7 +7,7 @@ interface RequireAccessProps {
   projectId?: string;
   phaseId?: string;
   taskId?: string;
-  rolesAllowed?: ('manager' | 'worker')[];
+  rolesAllowed?: ('admin' | 'manager' | 'worker')[];
 }
 
 export const RequireAccess = ({
@@ -40,7 +40,7 @@ export const RequireAccess = ({
     }
 
     // Check if user's role is in allowed roles
-    if (rolesAllowed && access.role !== 'admin' && !rolesAllowed.includes(access.role as 'manager' | 'worker')) {
+    if (rolesAllowed && access.role !== 'admin' && !rolesAllowed.includes(access.role as 'admin' | 'manager' | 'worker')) {
       navigate('/403');
       return;
     }

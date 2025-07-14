@@ -43,6 +43,7 @@ const SchedulePlanner = lazy(() => import("./pages/schedule-planner/SchedulePlan
 const ShiftScreen = lazy(() => import("./pages/ShiftScreen"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Forbidden = lazy(() => import("./pages/Forbidden"));
+const ApprovalQueue = lazy(() => import("./pages/review/ApprovalQueue"));
 
 // Wrapper components to access route params for RequireAccess
 const ProjectDetailWrapper = () => {
@@ -90,6 +91,15 @@ const EasyPhaseChecklistWrapper = () => {
   );
 };
 
+const ApprovalQueueWrapper = () => {
+  const { id } = useParams();
+  return (
+    <RequireAccess projectId={id} rolesAllowed={['manager', 'admin']}>
+      <ApprovalQueue />
+    </RequireAccess>
+  );
+};
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -115,6 +125,7 @@ const App = () => (
               {/* Project routes with access control */}
               <Route path="/projects/:id" element={<RequireAuth><ProjectDetailWrapper /></RequireAuth>} />
               <Route path="/projects/:id/team" element={<RequireAuth><ProjectTeamWrapper /></RequireAuth>} />
+              <Route path="/projects/:id/review" element={<RequireAuth><ApprovalQueueWrapper /></RequireAuth>} />
               <Route path="/projects/:id/phase/:phaseId" element={<RequireAuth><PhaseDetailWrapper /></RequireAuth>} />
               
               {/* Phase routes with access control */}

@@ -641,9 +641,43 @@ export type Database = {
           },
         ]
       }
+      task_workers: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_workers_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           actual_hours: number | null
+          approved_at: string | null
+          approved_by: string | null
           assigned_by: string | null
           assigned_to: string | null
           attachments: string[] | null
@@ -655,6 +689,7 @@ export type Database = {
           phase_id: string | null
           priority: Database["public"]["Enums"]["task_priority"]
           project_id: string
+          signature_url: string | null
           status: Database["public"]["Enums"]["task_status"]
           tags: string[] | null
           title: string
@@ -662,6 +697,8 @@ export type Database = {
         }
         Insert: {
           actual_hours?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
           assigned_by?: string | null
           assigned_to?: string | null
           attachments?: string[] | null
@@ -673,6 +710,7 @@ export type Database = {
           phase_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id: string
+          signature_url?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[] | null
           title: string
@@ -680,6 +718,8 @@ export type Database = {
         }
         Update: {
           actual_hours?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
           assigned_by?: string | null
           assigned_to?: string | null
           attachments?: string[] | null
@@ -691,6 +731,7 @@ export type Database = {
           phase_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string
+          signature_url?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[] | null
           title?: string
