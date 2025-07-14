@@ -278,13 +278,10 @@ export function useDeleteProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      // For now, return mock success - this would need to be implemented
-      // when we add delete functionality
-      return { success: true };
-    },
+    mutationFn: (id: string) => projectService.deleteProject(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['accessible-projects'] });
     },
   });
 }

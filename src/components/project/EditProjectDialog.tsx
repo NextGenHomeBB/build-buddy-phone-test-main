@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigate } from 'react-router-dom';
 import * as z from 'zod';
 import {
   Dialog,
@@ -62,6 +63,7 @@ interface EditProjectDialogProps {
 
 export function EditProjectDialog({ children, project }: EditProjectDialogProps) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const { mutate: updateProject, isPending } = useUpdateProject();
   const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
   const { toast } = useToast();
@@ -118,6 +120,8 @@ export function EditProjectDialog({ children, project }: EditProjectDialogProps)
           description: 'Project deleted successfully',
         });
         setOpen(false);
+        // Navigate back to projects list after successful deletion
+        navigate('/projects');
       },
       onError: (error) => {
         toast({
