@@ -79,7 +79,7 @@ function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, 
   const handleTaskClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Task assignment clicked for worker:', worker);
+    console.log('🎯 Task assignment button clicked for worker:', worker);
     if (onClick) {
       onClick();
     }
@@ -89,23 +89,29 @@ function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, 
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className="flex items-center gap-1 group"
     >
-      <Badge
-        variant={worker.is_assistant ? "outline" : isFromSchedule ? "default" : "secondary"}
-        className="flex-1 p-2 cursor-grab hover:bg-secondary/80 transition-colors"
+      {/* Draggable Badge Area - Only this part has drag listeners */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="flex-1"
       >
-        {displayName}
-        {worker.is_assistant && " (assist)"}
-        {isFromSchedule && scheduleItemId && " 🔗"}
-      </Badge>
+        <Badge
+          variant={worker.is_assistant ? "outline" : isFromSchedule ? "default" : "secondary"}
+          className="w-full p-2 cursor-grab hover:bg-secondary/80 transition-colors"
+        >
+          {displayName}
+          {worker.is_assistant && " (assist)"}
+          {isFromSchedule && scheduleItemId && " 🔗"}
+        </Badge>
+      </div>
       
+      {/* Task Assignment Button - Separate from drag area */}
       {onClick && (
         <button
           onClick={handleTaskClick}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-secondary rounded-full"
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-secondary rounded-full shrink-0"
           title="Click to assign tasks"
         >
           <Settings className="h-3 w-3" />
