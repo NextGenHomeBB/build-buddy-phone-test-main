@@ -29,6 +29,7 @@ import { useSchedule, useUnassignedWorkers, useUpdateWorkerAssignment, useUpsert
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
 import { PasteScheduleModal } from './PasteScheduleModal';
 import { ProjectScheduleAssignment } from '@/components/ProjectScheduleAssignment';
+import { ProjectSelectionDialog } from '@/components/ProjectSelectionDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useDebouncedCallback } from 'use-debounce';
@@ -184,6 +185,7 @@ function DroppableScheduleItem({ item, onWorkerClick }: {
 export default function SchedulePlanner() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [pasteModalOpen, setPasteModalOpen] = useState(false);
+  const [projectSelectionOpen, setProjectSelectionOpen] = useState(false);
   const [activeWorker, setActiveWorker] = useState<DraggableWorker | null>(null);
   const [isCreatingSample, setIsCreatingSample] = useState(false);
   const [projectAssignmentModal, setProjectAssignmentModal] = useState<{
@@ -224,23 +226,23 @@ export default function SchedulePlanner() {
     1000
   );
 
-  // Create schedule from real projects
-  const createScheduleFromProjects = useCallback(async () => {
+  // Create schedule from selected projects
+  const createScheduleFromProjects = useCallback(async (selectedProjectIds: string[]) => {
     setIsCreatingSample(true);
     try {
-      // Fetch real projects from database
+      // Fetch selected projects from database
       const { data: projects, error } = await supabase
         .from('projects')
         .select('id, name, location, status')
-        .in('status', ['planning', 'active'])
-        .limit(3);
+        .in('id', selectedProjectIds)
+        .in('status', ['planning', 'active']);
 
       if (error) throw error;
 
       if (!projects || projects.length === 0) {
         toast({
-          title: "No projects found",
-          description: "Create some projects first to generate schedule items",
+          title: "No valid projects found",
+          description: "Selected projects may not be in active or planning status",
           variant: "destructive"
         });
         return;
@@ -248,14 +250,14 @@ export default function SchedulePlanner() {
 
       const scheduleItems = projects.map((project, index) => ({
         address: project.location,
-        category: index === 0 ? 'normal' as const : 
-                 index === 1 ? 'materials' as const : 'specials' as const,
-        startTime: index === 0 ? "09:00" : 
-                  index === 1 ? "13:00" : "08:00",
-        endTime: index === 0 ? "12:00" : 
-                index === 1 ? "17:00" : "16:00",
+        category: index % 3 === 0 ? 'normal' as const : 
+                 index % 3 === 1 ? 'materials' as const : 'specials' as const,
+        startTime: index % 3 === 0 ? "09:00" : 
+                  index % 3 === 1 ? "13:00" : "08:00",
+        endTime: index % 3 === 0 ? "12:00" : 
+                index % 3 === 1 ? "17:00" : "16:00",
         workers: [],
-        projectId: project.id // Add project reference
+        projectId: project.id
       }));
 
       const scheduleData = {
@@ -266,8 +268,8 @@ export default function SchedulePlanner() {
 
       await upsertSchedule.mutateAsync(scheduleData);
       toast({
-        title: "Schedule created from projects",
-        description: `Created ${projects.length} schedule items from real projects`
+        title: "Schedule created from selected projects",
+        description: `Created ${projects.length} schedule items from your selected projects`
       });
     } catch (error) {
       console.error('Error creating schedule:', error);
@@ -278,6 +280,7 @@ export default function SchedulePlanner() {
       });
     } finally {
       setIsCreatingSample(false);
+      setProjectSelectionOpen(false);
     }
   }, [selectedDate, upsertSchedule, toast]);
 
@@ -412,7 +415,7 @@ export default function SchedulePlanner() {
             </Popover>
             
             <Button 
-              onClick={createScheduleFromProjects}
+              onClick={() => setProjectSelectionOpen(true)}
               disabled={isCreatingSample}
               variant="outline"
             >
@@ -511,11 +514,11 @@ export default function SchedulePlanner() {
                     <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold text-muted-foreground">No Schedule Items</h3>
                     <p className="text-sm text-muted-foreground mt-2 text-center mb-4">
-                      Create some schedule items to test drag & drop functionality.
+                      Create schedule items from your projects to start drag & drop functionality.
                     </p>
                     <div className="flex gap-2">
                       <Button 
-                        onClick={createScheduleFromProjects}
+                        onClick={() => setProjectSelectionOpen(true)}
                         disabled={isCreatingSample}
                         size="sm"
                       >
@@ -558,6 +561,14 @@ export default function SchedulePlanner() {
           </div>
         )}
       </DragOverlay>
+
+      {/* Project Selection Modal */}
+      <ProjectSelectionDialog
+        open={projectSelectionOpen}
+        onOpenChange={setProjectSelectionOpen}
+        onProjectsSelected={createScheduleFromProjects}
+        isCreating={isCreatingSample}
+      />
 
       {/* Paste Schedule Modal */}
       <PasteScheduleModal 
