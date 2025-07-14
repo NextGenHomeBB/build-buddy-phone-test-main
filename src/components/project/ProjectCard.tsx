@@ -11,7 +11,7 @@ interface ProjectCardProps {
     id: string;
     name: string;
     description: string;
-    status: "planning" | "active" | "review" | "completed" | "delayed";
+    status: "planning" | "active" | "on-hold" | "completed" | "cancelled";
     progress: number;
     dueDate: string;
     teamSize: number;
@@ -24,9 +24,9 @@ interface ProjectCardProps {
 const statusConfig = {
   planning: { label: "Planning", variant: "secondary" as const, color: "bg-muted" },
   active: { label: "Active", variant: "default" as const, color: "bg-primary" },
-  review: { label: "In Review", variant: "outline" as const, color: "bg-warning" },
+  "on-hold": { label: "On Hold", variant: "outline" as const, color: "bg-warning" },
   completed: { label: "Completed", variant: "secondary" as const, color: "bg-success" },
-  delayed: { label: "Delayed", variant: "destructive" as const, color: "bg-destructive" },
+  cancelled: { label: "Cancelled", variant: "destructive" as const, color: "bg-destructive" },
 };
 
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
