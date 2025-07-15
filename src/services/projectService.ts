@@ -61,6 +61,8 @@ export const projectService = {
   },
 
   async getProject(id: string) {
+    console.log('🔍 getProject called for ID:', id);
+    
     const { data, error } = await supabase
       .from('projects')
       .select(`
@@ -74,9 +76,20 @@ export const projectService = {
       `)
       .eq('id', id)
       .order('created_at', { ascending: true, referencedTable: 'project_phases' })
-      .single();
+      .maybeSingle();
     
-    if (error) throw error;
+    console.log('📊 getProject result:', { data, error, projectId: id });
+    
+    if (error) {
+      console.error('❌ getProject error:', error);
+      throw error;
+    }
+    
+    if (!data) {
+      console.warn('⚠️ Project not found:', id);
+      throw new Error(`Project with ID ${id} not found`);
+    }
+    
     return data;
   },
 

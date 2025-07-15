@@ -33,8 +33,19 @@ export function useAccessibleProjects() {
 export function useProject(id: string) {
   return useQuery({
     queryKey: ['projects', id],
-    queryFn: () => projectService.getProject(id),
+    queryFn: async () => {
+      console.log('🎣 useProject hook executing for:', id);
+      try {
+        const result = await projectService.getProject(id);
+        console.log('✅ useProject success:', result?.name);
+        return result;
+      } catch (error) {
+        console.error('❌ useProject error:', error);
+        throw error;
+      }
+    },
     enabled: !!id,
+    retry: 1,
   });
 }
 
