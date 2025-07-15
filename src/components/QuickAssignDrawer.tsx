@@ -495,9 +495,7 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
           </SheetDescription>
         </SheetHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 flex-1 overflow-hidden">
-          <MainContent />
-        </div>
+        <MainContent />
       </SheetContent>
     </Sheet>
   );
