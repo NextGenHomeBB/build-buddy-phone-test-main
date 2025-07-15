@@ -302,9 +302,9 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
               </div>
             </div>
 
-            <ScrollArea className="h-80">
+            <ScrollArea className="flex-1 max-h-[400px]">
               {workersLoading ? (
-                <div className="space-y-3">
+                <div className="space-y-3 p-2">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="flex items-center space-x-3 p-3">
                       <div className="h-10 w-10 bg-muted rounded-full animate-pulse" />
@@ -321,7 +321,7 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
                   <p className="text-muted-foreground">No workers found</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 p-2">
                   {filteredWorkers.map((worker) => (
                     <div
                       key={worker.id}
