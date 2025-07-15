@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, DollarSign, MapPin, Users, Plus, Search, Filter } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, Users, Plus, Search, Filter, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { CreateProjectDialog } from '@/components/project/CreateProjectDialog';
 import { QuickAssignDrawer } from '@/components/QuickAssignDrawer';
@@ -20,6 +20,13 @@ export default function Projects() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+
+  const handleDeleteProject = (projectId: string, projectName: string) => {
+    if (confirm(`Are you sure you want to delete the project "${projectName}"? This action cannot be undone.`)) {
+      // TODO: Implement actual delete functionality
+      console.log('Deleting project:', projectId);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -184,7 +191,7 @@ export default function Projects() {
         {!isLoading && filteredProjects.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => (
-              <Card key={project.id} className="hover:shadow-lg transition-shadow">
+              <Card key={project.id} className="group hover:shadow-lg transition-all duration-200 relative">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">
@@ -194,9 +201,25 @@ export default function Projects() {
                         {project.location}
                       </CardDescription>
                     </div>
-                    <Badge className={getStatusColor(project.status)} variant="secondary">
-                      {project.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(project.status)} variant="secondary">
+                        {project.status}
+                      </Badge>
+                      {canCreateProject() && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleDeleteProject(project.id, project.name);
+                          }}
+                          title={`Delete ${project.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 
