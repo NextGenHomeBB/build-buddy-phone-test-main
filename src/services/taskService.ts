@@ -24,7 +24,8 @@ export const taskService = {
       `);
 
     if (userId) {
-      query = query.eq('assigned_to', userId);
+      // Filter tasks where user is assigned directly OR is in task_workers
+      query = query.or(`assigned_to.eq.${userId},workers.user_id.eq.${userId}`);
     }
 
     if (filters?.status?.length) {
