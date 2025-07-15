@@ -14,68 +14,67 @@ import { QuickAssignDrawer } from '@/components/QuickAssignDrawer';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useAccessibleProjects, useDeleteProject } from '@/hooks/useProjects';
 import { useToast } from '@/hooks/use-toast';
-
 export default function Projects() {
-  const { data: projects, isLoading, error } = useAccessibleProjects();
-  const { canCreateProject } = useRoleAccess();
+  const {
+    data: projects,
+    isLoading,
+    error
+  } = useAccessibleProjects();
+  const {
+    canCreateProject
+  } = useRoleAccess();
   const deleteProject = useDeleteProject();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-
   const handleDeleteProject = async (projectId: string, projectName: string) => {
     if (confirm(`Are you sure you want to delete the project "${projectName}"? This action cannot be undone.`)) {
       try {
         await deleteProject.mutateAsync(projectId);
         toast({
           title: "Project deleted",
-          description: `"${projectName}" has been successfully deleted.`,
+          description: `"${projectName}" has been successfully deleted.`
         });
       } catch (error) {
         console.error('Error deleting project:', error);
         toast({
           title: "Delete failed",
           description: "Failed to delete the project. Please try again.",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
     }
   };
-
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active': 
+      case 'active':
         return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'completed': 
+      case 'completed':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-      case 'on-hold': 
+      case 'on-hold':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-      case 'cancelled': 
+      case 'cancelled':
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       case 'planning':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-      default: 
+      default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
     }
   };
 
   // Filter projects based on search and filters
   const filteredProjects = projects?.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) || project.location.toLowerCase().includes(searchTerm.toLowerCase()) || project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     const matchesType = typeFilter === 'all' || project.type === typeFilter;
-    
     return matchesSearch && matchesStatus && matchesType;
   }) || [];
-
   if (error) {
     console.error('Projects error:', error);
-    return (
-      <AppLayout>
+    return <AppLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center space-y-4">
             <h3 className="text-lg font-semibold text-destructive">Error loading projects</h3>
@@ -85,12 +84,9 @@ export default function Projects() {
             </Button>
           </div>
         </div>
-      </AppLayout>
-    );
+      </AppLayout>;
   }
-
-  return (
-    <AppLayout>
+  return <AppLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -101,26 +97,19 @@ export default function Projects() {
             </p>
           </div>
           
-          {canCreateProject() && (
-            <CreateProjectDialog>
+          {canCreateProject() && <CreateProjectDialog>
               <Button size="lg">
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
               </Button>
-            </CreateProjectDialog>
-          )}
+            </CreateProjectDialog>}
         </div>
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search projects..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <Input placeholder="Search projects..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
           
           <div className="flex gap-2">
@@ -154,10 +143,8 @@ export default function Projects() {
         </div>
 
         {/* Loading State */}
-        {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
+        {isLoading && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => <Card key={i} className="animate-pulse">
                 <CardHeader>
                   <div className="h-4 bg-muted rounded w-3/4"></div>
                   <div className="h-3 bg-muted rounded w-1/2"></div>
@@ -169,14 +156,11 @@ export default function Projects() {
                     <div className="h-8 bg-muted rounded"></div>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+              </Card>)}
+          </div>}
 
         {/* Empty State */}
-        {!isLoading && filteredProjects.length === 0 && (
-          <Card>
+        {!isLoading && filteredProjects.length === 0 && <Card>
             <CardContent className="py-12 text-center">
               <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
                 <Calendar className="w-12 h-12 text-muted-foreground" />
@@ -185,28 +169,20 @@ export default function Projects() {
                 {projects?.length === 0 ? 'No projects yet' : 'No matching projects'}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {projects?.length === 0 
-                  ? 'Create your first project to get started with project management.'
-                  : 'Try adjusting your search criteria to find what you\'re looking for.'
-                }
+                {projects?.length === 0 ? 'Create your first project to get started with project management.' : 'Try adjusting your search criteria to find what you\'re looking for.'}
               </p>
-              {projects?.length === 0 && canCreateProject() && (
-                <CreateProjectDialog>
+              {projects?.length === 0 && canCreateProject() && <CreateProjectDialog>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     Create First Project
                   </Button>
-                </CreateProjectDialog>
-              )}
+                </CreateProjectDialog>}
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Projects Grid */}
-        {!isLoading && filteredProjects.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <Card key={project.id} className="group hover:shadow-lg transition-all duration-200 relative">
+        {!isLoading && filteredProjects.length > 0 && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProjects.map(project => <Card key={project.id} className="group hover:shadow-lg transition-all duration-200 relative">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">
@@ -220,20 +196,12 @@ export default function Projects() {
                       <Badge className={getStatusColor(project.status)} variant="secondary">
                         {project.status}
                       </Badge>
-                      {canCreateProject() && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleDeleteProject(project.id, project.name);
-                          }}
-                          title={`Delete ${project.name}`}
-                        >
+                      {canCreateProject() && <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={e => {
+                  e.preventDefault();
+                  handleDeleteProject(project.id, project.name);
+                }} title={`Delete ${project.name}`}>
                           <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                        </Button>}
                     </div>
                   </div>
                 </CardHeader>
@@ -275,31 +243,20 @@ export default function Projects() {
                     </Link>
                   </Button>
                 </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+              </Card>)}
+          </div>}
 
         {/* Results summary */}
-        {!isLoading && filteredProjects.length > 0 && (
-          <div className="text-center text-sm text-muted-foreground">
+        {!isLoading && filteredProjects.length > 0 && <div className="text-center text-sm text-muted-foreground">
             Showing {filteredProjects.length} of {projects?.length || 0} projects
-          </div>
-        )}
+          </div>}
 
         {/* Quick Assign FAB */}
-        {canCreateProject() && (
-          <QuickAssignDrawer>
-            <Button
-              size="lg"
-              className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-2xl hover:shadow-3xl z-50 p-0 bg-primary hover:bg-primary/90 border-2 border-background"
-              title="Quick Assign Tasks"
-            >
-              <Users className="h-7 w-7" />
+        {canCreateProject() && <QuickAssignDrawer>
+            <Button size="lg" title="Quick Assign Tasks" className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0 py-0 my-[50px]">
+              <Users className="h-6 w-6" />
             </Button>
-          </QuickAssignDrawer>
-        )}
+          </QuickAssignDrawer>}
       </div>
-    </AppLayout>
-  );
+    </AppLayout>;
 }
