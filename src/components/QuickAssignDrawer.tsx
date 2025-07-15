@@ -213,8 +213,8 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         {children}
       </SheetTrigger>
       
-      <SheetContent side="bottom" className="h-[80vh] sm:max-w-none">
-        <SheetHeader>
+      <SheetContent side="bottom" className="h-[85vh] sm:max-w-none flex flex-col">
+        <SheetHeader className="flex-shrink-0">
           <SheetTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
             Quick Assign Tasks
@@ -224,7 +224,7 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
           </SheetDescription>
         </SheetHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 flex-1 overflow-hidden">
           {/* Left Panel - Tasks */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
