@@ -25,7 +25,7 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
   const [parseError, setParseError] = useState<string | null>(null);
   const [newItemsPreview, setNewItemsPreview] = useState<{newProjects: string[], newWorkers: string[]} | null>(null);
   
-  const importSchedule = useImportSchedule();
+  const importScheduleMutation = useImportSchedule();
   const newItemsPreviewMutation = useNewItemsPreview();
   const { toast } = useToast();
 
@@ -80,7 +80,7 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
         }))
       };
       
-      const result = await importSchedule.mutateAsync(payload);
+      const result = await importScheduleMutation.mutateAsync(payload);
       console.log('✅ Schedule imported successfully:', result);
       
       // Reset form and close modal
@@ -106,7 +106,7 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
     open,
     hasScheduleText: !!scheduleText.trim(),
     hasParsedSchedule: !!parsedSchedule,
-    isImporting: importSchedule.isPending,
+    isImporting: importScheduleMutation.isPending,
     parseError
   });
 
@@ -140,10 +140,10 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
             {parsedSchedule && (
               <Button 
                 onClick={handleImportSchedule}
-                disabled={importSchedule.isPending}
+                disabled={importScheduleMutation.isPending}
                 className="ml-auto"
               >
-                {importSchedule.isPending ? 'Importing...' : 'Import Schedule'}
+                {importScheduleMutation.isPending ? 'Importing...' : 'Import Schedule'}
               </Button>
             )}
           </div>
