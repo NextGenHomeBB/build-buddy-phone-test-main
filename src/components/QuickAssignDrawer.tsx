@@ -359,7 +359,7 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
           <List
             height={isMobile ? 350 : 400}
             width="100%"
-            itemCount={currentItems.length}
+            itemCount={Math.min(currentItems.length, 3)}
             itemSize={isMobile ? 80 : 70}
             itemData={itemRowData}
           >
