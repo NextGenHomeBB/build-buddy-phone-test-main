@@ -24,11 +24,11 @@ export default function Dashboard() {
     progress: project.progress,
     dueDate: new Date(project.end_date).toLocaleDateString('en-US', { 
       month: 'short', 
-      year: 'numeric' 
+      day: 'numeric'
     }),
-    teamSize: 0, // This would need to be calculated from project team members
+    teamSize: project.user_project_roles?.length || 0,
     currentPhase: project.phases?.[0]?.name || "Not started",
-    urgentTasks: 0, // This would need to be calculated from tasks
+    urgentTasks: project.tasks?.filter(task => task.priority === 'urgent' && task.status !== 'completed')?.length || 0,
   }));
 
   const filteredProjects = transformedProjects.filter(project =>
