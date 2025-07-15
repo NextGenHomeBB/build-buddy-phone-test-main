@@ -221,7 +221,7 @@ export default function Projects() {
                         <Calendar className="w-3 h-3" />
                         <span>Start Date</span>
                       </div>
-                      <p className="font-medium">
+                      <p className="font-medium my-[50px]">
                         {format(new Date(project.start_date), 'MMM d, yyyy')}
                       </p>
                     </div>
