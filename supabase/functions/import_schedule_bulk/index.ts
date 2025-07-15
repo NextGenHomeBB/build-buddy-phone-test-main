@@ -1,11 +1,7 @@
+// deno-lint-ignore-file
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.6";
 import { v4 as uuidv4 } from "https://deno.land/std@0.203.0/uuid/mod.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -13,59 +9,59 @@ const supabase = createClient(
 );
 
 async function logFailure(detail: unknown) {
-  try {
-    await supabase
-      .from("function_errors")
-      .insert({
-        id: uuidv4(),
-        fn: "import_schedule_bulk",
-        detail,
-      });
-  } catch (err) {
-    console.error("Failed to log error:", err);
-  }
+  console.error("Logging failure to function_errors:", detail);
+  await supabase.from("function_errors").insert({
+    id: uuidv4(),
+    fn: "import_schedule_bulk",
+    detail,
+  });
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      }
+    });
   }
 
   try {
     console.log("Import schedule bulk request received");
+    const body = await req.json();           // { workDate, scheduleItems }
+    console.log("Request payload:", JSON.stringify(body, null, 2));
     
-    const body = await req.json();
-    console.log("Request body:", JSON.stringify(body, null, 2));
-    
-    if (!body.workDate || !body.scheduleItems) {
-      throw new Error("Missing required fields: workDate and scheduleItems");
-    }
-
     const { data, error } = await supabase
       .rpc("import_schedule_tx", { payload: body });
 
     console.log("Database function result:", { data, error });
 
     if (error || !data?.success) {
-      const errorDetail = error ?? data;
-      const errorMessage = error?.message ?? data?.error ?? "Import function failed";
+      const errorDetail = {
+        database_error: error,
+        function_result: data,
+        request_payload: body,
+        timestamp: new Date().toISOString()
+      };
       
-      console.error("Import failed:", errorDetail);
+      console.error("Import failed with details:", errorDetail);
       await logFailure(errorDetail);
       
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: errorMessage,
-          detail: errorDetail
+        JSON.stringify({
+          success: false,
+          message: error?.message ?? data?.error ?? "Unknown failure",
+          detail: errorDetail,
+          sql_error: error?.code ? `${error.code}: ${error.message}` : undefined
         }),
-        { 
-          status: 200,  // Always return 200 to avoid edge function errors
-          headers: { 
+        {
+          status: 200,                                       // always 200
+          headers: {
             "Content-Type": "application/json",
-            ...corsHeaders
-          }
+            "Access-Control-Allow-Origin": "*",
+          },
         }
       );
     }
@@ -75,26 +71,32 @@ serve(async (req) => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders
+        "Access-Control-Allow-Origin": "*",
       },
     });
-
   } catch (err) {
-    console.error("Unhandled error:", err);
-    await logFailure(err);
+    const errorDetail = {
+      error: err,
+      error_message: String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error("Unhandled error:", errorDetail);
+    await logFailure(errorDetail);
     
     return new Response(
       JSON.stringify({ 
         success: false, 
         message: String(err),
-        detail: err
+        detail: errorDetail
       }),
-      { 
-        status: 200,  // Always return 200 to avoid edge function errors
-        headers: { 
+      {
+        status: 200,
+        headers: {
           "Content-Type": "application/json",
-          ...corsHeaders
-        }
+          "Access-Control-Allow-Origin": "*",
+        },
       }
     );
   }

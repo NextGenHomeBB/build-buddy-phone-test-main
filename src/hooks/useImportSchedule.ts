@@ -62,12 +62,27 @@ export function useImportSchedule() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['unassigned-workers'] });
     },
-    onError: (error: Error) => {
+    onError: (error: Error & { detail?: any; sql_error?: string }) => {
       console.error("Import error:", error);
       
+      // Extract more detailed error information
+      const errorMessage = error.message || "Import failed";
+      const sqlError = error.sql_error;
+      const hasDetailedError = error.detail?.database_error || error.detail?.function_result;
+      
+      let description = errorMessage;
+      if (sqlError) {
+        description = `SQL Error: ${sqlError}`;
+      } else if (hasDetailedError) {
+        const dbError = error.detail.database_error;
+        if (dbError?.message) {
+          description = `Database Error: ${dbError.message}`;
+        }
+      }
+      
       toast({
-        title: "Import failed",
-        description: error.message,
+        title: "Schedule import failed",
+        description,
         variant: "destructive",
       });
     },
