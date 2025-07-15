@@ -47,8 +47,28 @@ export const RequireAccess = ({
   }, [access, isLoading, error, navigate, rolesAllowed]);
 
   // Show loading or nothing while checking access
-  if (isLoading || !access) {
-    return null;
+  if (isLoading) {
+    return <div className="p-4 text-center">Checking access...</div>;
+  }
+
+  // Show error if access check failed
+  if (error) {
+    console.error('Access check error:', error);
+    return (
+      <div className="p-4 text-center text-destructive">
+        Access check failed: {error.message}
+      </div>
+    );
+  }
+
+  // Show message if no access data
+  if (!access) {
+    console.warn('No access data returned');
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        Access denied: No permission data
+      </div>
+    );
   }
 
   // If we get here, access is granted
