@@ -18,9 +18,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useUnassignedTasks, useBulkAssign } from '@/hooks/useTasks';
+import { useUnassignedChecklistItems } from '@/hooks/useUnassignedChecklistItems';
+import { useBulkAssignChecklistItems } from '@/hooks/useBulkAssignChecklistItems';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Users, Search, CheckSquare, UserPlus, Zap } from 'lucide-react';
+import { Users, Search, CheckSquare, UserPlus, Zap, ListTodo, ClipboardList } from 'lucide-react';
 import { FixedSizeList as List } from 'react-window';
 
 interface Worker {
@@ -39,18 +41,36 @@ interface Task {
   priority: string;
 }
 
+interface ChecklistItem {
+  id: string;
+  title: string;
+  description?: string;
+  project: { name: string } | null;
+  checklist: { name: string } | null;
+  priority?: string;
+  projectChecklistId: string;
+}
+
+type AssignableItem = Task | ChecklistItem;
+
+function isChecklistItem(item: AssignableItem): item is ChecklistItem {
+  return 'checklist' in item && 'projectChecklistId' in item;
+}
+
 interface QuickAssignDrawerProps {
   projectId?: string;
   children: React.ReactNode;
 }
 
-const TaskRow = ({ index, style, data }: { 
+type AssignMode = 'tasks' | 'checklist';
+
+const ItemRow = ({ index, style, data }: { 
   index: number; 
   style: any; 
-  data: { tasks: Task[]; selectedTasks: Set<string>; onTaskToggle: (id: string) => void; isMobile: boolean; } 
+  data: { items: AssignableItem[]; selectedItems: Set<string>; onItemToggle: (id: string) => void; isMobile: boolean; } 
 }) => {
-  const task = data.tasks[index];
-  const isSelected = data.selectedTasks.has(task.id);
+  const item = data.items[index];
+  const isSelected = data.selectedItems.has(item.id);
 
   return (
     <div style={style} className="px-2">
@@ -58,7 +78,7 @@ const TaskRow = ({ index, style, data }: {
         className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors touch-manipulation ${
           isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
         } ${data.isMobile ? 'min-h-[60px]' : ''}`}
-        onClick={() => data.onTaskToggle(task.id)}
+        onClick={() => data.onItemToggle(item.id)}
       >
         <Checkbox 
           checked={isSelected} 
@@ -67,14 +87,14 @@ const TaskRow = ({ index, style, data }: {
         />
         <div className="flex-1 min-w-0">
           <h4 className={`font-medium truncate ${data.isMobile ? 'text-base' : 'text-sm'}`}>
-            {task.title}
+            {item.title}
           </h4>
           <p className={`text-muted-foreground truncate ${data.isMobile ? 'text-sm' : 'text-xs'}`}>
-            {task.project?.name} {task.phase && `• ${task.phase.name}`}
+            {item.project?.name} {isChecklistItem(item) ? `• ${item.checklist?.name}` : item.phase && `• ${item.phase.name}`}
           </p>
         </div>
         <Badge variant="outline" className={data.isMobile ? 'text-sm px-2' : 'text-xs'}>
-          {task.priority}
+          {item.priority || 'medium'}
         </Badge>
       </div>
     </div>
@@ -83,15 +103,19 @@ const TaskRow = ({ index, style, data }: {
 
 export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProps) {
   const [open, setOpen] = useState(false);
-  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [assignMode, setAssignMode] = useState<AssignMode>('checklist');
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Fetch unassigned tasks using the new hook
+  // Fetch unassigned tasks and checklist items
   const { data: tasks = [], isLoading: tasksLoading } = useUnassignedTasks(projectId || '');
-  const isTasksEnabled = open && !!projectId;
+  const { data: checklistItems = [], isLoading: checklistLoading } = useUnassignedChecklistItems(projectId || '');
+  
+  const currentItems = assignMode === 'tasks' ? tasks : checklistItems;
+  const isLoading = assignMode === 'tasks' ? tasksLoading : checklistLoading;
 
   // Fetch project workers
   const { data: workers = [], isLoading: workersLoading } = useQuery({
@@ -142,6 +166,7 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
   });
 
   const bulkAssignMutation = useBulkAssign();
+  const bulkAssignChecklistMutation = useBulkAssignChecklistItems();
 
   const filteredWorkers = useMemo(() => {
     if (!searchQuery) return workers;
@@ -150,68 +175,91 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
     );
   }, [workers, searchQuery]);
 
-  const handleTaskToggle = useCallback((taskId: string) => {
-    setSelectedTasks(prev => {
+  const handleItemToggle = useCallback((itemId: string) => {
+    setSelectedItems(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(taskId)) {
-        newSet.delete(taskId);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
       } else {
-        newSet.add(taskId);
+        newSet.add(itemId);
       }
       return newSet;
     });
   }, []);
 
   const handleSelectAll = useCallback(() => {
-    setSelectedTasks(new Set(tasks.map(task => task.id)));
-  }, [tasks]);
+    setSelectedItems(new Set(currentItems.map(item => item.id)));
+  }, [currentItems]);
 
   const handleDeselectAll = useCallback(() => {
-    setSelectedTasks(new Set());
+    setSelectedItems(new Set());
+  }, []);
+
+  const handleModeChange = useCallback((mode: AssignMode) => {
+    setAssignMode(mode);
+    setSelectedItems(new Set());
+    setSelectedWorker(null);
   }, []);
 
   const handleAssign = async () => {
-    if (!selectedWorker || selectedTasks.size === 0) {
+    if (!selectedWorker || selectedItems.size === 0) {
       toast({
         title: "Selection Required",
-        description: "Please select tasks and a worker to assign them to.",
+        description: `Please select ${assignMode === 'tasks' ? 'tasks' : 'checklist items'} and a worker to assign them to.`,
         variant: "destructive",
       });
       return;
     }
 
     try {
-      const assignments = Array.from(selectedTasks).map(taskId => ({
-        taskId,
-        userIds: [selectedWorker.id],
-        primaryId: selectedWorker.id
-      }));
+      if (assignMode === 'tasks') {
+        const assignments = Array.from(selectedItems).map(taskId => ({
+          taskId,
+          userIds: [selectedWorker.id],
+          primaryId: selectedWorker.id
+        }));
 
-      await bulkAssignMutation.mutateAsync({ assignments });
+        await bulkAssignMutation.mutateAsync({ assignments });
+      } else {
+        // Group items by project checklist ID
+        const checklistAssignments = Array.from(selectedItems).map(itemId => {
+          const item = checklistItems.find(ci => ci.id === itemId);
+          if (!item) throw new Error(`Checklist item ${itemId} not found`);
+          
+          return {
+            projectChecklistId: item.projectChecklistId,
+            itemId: itemId,
+            userId: selectedWorker.id
+          };
+        });
 
+        await bulkAssignChecklistMutation.mutateAsync({ assignments: checklistAssignments });
+      }
+
+      const itemType = assignMode === 'tasks' ? 'tasks' : 'checklist items';
       toast({
-        title: "Tasks Assigned",
-        description: `Successfully assigned ${selectedTasks.size} tasks to ${selectedWorker.name}`,
+        title: `${assignMode === 'tasks' ? 'Tasks' : 'Checklist Items'} Assigned`,
+        description: `Successfully assigned ${selectedItems.size} ${itemType} to ${selectedWorker.name}`,
       });
 
-      setSelectedTasks(new Set());
+      setSelectedItems(new Set());
       setSelectedWorker(null);
       setOpen(false);
     } catch (error) {
       toast({
         title: "Assignment Failed",
-        description: "Failed to assign tasks. Please try again.",
+        description: `Failed to assign ${assignMode === 'tasks' ? 'tasks' : 'checklist items'}. Please try again.`,
         variant: "destructive",
       });
     }
   };
 
-  const taskRowData = useMemo(() => ({
-    tasks,
-    selectedTasks,
-    onTaskToggle: handleTaskToggle,
+  const itemRowData = useMemo(() => ({
+    items: currentItems,
+    selectedItems,
+    onItemToggle: handleItemToggle,
     isMobile
-  }), [tasks, selectedTasks, handleTaskToggle, isMobile]);
+  }), [currentItems, selectedItems, handleItemToggle, isMobile]);
 
   const MainContent = () => (
     <div className="flex flex-col h-full">
@@ -219,12 +267,34 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         <div className="flex items-center gap-2 mb-2">
           <Zap className="h-5 w-5" />
           <h2 className={`font-semibold ${isMobile ? 'text-lg' : 'text-xl'}`}>
-            Quick Assign Tasks
+            Quick Assign {assignMode === 'tasks' ? 'Tasks' : 'Checklist Items'}
           </h2>
         </div>
         <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-base'}`}>
-          Bulk assign unassigned tasks to workers efficiently
+          Bulk assign unassigned {assignMode === 'tasks' ? 'tasks' : 'checklist items'} to workers efficiently
         </p>
+        
+        {/* Mode Toggle */}
+        <div className="flex gap-2 mt-3">
+          <Button
+            variant={assignMode === 'checklist' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleModeChange('checklist')}
+            className="gap-2"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Checklist Items ({checklistItems.length})
+          </Button>
+          <Button
+            variant={assignMode === 'tasks' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleModeChange('tasks')}
+            className="gap-2"
+          >
+            <ListTodo className="h-4 w-4" />
+            Tasks ({tasks.length})
+          </Button>
+        </div>
       </div>
 
       {/* Search Worker - Sticky on mobile */}
@@ -241,18 +311,18 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
       </div>
 
       <div className={`grid gap-6 flex-1 overflow-hidden ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
-        {/* Tasks Section */}
+        {/* Items Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
-              Unassigned Tasks
+              Unassigned {assignMode === 'tasks' ? 'Tasks' : 'Checklist Items'}
             </h3>
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
                 size={isMobile ? 'sm' : 'sm'}
                 onClick={handleSelectAll}
-                disabled={tasks.length === 0}
+                disabled={currentItems.length === 0}
                 className={isMobile ? 'h-9 px-3 text-sm' : ''}
               >
                 All
@@ -261,7 +331,7 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
                 variant="outline" 
                 size={isMobile ? 'sm' : 'sm'}
                 onClick={handleDeselectAll}
-                disabled={selectedTasks.size === 0}
+                disabled={selectedItems.size === 0}
                 className={isMobile ? 'h-9 px-3 text-sm' : ''}
               >
                 Clear
@@ -269,38 +339,38 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
             </div>
           </div>
 
-          {tasksLoading ? (
+          {isLoading ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className={`bg-muted rounded-lg animate-pulse ${isMobile ? 'h-16' : 'h-14'}`} />
               ))}
             </div>
-          ) : tasks.length === 0 ? (
+          ) : currentItems.length === 0 ? (
             <div className="text-center py-12">
               <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h4 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>
-                All Tasks Assigned
+                All {assignMode === 'tasks' ? 'Tasks' : 'Checklist Items'} Assigned
               </h4>
               <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-base'}`}>
-                No unassigned tasks found for this project.
+                No unassigned {assignMode === 'tasks' ? 'tasks' : 'checklist items'} found for this project.
               </p>
             </div>
           ) : (
           <List
             height={isMobile ? 350 : 400}
             width="100%"
-            itemCount={tasks.length}
+            itemCount={currentItems.length}
             itemSize={isMobile ? 80 : 70}
-            itemData={taskRowData}
+            itemData={itemRowData}
           >
-            {TaskRow}
+            {ItemRow}
           </List>
           )}
 
-          {selectedTasks.size > 0 && (
+          {selectedItems.size > 0 && (
             <div className="bg-primary/10 p-3 rounded-lg">
               <p className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                {selectedTasks.size} task{selectedTasks.size !== 1 ? 's' : ''} selected
+                {selectedItems.size} {assignMode === 'tasks' ? 'task' : 'item'}{selectedItems.size !== 1 ? 's' : ''} selected
               </p>
             </div>
           )}
@@ -388,15 +458,15 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         </Button>
         <Button 
           onClick={handleAssign}
-          disabled={selectedTasks.size === 0 || !selectedWorker || bulkAssignMutation.isPending}
+          disabled={selectedItems.size === 0 || !selectedWorker || bulkAssignMutation.isPending || bulkAssignChecklistMutation.isPending}
           className={isMobile ? 'h-12' : 'min-w-24'}
         >
-          {bulkAssignMutation.isPending ? (
+          {(bulkAssignMutation.isPending || bulkAssignChecklistMutation.isPending) ? (
             <>Assigning...</>
           ) : (
             <>
               <UserPlus className="h-4 w-4 mr-2" />
-              Assign {selectedTasks.size > 0 ? `(${selectedTasks.size})` : ''}
+              Assign {selectedItems.size > 0 ? `(${selectedItems.size})` : ''}
             </>
           )}
         </Button>
@@ -418,10 +488,10 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         <SheetHeader className="flex-shrink-0">
           <SheetTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
-            Quick Assign Tasks
+            Quick Assign {assignMode === 'tasks' ? 'Tasks' : 'Checklist Items'}
           </SheetTitle>
           <SheetDescription>
-            Bulk assign unassigned tasks to workers efficiently
+            Bulk assign unassigned {assignMode === 'tasks' ? 'tasks' : 'checklist items'} to workers efficiently
           </SheetDescription>
         </SheetHeader>
 
