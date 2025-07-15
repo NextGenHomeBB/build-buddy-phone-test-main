@@ -37,6 +37,7 @@ import { CreatePhaseDialog } from '@/components/project/CreatePhaseDialog';
 import { EditPhaseDialog } from '@/components/project/EditPhaseDialog';
 import { PhaseCalendar } from '@/components/PhaseCalendar';
 import { ProjectMaterials } from '@/components/project/ProjectMaterials';
+import { ProjectChecklistsTab } from '@/components/project/ProjectChecklistsTab';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -55,7 +56,7 @@ export default function ProjectDetail() {
 
   // Get current tab from URL or default to overview
   const currentTab = searchParams.get('tab') || 'overview';
-  const validTabs = ['overview', 'phases', 'calendar', 'materials', 'labour', 'team', 'docs', 'activity'];
+  const validTabs = ['overview', 'phases', 'calendar', 'checklists', 'materials', 'labour', 'team', 'docs', 'activity'];
   const activeTab = validTabs.includes(currentTab) ? currentTab : 'overview';
 
   // Handle tab change
@@ -341,10 +342,11 @@ export default function ProjectDetail() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-8 sm:grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9 sm:grid-cols-9">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="phases" className="text-xs sm:text-sm">Phases</TabsTrigger>
             <TabsTrigger value="calendar" className="text-xs sm:text-sm">Calendar</TabsTrigger>
+            <TabsTrigger value="checklists" className="text-xs sm:text-sm">Checklists</TabsTrigger>
             <TabsTrigger value="materials" className="text-xs sm:text-sm">Materials</TabsTrigger>
             <TabsTrigger value="labour" className="text-xs sm:text-sm">Labour</TabsTrigger>
             <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>
@@ -489,6 +491,10 @@ export default function ProjectDetail() {
 
           <TabsContent value="calendar" className="space-y-4">
             <PhaseCalendar projectId={id!} />
+          </TabsContent>
+
+          <TabsContent value="checklists">
+            <ProjectChecklistsTab projectId={id!} />
           </TabsContent>
 
           <TabsContent value="team">

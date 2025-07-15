@@ -8,99 +8,68 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Edit, Trash2, CheckSquare, List } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-
-const mockChecklists = [
-  {
-    id: '1',
-    name: 'Foundation Inspection',
-    description: 'Comprehensive foundation quality checklist',
-    category: 'Structural',
-    items: [
-      'Verify concrete mix specifications',
-      'Check rebar placement and spacing',
-      'Inspect formwork alignment',
-      'Test concrete slump',
-      'Document foundation dimensions'
-    ]
-  },
-  {
-    id: '2',
-    name: 'Electrical Safety',
-    description: 'Electrical work safety and compliance checklist',
-    category: 'Electrical',
-    items: [
-      'Power isolation confirmed',
-      'Circuit testing completed',
-      'Ground fault protection verified',
-      'Panel labeling updated',
-      'Safety equipment inspected'
-    ]
-  },
-  {
-    id: '3',
-    name: 'Final Walkthrough',
-    description: 'Pre-delivery quality assurance checklist',
-    category: 'Quality',
-    items: [
-      'All fixtures installed and working',
-      'Paint touchups completed',
-      'Flooring installation verified',
-      'HVAC system tested',
-      'Customer documentation prepared'
-    ]
-  }
-];
+import { useChecklists, useCreateChecklist, useUpdateChecklist, useDeleteChecklist } from '@/hooks/useChecklists';
 
 export default function AdminChecklists() {
-  const [checklists, setChecklists] = useState(mockChecklists);
+  const { data: checklists = [], isLoading } = useChecklists();
+  const createChecklistMutation = useCreateChecklist();
+  const updateChecklistMutation = useUpdateChecklist();
+  const deleteChecklistMutation = useDeleteChecklist();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    category: '',
     items: ['']
   });
 
   const handleSubmit = () => {
-    const newChecklist = {
-      id: editingChecklist?.id || Date.now().toString(),
-      ...formData,
-      items: formData.items.filter(item => item.trim())
+    const checklistItems = formData.items
+      .filter(item => item.trim())
+      .map((item, index) => ({
+        id: `item-${index}`,
+        title: item.trim(),
+      }));
+
+    const checklistData = {
+      name: formData.name,
+      description: formData.description,
+      items: checklistItems,
     };
 
     if (editingChecklist) {
-      setChecklists(prev => prev.map(c => c.id === editingChecklist.id ? newChecklist : c));
-      toast({ title: "Checklist updated successfully" });
+      updateChecklistMutation.mutate({
+        id: editingChecklist.id,
+        updates: checklistData,
+      });
     } else {
-      setChecklists(prev => [...prev, newChecklist]);
-      toast({ title: "Checklist created successfully" });
+      createChecklistMutation.mutate(checklistData);
     }
 
     resetForm();
   };
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', category: '', items: [''] });
+    setFormData({ name: '', description: '', items: [''] });
     setEditingChecklist(null);
     setIsDialogOpen(false);
   };
 
   const handleEdit = (checklist: any) => {
     setEditingChecklist(checklist);
+    const items = Array.isArray(checklist.items) 
+      ? checklist.items.map((item: any) => typeof item === 'string' ? item : item.title || item.text || '')
+      : [];
     setFormData({
       name: checklist.name,
-      description: checklist.description,
-      category: checklist.category,
-      items: [...checklist.items, '']
+      description: checklist.description || '',
+      items: [...items, '']
     });
     setIsDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    setChecklists(prev => prev.filter(c => c.id !== id));
-    toast({ title: "Checklist deleted successfully" });
+    deleteChecklistMutation.mutate(id);
   };
 
   const addItem = () => {
@@ -172,15 +141,6 @@ export default function AdminChecklists() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    placeholder="e.g., Structural, Electrical, Quality"
-                  />
-                </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -214,7 +174,11 @@ export default function AdminChecklists() {
                 </div>
 
                 <div className="flex gap-2 pt-4">
-                  <Button onClick={handleSubmit} className="flex-1">
+                  <Button 
+                    onClick={handleSubmit} 
+                    className="flex-1"
+                    disabled={createChecklistMutation.isPending || updateChecklistMutation.isPending}
+                  >
                     {editingChecklist ? 'Update' : 'Create'} Template
                   </Button>
                   <Button variant="outline" onClick={resetForm}>
@@ -241,43 +205,57 @@ export default function AdminChecklists() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-2">Name</th>
-                      <th className="text-left p-2">Category</th>
                       <th className="text-left p-2">Items</th>
                       <th className="text-left p-2">Description</th>
                       <th className="text-right p-2">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {checklists.map((checklist) => (
-                      <tr key={checklist.id} className="border-b">
-                        <td className="p-2 font-medium">{checklist.name}</td>
-                        <td className="p-2">
-                          <Badge variant="outline">{checklist.category}</Badge>
-                        </td>
-                        <td className="p-2">{checklist.items.length} items</td>
-                        <td className="p-2 text-muted-foreground max-w-xs truncate">
-                          {checklist.description}
-                        </td>
-                        <td className="p-2">
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(checklist)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(checklist.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                          Loading checklists...
                         </td>
                       </tr>
-                    ))}
+                    ) : checklists.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                          No checklist templates found. Create one to get started.
+                        </td>
+                      </tr>
+                    ) : (
+                      checklists.map((checklist) => {
+                        const itemCount = Array.isArray(checklist.items) ? checklist.items.length : 0;
+                        return (
+                          <tr key={checklist.id} className="border-b">
+                            <td className="p-2 font-medium">{checklist.name}</td>
+                            <td className="p-2">{itemCount} items</td>
+                            <td className="p-2 text-muted-foreground max-w-xs truncate">
+                              {checklist.description || 'No description'}
+                            </td>
+                            <td className="p-2">
+                              <div className="flex gap-2 justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEdit(checklist)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDelete(checklist.id)}
+                                  disabled={deleteChecklistMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -287,43 +265,58 @@ export default function AdminChecklists() {
 
         {/* Mobile Cards */}
         <div className="md:hidden space-y-4">
-          {checklists.map((checklist) => (
-            <Card key={checklist.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-base">{checklist.name}</CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">{checklist.category}</Badge>
-                      <span className="text-sm text-muted-foreground flex items-center gap-1">
-                        <CheckSquare className="h-3 w-3" />
-                        {checklist.items.length} items
-                      </span>
+          {isLoading ? (
+            <div className="text-center p-8 text-muted-foreground">
+              Loading checklists...
+            </div>
+          ) : checklists.length === 0 ? (
+            <div className="text-center p-8 text-muted-foreground">
+              No checklist templates found. Create one to get started.
+            </div>
+          ) : (
+            checklists.map((checklist) => {
+              const itemCount = Array.isArray(checklist.items) ? checklist.items.length : 0;
+              return (
+                <Card key={checklist.id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-base">{checklist.name}</CardTitle>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm text-muted-foreground flex items-center gap-1">
+                            <CheckSquare className="h-3 w-3" />
+                            {itemCount} items
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(checklist)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(checklist.id)}
+                          disabled={deleteChecklistMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(checklist)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(checklist.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm text-muted-foreground">{checklist.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground">
+                      {checklist.description || 'No description'}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
       </div>
     </AppLayout>

@@ -1,4 +1,4 @@
-import { Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield, Package, MessageSquarePlus, CalendarDays } from "lucide-react";
+import { Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield, Package, MessageSquarePlus, CalendarDays, ClipboardList } from "lucide-react";
 
 export const navigationItems = [
   {
@@ -50,6 +50,12 @@ export const adminItems = [
     title: "User Access",
     url: "/admin/access",
     icon: Shield,
+    badge: null,
+  },
+  {
+    title: "Checklists",
+    url: "/admin/checklists",
+    icon: ClipboardList,
     badge: null,
   },
   {
