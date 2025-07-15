@@ -26,12 +26,14 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useSchedule, useUnassignedWorkers, useUpdateWorkerAssignment, useUpsertSchedule } from '@/hooks/schedule';
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
 import { PasteScheduleModal } from './PasteScheduleModal';
 import { ProjectScheduleAssignment } from '@/components/ProjectScheduleAssignment';
 import { ProjectSelectionDialog } from '@/components/ProjectSelectionDialog';
 import { WorkerTaskAssignment } from '@/components/WorkerTaskAssignment';
+import { WorkerSelectSheet } from '@/components/WorkerSelectSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useDebouncedCallback } from 'use-debounce';
@@ -146,7 +148,7 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign, unassi
 
   return (
     <div ref={setNodeRef}>
-      <Card className={`h-fit transition-all duration-300 ${
+      <Card className={`h-fit transition-all duration-300 shadow-sm ${
         isOver 
           ? 'ring-4 ring-purple-400 bg-gradient-to-br from-purple-100 to-blue-100 shadow-2xl' 
           : 'hover:shadow-xl bg-gradient-to-br from-white to-gray-50 border-2 hover:border-purple-200'
@@ -167,19 +169,26 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign, unassi
                   }
                 }}
                 className="h-7 w-7 p-0 transition-all duration-300 hover:bg-purple-100 rounded-full"
-                title="✨ Assign magical tasks to workers!"
+                title="Assign tasks to workers"
               >
                 <ExternalLink className="h-4 w-4 text-purple-600" />
               </Button>
             )}
           </div>
-          {/* Mobile-friendly worker assignment dropdown */}
+          {/* Mobile-friendly worker assignment */}
           <div className="block md:hidden">
+            <WorkerSelectSheet 
+              scheduleItemId={item.id}
+              scheduleDate={item.selectedDate || new Date()}
+            />
+          </div>
+          {/* Desktop dropdown fallback */}
+          <div className="hidden md:block">
             <Select onValueChange={(workerId) => onWorkerAssign(workerId, item.id)}>
               <SelectTrigger className="w-full h-8 text-sm">
                 <div className="flex items-center gap-2">
                   <Users className="h-3 w-3" />
-                  <SelectValue placeholder="📱 Assign Worker" />
+                  <SelectValue placeholder="Assign Worker" />
                 </div>
               </SelectTrigger>
               <SelectContent>
@@ -201,7 +210,7 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign, unassi
           {item.project_id && (
             <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full inline-flex items-center gap-1">
               <span>🏗️</span>
-              Project linked - Tap workers for task magic!
+              Project linked - Tap workers for tasks
             </div>
           )}
         </div>
@@ -443,38 +452,39 @@ export default function SchedulePlanner() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-        <div className="container mx-auto p-4 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 transition-all duration-300 hover:bg-primary/10"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                🎯 Schedule Planner
-              </h1>
-              <p className="text-muted-foreground">
-                ✨ Drag, drop & assign with style! Tap workers to assign tasks 📱
-              </p>
+      <div className="flex flex-col h-[100dvh] overflow-hidden">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b p-4 space-y-4">
+          {/* Mobile Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <div>
+                <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  Schedule Planner
+                </h1>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          {/* Horizontal Scrolling Button Row */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[200px] justify-start text-left font-normal transition-all duration-300 hover:shadow-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50">
+                <Button variant="outline" className="shrink-0 justify-start text-left font-normal">
                   <Calendar className="mr-2 h-4 w-4" />
-                  {format(selectedDate, 'MMM d, yyyy')}
+                  📅 {format(selectedDate, 'MMM d, yyyy')}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
+              <PopoverContent className="w-auto p-0" align="start">
                 <CalendarComponent
                   mode="single"
                   selected={selectedDate}
@@ -488,166 +498,215 @@ export default function SchedulePlanner() {
               onClick={() => setProjectSelectionOpen(true)}
               disabled={isCreatingSample}
               variant="outline"
-              className="transition-all duration-300 hover:shadow-lg hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50"
+              className="shrink-0"
             >
               {isCreatingSample ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Plus className="mr-2 h-4 w-4" />
               )}
-              🏗️ Create from Projects
+              Create from Projects
             </Button>
             
             <Button 
               onClick={() => setPasteModalOpen(true)}
-              className="transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+              className="shrink-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
             >
               <FileText className="mr-2 h-4 w-4" />
-              📋 Paste Schedule
+              Paste Schedule
             </Button>
           </div>
         </div>
 
-        {/* Planner Board */}
-        <div className="grid grid-cols-12 gap-6 min-h-[600px]">
-          {/* Unassigned Workers Column */}
-          <div className="col-span-12 lg:col-span-3">
-            <Card className="h-full transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
-              <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="h-5 w-5" />
-                  🚀 Available Workers
-                  <Badge variant="secondary" className="bg-white/20 text-white">{unassignedWorkers.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent 
-                className="space-y-3 min-h-[200px] p-4"
-                id="unassigned-workers"
-                data-droppable="true"
-              >
-                <div className="text-sm text-center mb-4 p-3 bg-white/50 rounded-lg border-2 border-dashed border-blue-300">
-                  ✨ Tap workers to assign magical tasks! ✨
-                </div>
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-hidden px-4 pb-4">
+          <div className="h-full grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Unassigned Workers - Collapsible on Mobile */}
+            <div className="lg:col-span-3">
+              <div className="block lg:hidden">
+                <Accordion type="single" collapsible defaultValue="workers">
+                  <AccordionItem value="workers">
+                    <AccordionTrigger className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg px-4">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        Available Workers
+                        <Badge variant="secondary" className="bg-white/20 text-white">{unassignedWorkers.length}</Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4">
+                      <div className="space-y-3 max-h-60 overflow-y-auto">
+                        <SortableContext 
+                          items={unassignedWorkers.map(w => w.user_id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {unassignedWorkers.map((worker) => (
+                            <DraggableWorkerBadge
+                              key={worker.user_id}
+                              worker={worker}
+                              isFromSchedule={false}
+                              onClick={() => {
+                                setWorkerTaskAssignmentModal({
+                                  open: true,
+                                  worker: worker,
+                                  projectId: undefined
+                                });
+                              }}
+                            />
+                          ))}
+                        </SortableContext>
+                        
+                        {unassignedWorkers.length === 0 && (
+                          <div className="text-sm text-muted-foreground text-center py-8 border-2 border-dashed border-blue-300 rounded-lg bg-white/30">
+                            <Users className="h-12 w-12 mx-auto mb-4 opacity-50 text-purple-400" />
+                            <div className="space-y-1">
+                              <p className="font-medium">All workers are busy!</p>
+                              <p className="text-xs">{schedule?.items.length ? "Everyone's assigned" : "No workers available"}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+              
+              {/* Desktop Workers Panel */}
+              <div className="hidden lg:block">
+                <Card className="h-full transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+                  <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Users className="h-5 w-5" />
+                      Available Workers
+                      <Badge variant="secondary" className="bg-white/20 text-white">{unassignedWorkers.length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent 
+                    className="space-y-3 min-h-[200px] p-4"
+                    id="unassigned-workers"
+                    data-droppable="true"
+                  >
+                    <SortableContext 
+                      items={unassignedWorkers.map(w => w.user_id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {unassignedWorkers.map((worker) => (
+                        <DraggableWorkerBadge
+                          key={worker.user_id}
+                          worker={worker}
+                          isFromSchedule={false}
+                          onClick={() => {
+                            setWorkerTaskAssignmentModal({
+                              open: true,
+                              worker: worker,
+                              projectId: undefined
+                            });
+                          }}
+                        />
+                      ))}
+                    </SortableContext>
+                    
+                    {unassignedWorkers.length === 0 && (
+                      <div className="text-sm text-muted-foreground text-center py-8 border-2 border-dashed border-blue-300 rounded-lg bg-white/30">
+                        <Users className="h-12 w-12 mx-auto mb-4 opacity-50 text-purple-400" />
+                        <div className="space-y-1">
+                          <p className="font-medium">All workers are busy!</p>
+                          <p className="text-xs">{schedule?.items.length ? "Everyone's assigned" : "No workers available"}</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Schedule Items */}
+            <div className="lg:col-span-9 overflow-y-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <SortableContext 
-                  items={unassignedWorkers.map(w => w.user_id)}
+                  items={schedule?.items.map(item => item.id) || []}
                   strategy={verticalListSortingStrategy}
                 >
-                  {unassignedWorkers.map((worker) => (
-                    <DraggableWorkerBadge
-                      key={worker.user_id}
-                      worker={worker}
-                      isFromSchedule={false}
-                      onClick={() => {
+                  {schedule?.items.map((item) => (
+                    <DroppableScheduleItem
+                      key={item.id}
+                      item={{...item, selectedDate}}
+                      unassignedWorkers={unassignedWorkers}
+                      onWorkerAssign={(workerId, scheduleItemId) => {
+                        const worker = unassignedWorkers.find(w => w.user_id === workerId);
+                        if (worker) {
+                          toast({
+                            title: "Assigning worker...",
+                            description: `Assigning ${worker.name} to schedule item`
+                          });
+                          debouncedUpdate(scheduleItemId, workerId, false, 'assign');
+                        }
+                      }}
+                      onWorkerClick={(itemOrWorker) => {
+                        if (itemOrWorker.workers) {
+                          // Clicked on item header
+                          setProjectAssignmentModal({
+                            open: true,
+                            scheduleItem: itemOrWorker,
+                            workerIds: itemOrWorker.workers.map((w: any) => w.user_id),
+                            workerNames: itemOrWorker.workers.map((w: any) => w.profiles.name)
+                          });
+                        } else {
+                          // Clicked on individual worker
+                          setProjectAssignmentModal({
+                            open: true,
+                            scheduleItem: item,
+                            workerIds: [itemOrWorker.workers[0].user_id],
+                            workerNames: [itemOrWorker.workers[0].profiles.name]
+                          });
+                        }
+                      }}
+                      onWorkerTaskAssign={(worker, projectId) => {
                         setWorkerTaskAssignmentModal({
                           open: true,
                           worker: worker,
-                          projectId: undefined
+                          projectId: projectId
                         });
                       }}
                     />
                   ))}
                 </SortableContext>
                 
-                {unassignedWorkers.length === 0 && (
-                  <div className="text-sm text-muted-foreground text-center py-8 border-2 border-dashed border-blue-300 rounded-lg bg-white/30 animate-pulse">
-                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50 text-purple-400" />
-                    <div className="space-y-1">
-                      <p className="font-medium">🎉 All workers are busy!</p>
-                      <p className="text-xs">{schedule?.items.length ? "Everyone's assigned" : "No workers available"}</p>
-                    </div>
-                  </div>
+                {(!schedule?.items || schedule.items.length === 0) && (
+                  <Card className="col-span-1 lg:col-span-2 transition-all duration-300 border-2 border-dashed border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <Calendar className="h-16 w-16 text-purple-400 mb-4" />
+                      <h3 className="text-xl font-semibold text-purple-600 mb-2">Ready to Create?</h3>
+                      <p className="text-sm text-muted-foreground mt-2 text-center mb-6 max-w-md">
+                        Start building your schedule! Create schedule items from your projects.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button 
+                          onClick={() => setProjectSelectionOpen(true)}
+                          disabled={isCreatingSample}
+                          size="lg"
+                          className="transition-all duration-300 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
+                        >
+                          {isCreatingSample ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Plus className="mr-2 h-4 w-4" />
+                          )}
+                          Create from Projects
+                        </Button>
+                        <Button 
+                          onClick={() => setPasteModalOpen(true)}
+                          variant="outline"
+                          size="lg"
+                          className="transition-all duration-300 border-purple-300 hover:bg-purple-50"
+                        >
+                          <FileText className="mr-2 h-4 w-4" />
+                          Paste Schedule
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Schedule Items Columns */}
-          <div className="col-span-12 lg:col-span-9">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
-              <SortableContext 
-                items={schedule?.items.map(item => item.id) || []}
-                strategy={verticalListSortingStrategy}
-              >
-                {schedule?.items.map((item) => (
-                  <DroppableScheduleItem
-                    key={item.id}
-                    item={item}
-                    unassignedWorkers={unassignedWorkers}
-                    onWorkerAssign={(workerId, scheduleItemId) => {
-                      const worker = unassignedWorkers.find(w => w.user_id === workerId);
-                      if (worker) {
-                        toast({
-                          title: "Assigning worker...",
-                          description: `Assigning ${worker.name} to schedule item`
-                        });
-                        debouncedUpdate(scheduleItemId, workerId, false, 'assign');
-                      }
-                    }}
-                    onWorkerClick={(itemOrWorker) => {
-                      if (itemOrWorker.workers) {
-                        // Clicked on item header
-                        setProjectAssignmentModal({
-                          open: true,
-                          scheduleItem: itemOrWorker,
-                          workerIds: itemOrWorker.workers.map((w: any) => w.user_id),
-                          workerNames: itemOrWorker.workers.map((w: any) => w.profiles.name)
-                        });
-                      } else {
-                        // Clicked on individual worker
-                        setProjectAssignmentModal({
-                          open: true,
-                          scheduleItem: item,
-                          workerIds: [itemOrWorker.workers[0].user_id],
-                          workerNames: [itemOrWorker.workers[0].profiles.name]
-                        });
-                      }
-                    }}
-                    onWorkerTaskAssign={(worker, projectId) => {
-                      setWorkerTaskAssignmentModal({
-                        open: true,
-                        worker: worker,
-                        projectId: projectId
-                      });
-                    }}
-                  />
-                ))}
-              </SortableContext>
-              
-              {(!schedule?.items || schedule.items.length === 0) && (
-                <Card className="col-span-1 lg:col-span-2 transition-all duration-300 border-2 border-dashed border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <Calendar className="h-16 w-16 text-purple-400 mb-4" />
-                    <h3 className="text-xl font-semibold text-purple-600 mb-2">🎨 Ready to Create Magic?</h3>
-                    <p className="text-sm text-muted-foreground mt-2 text-center mb-6 max-w-md">
-                      ✨ Start building your perfect schedule! Create amazing schedule items from your projects to unlock the drag & drop superpowers! 🚀
-                    </p>
-                    <div className="flex gap-3">
-                      <Button 
-                        onClick={() => setProjectSelectionOpen(true)}
-                        disabled={isCreatingSample}
-                        size="lg"
-                        className="transition-all duration-300 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
-                      >
-                        {isCreatingSample ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Plus className="mr-2 h-4 w-4" />
-                        )}
-                        🏗️ Create from Projects
-                      </Button>
-                      <Button 
-                        onClick={() => setPasteModalOpen(true)}
-                        variant="outline"
-                        size="lg"
-                        className="transition-all duration-300 border-purple-300 hover:bg-purple-50"
-                      >
-                        <FileText className="mr-2 h-4 w-4" />
-                        📋 Paste Schedule
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              </div>
             </div>
           </div>
         </div>
