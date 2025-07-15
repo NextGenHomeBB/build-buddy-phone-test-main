@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { parseDagschema, type ParsedSchedule } from '@/lib/parseDagschema';
-import { useUpsertSchedule, useNewItemsPreview } from '@/hooks/schedule';
+import { useNewItemsPreview } from '@/hooks/schedule';
+import { useImportSchedule } from '@/hooks/useImportSchedule';
 import { format } from 'date-fns';
 import { CheckCircle, AlertCircle, Clock, Users, MapPin, Plus } from 'lucide-react';
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
@@ -24,7 +25,7 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
   const [parseError, setParseError] = useState<string | null>(null);
   const [newItemsPreview, setNewItemsPreview] = useState<{newProjects: string[], newWorkers: string[]} | null>(null);
   
-  const upsertSchedule = useUpsertSchedule();
+  const importSchedule = useImportSchedule();
   const newItemsPreviewMutation = useNewItemsPreview();
   const { toast } = useToast();
 
@@ -67,19 +68,20 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
     console.log('🚀 Starting schedule import...', parsedSchedule);
     
     try {
-      const result = await upsertSchedule.mutateAsync(parsedSchedule);
-      console.log('✅ Schedule imported successfully');
+      // Convert ParsedSchedule to ImportSchedulePayload format
+      const payload = {
+        workDate: format(parsedSchedule.workDate, 'yyyy-MM-dd'),
+        scheduleItems: parsedSchedule.items.map(item => ({
+          address: item.address,
+          category: item.category,
+          startTime: item.startTime,
+          endTime: item.endTime,
+          workers: item.workers.map(w => w.name)
+        }))
+      };
       
-      const autoImportResult = result.autoImportResult;
-      const successMsg = `Imported ${parsedSchedule.items.length} schedule items for ${format(parsedSchedule.workDate, 'MMM d, yyyy')}`;
-      const autoCreatedMsg = autoImportResult.createdProjects > 0 || autoImportResult.createdWorkers > 0 
-        ? ` Created ${autoImportResult.createdProjects} new projects and ${autoImportResult.createdWorkers} new worker profiles (placeholders).`
-        : '';
-      
-      toast({
-        title: "Schedule imported successfully",
-        description: successMsg + autoCreatedMsg,
-      });
+      const result = await importSchedule.mutateAsync(payload);
+      console.log('✅ Schedule imported successfully:', result);
       
       // Reset form and close modal
       handleClose();
@@ -87,11 +89,6 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
       const errorMsg = error instanceof Error ? error.message : 'Failed to import schedule';
       console.error('❌ Import error:', error);
       setParseError(errorMsg);
-      toast({
-        title: "Import failed",
-        description: errorMsg,
-        variant: "destructive",
-      });
     }
   };
 
@@ -109,7 +106,7 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
     open,
     hasScheduleText: !!scheduleText.trim(),
     hasParsedSchedule: !!parsedSchedule,
-    isImporting: upsertSchedule.isPending,
+    isImporting: importSchedule.isPending,
     parseError
   });
 
@@ -143,10 +140,10 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
             {parsedSchedule && (
               <Button 
                 onClick={handleImportSchedule}
-                disabled={upsertSchedule.isPending}
+                disabled={importSchedule.isPending}
                 className="ml-auto"
               >
-                {upsertSchedule.isPending ? 'Importing...' : 'Import Schedule'}
+                {importSchedule.isPending ? 'Importing...' : 'Import Schedule'}
               </Button>
             )}
           </div>

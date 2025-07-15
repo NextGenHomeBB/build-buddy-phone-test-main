@@ -249,6 +249,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_user_id: string | null
           avatar_url: string | null
           created_at: string
           id: string
@@ -260,6 +261,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auth_user_id?: string | null
           avatar_url?: string | null
           created_at?: string
           id?: string
@@ -271,6 +273,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auth_user_id?: string | null
           avatar_url?: string | null
           created_at?: string
           id?: string
@@ -998,6 +1001,10 @@ export type Database = {
       get_user_global_role: {
         Args: { user_id_param: string }
         Returns: string
+      }
+      import_schedule_tx: {
+        Args: { payload: Json }
+        Returns: Json
       }
       update_phase_progress: {
         Args: { phase_id_param: string }
