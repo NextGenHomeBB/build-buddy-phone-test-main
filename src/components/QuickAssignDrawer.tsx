@@ -8,6 +8,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,9 +17,9 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { taskService } from '@/services/taskService';
-import { useBulkAssign } from '@/hooks/useTasks';
+import { useUnassignedTasks, useBulkAssign } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Users, Search, CheckSquare, UserPlus, Zap } from 'lucide-react';
 import { FixedSizeList as List } from 'react-window';
 
@@ -46,27 +47,33 @@ interface QuickAssignDrawerProps {
 const TaskRow = ({ index, style, data }: { 
   index: number; 
   style: any; 
-  data: { tasks: Task[]; selectedTasks: Set<string>; onTaskToggle: (id: string) => void; } 
+  data: { tasks: Task[]; selectedTasks: Set<string>; onTaskToggle: (id: string) => void; isMobile: boolean; } 
 }) => {
   const task = data.tasks[index];
   const isSelected = data.selectedTasks.has(task.id);
 
   return (
-    <div style={style} className="px-4 py-2">
+    <div style={style} className="px-2">
       <div 
-        className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+        className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors touch-manipulation ${
           isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
-        }`}
+        } ${data.isMobile ? 'min-h-[60px]' : ''}`}
         onClick={() => data.onTaskToggle(task.id)}
       >
-        <Checkbox checked={isSelected} onChange={() => {}} />
+        <Checkbox 
+          checked={isSelected} 
+          onChange={() => {}} 
+          className={data.isMobile ? 'h-5 w-5' : 'h-4 w-4'}
+        />
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-sm truncate">{task.title}</h4>
-          <p className="text-xs text-muted-foreground truncate">
+          <h4 className={`font-medium truncate ${data.isMobile ? 'text-base' : 'text-sm'}`}>
+            {task.title}
+          </h4>
+          <p className={`text-muted-foreground truncate ${data.isMobile ? 'text-sm' : 'text-xs'}`}>
             {task.project?.name} {task.phase && `• ${task.phase.name}`}
           </p>
         </div>
-        <Badge variant="outline" className="text-xs">
+        <Badge variant="outline" className={data.isMobile ? 'text-sm px-2' : 'text-xs'}>
           {task.priority}
         </Badge>
       </div>
@@ -80,13 +87,11 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
-  // Fetch unassigned tasks
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: ['unassigned-tasks', projectId],
-    queryFn: () => taskService.getUnassignedTasks(projectId),
-    enabled: open
-  });
+  // Fetch unassigned tasks using the new hook
+  const { data: tasks = [], isLoading: tasksLoading } = useUnassignedTasks(projectId || '');
+  const isTasksEnabled = open && !!projectId;
 
   // Fetch project workers
   const { data: workers = [], isLoading: workersLoading } = useQuery({
@@ -204,16 +209,212 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
   const taskRowData = useMemo(() => ({
     tasks,
     selectedTasks,
-    onTaskToggle: handleTaskToggle
-  }), [tasks, selectedTasks, handleTaskToggle]);
+    onTaskToggle: handleTaskToggle,
+    isMobile
+  }), [tasks, selectedTasks, handleTaskToggle, isMobile]);
 
-  return (
+  const MainContent = () => (
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0 mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Zap className="h-5 w-5" />
+          <h2 className={`font-semibold ${isMobile ? 'text-lg' : 'text-xl'}`}>
+            Quick Assign Tasks
+          </h2>
+        </div>
+        <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-base'}`}>
+          Bulk assign unassigned tasks to workers efficiently
+        </p>
+      </div>
+
+      {/* Search Worker - Sticky on mobile */}
+      <div className={`flex-shrink-0 mb-4 ${isMobile ? 'sticky top-0 bg-background z-10 pb-2' : ''}`}>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Search workers..."
+            className={`pl-10 ${isMobile ? 'h-12 text-base' : ''}`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className={`grid gap-6 flex-1 overflow-hidden ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+        {/* Tasks Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
+              Unassigned Tasks
+            </h3>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size={isMobile ? 'sm' : 'sm'}
+                onClick={handleSelectAll}
+                disabled={tasks.length === 0}
+                className={isMobile ? 'h-9 px-3 text-sm' : ''}
+              >
+                All
+              </Button>
+              <Button 
+                variant="outline" 
+                size={isMobile ? 'sm' : 'sm'}
+                onClick={handleDeselectAll}
+                disabled={selectedTasks.size === 0}
+                className={isMobile ? 'h-9 px-3 text-sm' : ''}
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
+
+          {tasksLoading ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className={`bg-muted rounded-lg animate-pulse ${isMobile ? 'h-16' : 'h-14'}`} />
+              ))}
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="text-center py-12">
+              <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h4 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>
+                All Tasks Assigned
+              </h4>
+              <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-base'}`}>
+                No unassigned tasks found for this project.
+              </p>
+            </div>
+          ) : (
+          <List
+            height={isMobile ? 350 : 400}
+            width="100%"
+            itemCount={tasks.length}
+            itemSize={isMobile ? 80 : 70}
+            itemData={taskRowData}
+          >
+            {TaskRow}
+          </List>
+          )}
+
+          {selectedTasks.size > 0 && (
+            <div className="bg-primary/10 p-3 rounded-lg">
+              <p className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>
+                {selectedTasks.size} task{selectedTasks.size !== 1 ? 's' : ''} selected
+              </p>
+            </div>
+          )}
+        </div>
+
+        {!isMobile && <Separator orientation="vertical" className="hidden lg:block" />}
+
+        {/* Workers Section */}
+        <div className="space-y-4">
+          <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
+            Select Worker
+          </h3>
+
+          <ScrollArea className={`flex-1 ${isMobile ? 'max-h-[250px]' : 'max-h-[400px]'}`}>
+            {workersLoading ? (
+              <div className="space-y-3 p-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-3 p-3">
+                    <div className={`bg-muted rounded-full animate-pulse ${isMobile ? 'h-12 w-12' : 'h-10 w-10'}`} />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-muted rounded animate-pulse" />
+                      <div className="h-3 bg-muted rounded w-2/3 animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredWorkers.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground">No workers found</p>
+              </div>
+            ) : (
+              <div className="space-y-2 p-2">
+                {filteredWorkers.map((worker) => (
+                  <div
+                    key={worker.id}
+                    className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors touch-manipulation ${
+                      selectedWorker?.id === worker.id 
+                        ? 'bg-primary/10 border-primary' 
+                        : 'hover:bg-muted/50'
+                    } ${isMobile ? 'min-h-[64px]' : ''}`}
+                    onClick={() => setSelectedWorker(worker)}
+                  >
+                    <Avatar className={isMobile ? 'h-12 w-12' : 'h-10 w-10'}>
+                      <AvatarImage src={worker.avatar_url || ''} />
+                      <AvatarFallback>
+                        {worker.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className={`font-medium ${isMobile ? 'text-base' : 'text-sm'}`}>
+                        {worker.name}
+                      </p>
+                      <p className={`text-muted-foreground capitalize ${isMobile ? 'text-sm' : 'text-xs'}`}>
+                        {worker.role}
+                      </p>
+                    </div>
+                    {selectedWorker?.id === worker.id && (
+                      <CheckSquare className={`text-primary ${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+
+          {selectedWorker && (
+            <div className="bg-muted/30 p-3 rounded-lg">
+              <p className={isMobile ? 'text-sm' : 'text-sm'}>
+                <span className="font-medium">Selected:</span> {selectedWorker.name}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className={`flex gap-3 pt-4 border-t flex-shrink-0 ${isMobile ? 'flex-col' : 'justify-end'}`}>
+        <Button 
+          variant="outline" 
+          onClick={() => setOpen(false)}
+          className={isMobile ? 'h-12' : ''}
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleAssign}
+          disabled={selectedTasks.size === 0 || !selectedWorker || bulkAssignMutation.isPending}
+          className={isMobile ? 'h-12' : 'min-w-24'}
+        >
+          {bulkAssignMutation.isPending ? (
+            <>Assigning...</>
+          ) : (
+            <>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Assign {selectedTasks.size > 0 ? `(${selectedTasks.size})` : ''}
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
+  return isMobile ? (
+    <BottomSheet open={open} onOpenChange={setOpen} trigger={children}>
+      <MainContent />
+    </BottomSheet>
+  ) : (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         {children}
       </SheetTrigger>
       
-      <SheetContent side="bottom" className="h-[85vh] sm:max-w-none flex flex-col">
+      <SheetContent side="right" className="w-full sm:max-w-4xl flex flex-col">
         <SheetHeader className="flex-shrink-0">
           <SheetTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
@@ -225,162 +426,7 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         </SheetHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 flex-1 overflow-hidden">
-          {/* Left Panel - Tasks */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Unassigned Tasks</h3>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleSelectAll}
-                  disabled={tasks.length === 0}
-                >
-                  Select All
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleDeselectAll}
-                  disabled={selectedTasks.size === 0}
-                >
-                  Clear
-                </Button>
-              </div>
-            </div>
-
-            {tasksLoading ? (
-              <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-16 bg-muted rounded-lg animate-pulse" />
-                ))}
-              </div>
-            ) : tasks.length === 0 ? (
-              <div className="text-center py-12">
-                <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h4 className="text-lg font-medium">All Tasks Assigned</h4>
-                <p className="text-muted-foreground">
-                  No unassigned tasks found for this project.
-                </p>
-              </div>
-            ) : (
-            <List
-              height={400}
-              width="100%"
-              itemCount={tasks.length}
-              itemSize={80}
-              itemData={taskRowData}
-            >
-              {TaskRow}
-            </List>
-            )}
-
-            {selectedTasks.size > 0 && (
-              <div className="bg-primary/10 p-3 rounded-lg">
-                <p className="text-sm font-medium">
-                  {selectedTasks.size} task{selectedTasks.size !== 1 ? 's' : ''} selected
-                </p>
-              </div>
-            )}
-          </div>
-
-          <Separator orientation="vertical" className="hidden lg:block" />
-
-          {/* Right Panel - Workers */}
-          <div className="space-y-4">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Select Worker</h3>
-              
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search workers..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <ScrollArea className="flex-1 max-h-[400px]">
-              {workersLoading ? (
-                <div className="space-y-3 p-2">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex items-center space-x-3 p-3">
-                      <div className="h-10 w-10 bg-muted rounded-full animate-pulse" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-muted rounded animate-pulse" />
-                        <div className="h-3 bg-muted rounded w-2/3 animate-pulse" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : filteredWorkers.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground">No workers found</p>
-                </div>
-              ) : (
-                <div className="space-y-2 p-2">
-                  {filteredWorkers.map((worker) => (
-                    <div
-                      key={worker.id}
-                      className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        selectedWorker?.id === worker.id 
-                          ? 'bg-primary/10 border-primary' 
-                          : 'hover:bg-muted/50'
-                      }`}
-                      onClick={() => setSelectedWorker(worker)}
-                    >
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={worker.avatar_url || ''} />
-                        <AvatarFallback>
-                          {worker.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="font-medium">{worker.name}</p>
-                        <p className="text-sm text-muted-foreground capitalize">
-                          {worker.role}
-                        </p>
-                      </div>
-                      {selectedWorker?.id === worker.id && (
-                        <CheckSquare className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-
-            {selectedWorker && (
-              <div className="bg-muted/30 p-3 rounded-lg">
-                <p className="text-sm">
-                  <span className="font-medium">Selected:</span> {selectedWorker.name}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleAssign}
-            disabled={selectedTasks.size === 0 || !selectedWorker || bulkAssignMutation.isPending}
-            className="min-w-24"
-          >
-            {bulkAssignMutation.isPending ? (
-              <>Assigning...</>
-            ) : (
-              <>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Assign {selectedTasks.size > 0 ? `(${selectedTasks.size})` : ''}
-              </>
-            )}
-          </Button>
+          <MainContent />
         </div>
       </SheetContent>
     </Sheet>

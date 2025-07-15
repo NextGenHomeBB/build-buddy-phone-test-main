@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskService } from '@/services/taskService';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface WorkerSummary {
   id: string;
@@ -190,6 +191,35 @@ export function useBulkAssign() {
     onError: (error) => {
       console.error('Failed to bulk assign workers:', error);
     }
+  });
+}
+
+/**
+ * Hook for unassigned tasks in a project
+ */
+export function useUnassignedTasks(projectId: string) {
+  return useQuery({
+    queryKey: ['unassigned-tasks', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+          id,
+          title,
+          description,
+          priority,
+          project:projects(name),
+          phase:project_phases(name)
+        `)
+        .eq('project_id', projectId)
+        .is('assigned_to', null)
+        .eq('status', 'todo')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!projectId,
   });
 }
 
