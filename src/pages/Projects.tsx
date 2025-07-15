@@ -12,19 +12,34 @@ import { format } from 'date-fns';
 import { CreateProjectDialog } from '@/components/project/CreateProjectDialog';
 import { QuickAssignDrawer } from '@/components/QuickAssignDrawer';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
-import { useAccessibleProjects } from '@/hooks/useProjects';
+import { useAccessibleProjects, useDeleteProject } from '@/hooks/useProjects';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Projects() {
   const { data: projects, isLoading, error } = useAccessibleProjects();
   const { canCreateProject } = useRoleAccess();
+  const deleteProject = useDeleteProject();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const handleDeleteProject = (projectId: string, projectName: string) => {
+  const handleDeleteProject = async (projectId: string, projectName: string) => {
     if (confirm(`Are you sure you want to delete the project "${projectName}"? This action cannot be undone.`)) {
-      // TODO: Implement actual delete functionality
-      console.log('Deleting project:', projectId);
+      try {
+        await deleteProject.mutateAsync(projectId);
+        toast({
+          title: "Project deleted",
+          description: `"${projectName}" has been successfully deleted.`,
+        });
+      } catch (error) {
+        console.error('Error deleting project:', error);
+        toast({
+          title: "Delete failed",
+          description: "Failed to delete the project. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
