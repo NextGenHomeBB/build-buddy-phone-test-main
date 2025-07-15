@@ -19,12 +19,13 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Calendar, Plus, FileText, Users, ArrowLeft, ExternalLink, Loader2, Settings } from 'lucide-react';
+import { Calendar, Plus, FileText, Users, ArrowLeft, ExternalLink, Loader2, Settings, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSchedule, useUnassignedWorkers, useUpdateWorkerAssignment, useUpsertSchedule } from '@/hooks/schedule';
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
 import { PasteScheduleModal } from './PasteScheduleModal';
@@ -125,10 +126,12 @@ function DraggableWorkerBadge({ worker, isFromSchedule = false, scheduleItemId, 
 }
 
 // Droppable Schedule Item Component
-function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign }: {
+function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign, unassignedWorkers, onWorkerAssign }: {
   item: any;
   onWorkerClick: (worker: any) => void;
   onWorkerTaskAssign: (worker: any, projectId?: string) => void;
+  unassignedWorkers: any[];
+  onWorkerAssign: (workerId: string, scheduleItemId: string) => void;
 }) {
   const {
     setNodeRef,
@@ -150,9 +153,9 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign }: {
       }`}>
       <CardHeader className="pb-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-lg">📍</span>
-            <CardTitle className="text-base font-semibold text-gray-800">{item.address}</CardTitle>
+            <CardTitle className="text-base font-semibold text-gray-800 flex-1 min-w-0">{item.address}</CardTitle>
             <ScheduleCategoryBadge category={item.category} />
             {item.project_id && (
               <Button
@@ -169,6 +172,27 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign }: {
                 <ExternalLink className="h-4 w-4 text-purple-600" />
               </Button>
             )}
+          </div>
+          {/* Mobile-friendly worker assignment dropdown */}
+          <div className="block md:hidden">
+            <Select onValueChange={(workerId) => onWorkerAssign(workerId, item.id)}>
+              <SelectTrigger className="w-full h-8 text-sm">
+                <div className="flex items-center gap-2">
+                  <Users className="h-3 w-3" />
+                  <SelectValue placeholder="📱 Assign Worker" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {unassignedWorkers.map((worker) => (
+                  <SelectItem key={worker.user_id} value={worker.user_id}>
+                    <div className="flex items-center gap-2">
+                      <span>👤</span>
+                      {worker.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="text-sm text-purple-600 font-medium flex items-center gap-1">
             <span>⏰</span>
@@ -548,6 +572,17 @@ export default function SchedulePlanner() {
                   <DroppableScheduleItem
                     key={item.id}
                     item={item}
+                    unassignedWorkers={unassignedWorkers}
+                    onWorkerAssign={(workerId, scheduleItemId) => {
+                      const worker = unassignedWorkers.find(w => w.user_id === workerId);
+                      if (worker) {
+                        toast({
+                          title: "Assigning worker...",
+                          description: `Assigning ${worker.name} to schedule item`
+                        });
+                        debouncedUpdate(scheduleItemId, workerId, false, 'assign');
+                      }
+                    }}
                     onWorkerClick={(itemOrWorker) => {
                       if (itemOrWorker.workers) {
                         // Clicked on item header
