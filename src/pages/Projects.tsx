@@ -253,7 +253,7 @@ export default function Projects() {
 
         {/* Quick Assign FAB */}
         {canCreateProject() && <QuickAssignDrawer>
-            <Button size="lg" title="Quick Assign Tasks" className="fixed bottom-[50px] right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0">
+            <Button size="lg" title="Quick Assign Tasks" className="fixed bottom-[65px] right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0">
               <Users className="h-6 w-6" />
             </Button>
           </QuickAssignDrawer>}
