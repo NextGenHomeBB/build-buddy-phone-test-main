@@ -94,7 +94,9 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
           
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">{project.teamSize}</span>
+            <span className="text-muted-foreground">
+              {project.teamSize} {project.teamSize === 1 ? 'member' : 'members'}
+            </span>
           </div>
           
           {project.urgentTasks > 0 && (
