@@ -92,29 +92,48 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
   const { data: workers = [], isLoading: workersLoading } = useQuery({
     queryKey: ['project-workers', projectId],
     queryFn: async () => {
-      if (!projectId) return [];
-      
-      // First get user IDs from user_project_role
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_project_role')
-        .select('user_id')
-        .eq('project_id', projectId);
+      if (projectId) {
+        // If projectId is provided, get workers for that specific project
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_project_role')
+          .select('user_id')
+          .eq('project_id', projectId);
 
-      if (roleError) throw roleError;
-      
-      const userIds = roleData.map(r => r.user_id);
-      if (userIds.length === 0) return [];
+        if (roleError) throw roleError;
+        
+        const userIds = roleData.map(r => r.user_id);
+        if (userIds.length === 0) return [];
 
-      // Then get profile data for those users
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name, avatar_url, role')
-        .in('user_id', userIds);
+        // Then get profile data for those users
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_id, name, avatar_url, role')
+          .in('user_id', userIds);
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data.map(profile => ({
+          id: profile.user_id,
+          name: profile.name,
+          avatar_url: profile.avatar_url,
+          role: profile.role
+        }));
+      } else {
+        // If no projectId, get all workers and managers
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_id, name, avatar_url, role')
+          .in('role', ['worker', 'manager']);
+
+        if (error) throw error;
+        return data.map(profile => ({
+          id: profile.user_id,
+          name: profile.name,
+          avatar_url: profile.avatar_url,
+          role: profile.role
+        }));
+      }
     },
-    enabled: open && !!projectId
+    enabled: open
   });
 
   const bulkAssignMutation = useBulkAssign();
