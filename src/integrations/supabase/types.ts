@@ -1006,6 +1006,10 @@ export type Database = {
         Args: { payload: Json }
         Returns: Json
       }
+      sync_task_workers_to_assigned_to: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_phase_progress: {
         Args: { phase_id_param: string }
         Returns: undefined
