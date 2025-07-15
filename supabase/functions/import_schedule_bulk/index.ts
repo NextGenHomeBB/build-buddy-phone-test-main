@@ -3,6 +3,12 @@ import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.6";
 import { v4 as uuidv4 } from "https://deno.land/std@0.203.0/uuid/mod.ts";
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -10,22 +16,23 @@ const supabase = createClient(
 
 async function logFailure(detail: unknown) {
   console.error("Logging failure to function_errors:", detail);
-  await supabase.from("function_errors").insert({
-    id: uuidv4(),
-    fn: "import_schedule_bulk",
-    detail,
-  });
+  try {
+    await supabase.from("function_errors").insert({
+      id: uuidv4(),
+      fn: "import_schedule_bulk",
+      detail,
+    });
+  } catch (logError) {
+    console.error("Failed to log error to function_errors:", logError);
+  }
 }
 
 serve(async (req) => {
+  console.log(`${req.method} ${req.url} - Import schedule request received`);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-      }
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -57,10 +64,10 @@ serve(async (req) => {
           sql_error: error?.code ? `${error.code}: ${error.message}` : undefined
         }),
         {
-          status: 200,                                       // always 200
+          status: 200,
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
+            ...corsHeaders,
           },
         }
       );
@@ -71,7 +78,7 @@ serve(async (req) => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        ...corsHeaders,
       },
     });
   } catch (err) {
@@ -95,7 +102,7 @@ serve(async (req) => {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          ...corsHeaders,
         },
       }
     );

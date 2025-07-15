@@ -29,25 +29,51 @@ export function useImportSchedule() {
     mutationFn: async (payload: ImportSchedulePayload): Promise<ImportScheduleResult> => {
       console.log("Calling import_schedule_bulk with payload:", payload);
       
-      const { data, error } = await supabase.functions.invoke(
-        "import_schedule_bulk",
-        { body: payload }
-      );
-      
-      console.log("Edge function response:", { data, error });
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "import_schedule_bulk",
+          { 
+            body: payload,
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }
+        );
+        
+        console.log("Edge function response:", { data, error });
 
-      if (error) {
-        console.error("Edge function error:", error);
-        throw new Error(error.message || "Failed to call import function");
+        if (error) {
+          console.error("Edge function error:", error);
+          // Enhanced error handling for different types of failures
+          if (error.message?.includes('Failed to send a request')) {
+            throw new Error(`Network error: Unable to connect to import service. Please check your connection and try again.`);
+          }
+          throw new Error(error.message || "Failed to call import function");
+        }
+
+        // Handle business logic errors returned with status 200
+        if (!data?.success) {
+          console.error("Import failed:", data);
+          const errorDetails = data?.detail || {};
+          const errorMessage = data?.message || data?.error || "Import failed";
+          
+          // Create enhanced error object with details
+          const enhancedError = new Error(errorMessage) as Error & { detail?: any; sql_error?: string };
+          enhancedError.detail = errorDetails;
+          enhancedError.sql_error = data?.sql_error;
+          
+          throw enhancedError;
+        }
+
+        return data;
+      } catch (networkError) {
+        console.error("Network or invocation error:", networkError);
+        // Re-throw with enhanced error information
+        if (networkError instanceof Error) {
+          throw networkError;
+        }
+        throw new Error("Unexpected error during import operation");
       }
-
-      // Handle business logic errors returned with status 200
-      if (!data?.success) {
-        console.error("Import failed:", data);
-        throw new Error(data?.message || data?.error || "Import failed");
-      }
-
-      return data;
     },
     onSuccess: (data) => {
       console.log("Import successful:", data);
