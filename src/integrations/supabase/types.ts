@@ -129,6 +129,27 @@ export type Database = {
           },
         ]
       }
+      function_errors: {
+        Row: {
+          created_at: string
+          detail: Json | null
+          fn: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json | null
+          fn: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          detail?: Json | null
+          fn?: string
+          id?: string
+        }
+        Relationships: []
+      }
       labour_costs: {
         Row: {
           created_at: string

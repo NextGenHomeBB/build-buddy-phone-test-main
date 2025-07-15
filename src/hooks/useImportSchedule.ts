@@ -41,9 +41,10 @@ export function useImportSchedule() {
         throw new Error(error.message || "Failed to call import function");
       }
 
+      // Handle business logic errors returned with status 200
       if (!data?.success) {
         console.error("Import failed:", data);
-        throw new Error(data?.error || "Import failed");
+        throw new Error(data?.message || data?.error || "Import failed");
       }
 
       return data;
