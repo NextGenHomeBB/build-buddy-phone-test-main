@@ -197,13 +197,13 @@ export function useBulkAssign() {
 /**
  * Hook for unassigned tasks in a project
  */
-export function useUnassignedTasks(projectId: string) {
+export function useUnassignedTasks(projectId?: string) {
   return useQuery({
     queryKey: ['unassigned-tasks', projectId],
     queryFn: async () => {
       console.log('🔍 Fetching unassigned tasks for project:', projectId);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('tasks')
         .select(`
           id,
@@ -213,10 +213,16 @@ export function useUnassignedTasks(projectId: string) {
           project:projects(name),
           phase:project_phases(name)
         `)
-        .eq('project_id', projectId)
         .is('assigned_to', null)
         .eq('status', 'todo')
         .order('created_at', { ascending: true });
+
+      // If projectId is provided, filter by it; otherwise get all projects
+      if (projectId) {
+        query = query.eq('project_id', projectId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('❌ Error fetching unassigned tasks:', error);
@@ -226,7 +232,6 @@ export function useUnassignedTasks(projectId: string) {
       console.log('📋 Unassigned tasks result:', data);
       return data || [];
     },
-    enabled: !!projectId,
   });
 }
 

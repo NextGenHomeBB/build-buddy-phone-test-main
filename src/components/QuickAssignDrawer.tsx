@@ -111,8 +111,8 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
   const isMobile = useIsMobile();
 
   // Fetch unassigned tasks and checklist items
-  const { data: tasks = [], isLoading: tasksLoading } = useUnassignedTasks(projectId || '');
-  const { data: checklistItems = [], isLoading: checklistLoading } = useUnassignedChecklistItems(projectId || '');
+  const { data: tasks = [], isLoading: tasksLoading } = useUnassignedTasks(projectId);
+  const { data: checklistItems = [], isLoading: checklistLoading } = useUnassignedChecklistItems(projectId);
   
   const currentItems = assignMode === 'tasks' ? tasks : checklistItems;
   const isLoading = assignMode === 'tasks' ? tasksLoading : checklistLoading;
