@@ -11,13 +11,13 @@ export interface UnassignedChecklistItem {
   projectChecklistId: string;
 }
 
-export function useUnassignedChecklistItems(projectId: string) {
+export function useUnassignedChecklistItems(projectId?: string) {
   return useQuery({
     queryKey: ['unassigned-checklist-items', projectId],
     queryFn: async () => {
       console.log('🔍 Fetching unassigned checklist items for project:', projectId);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('project_checklists')
         .select(`
           id,
@@ -31,8 +31,14 @@ export function useUnassignedChecklistItems(projectId: string) {
             id,
             name
           )
-        `)
-        .eq('project_id', projectId);
+        `);
+
+      // If projectId is provided, filter by it; otherwise get all projects
+      if (projectId) {
+        query = query.eq('project_id', projectId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('❌ Error fetching project checklists:', error);
@@ -74,6 +80,5 @@ export function useUnassignedChecklistItems(projectId: string) {
       console.log('🎯 Unassigned checklist items:', unassignedItems);
       return unassignedItems;
     },
-    enabled: !!projectId,
   });
 }
