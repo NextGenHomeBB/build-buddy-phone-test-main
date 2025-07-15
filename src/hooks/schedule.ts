@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import type { ParsedSchedule } from '@/lib/parseDagschema';
+import { autoCreateMissingProjectsAndWorkers, getNewItemsPreview } from '@/services/scheduleAutoImport.service';
 
 export interface ScheduleItem {
   id: string;
@@ -91,6 +92,9 @@ export function useUpsertSchedule() {
     mutationFn: async (data: ParsedSchedule) => {
       const dateStr = format(data.workDate, 'yyyy-MM-dd');
 
+      // Auto-create missing projects and workers
+      const autoImportResult = await autoCreateMissingProjectsAndWorkers(data);
+
       // First, upsert the schedule
       const { data: schedule, error: scheduleError } = await supabase
         .from('schedules')
@@ -113,11 +117,13 @@ export function useUpsertSchedule() {
 
       // Insert new items
       for (const item of data.items) {
+        const projectId = autoImportResult.projectMapping[item.address] || item.projectId || null;
+        
         const { data: scheduleItem, error: itemError } = await supabase
           .from('schedule_items')
           .insert({
             schedule_id: schedule.id,
-            project_id: item.projectId || null,
+            project_id: projectId,
             address: item.address,
             category: item.category,
             start_time: item.startTime,
@@ -130,21 +136,14 @@ export function useUpsertSchedule() {
 
         // Insert workers for this item
         if (item.workers.length > 0) {
-          // First, get user IDs from profiles by name
-          const workerNames = item.workers.map(w => w.name);
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('user_id, name')
-            .in('name', workerNames);
-
           const workerInserts = item.workers
             .map(worker => {
-              const profile = profiles?.find(p => p.name === worker.name);
-              if (!profile) return null;
+              const userId = autoImportResult.workerMapping[worker.name];
+              if (!userId) return null;
               
               return {
                 schedule_item_id: scheduleItem.id,
-                user_id: profile.user_id,
+                user_id: userId,
                 is_assistant: worker.isAssistant
               };
             })
@@ -162,20 +161,14 @@ export function useUpsertSchedule() {
 
       // Handle absences
       if (data.absences.length > 0) {
-        const absenceNames = data.absences.map(a => a.workerName);
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, name')
-          .in('name', absenceNames);
-
         const absenceInserts = data.absences
           .map(absence => {
-            const profile = profiles?.find(p => p.name === absence.workerName);
-            if (!profile) return null;
+            const userId = autoImportResult.workerMapping[absence.workerName];
+            if (!userId) return null;
             
             return {
               work_date: dateStr,
-              user_id: profile.user_id,
+              user_id: userId,
               reason: absence.reason
             };
           })
@@ -190,7 +183,7 @@ export function useUpsertSchedule() {
         }
       }
 
-      return schedule;
+      return { schedule, autoImportResult };
     },
     onSuccess: (_, variables) => {
       const dateStr = format(variables.workDate, 'yyyy-MM-dd');
@@ -249,6 +242,14 @@ export function useUnassignedWorkers(date: Date) {
         user_id: profile.user_id,
         name: profile.name
       })) || [];
+    }
+  });
+}
+
+export function useNewItemsPreview() {
+  return useMutation({
+    mutationFn: async (data: ParsedSchedule) => {
+      return await getNewItemsPreview(data);
     }
   });
 }

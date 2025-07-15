@@ -252,6 +252,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           id: string
+          is_placeholder: boolean | null
           name: string
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -262,6 +263,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          is_placeholder?: boolean | null
           name: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -272,6 +274,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          is_placeholder?: boolean | null
           name?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -444,6 +447,7 @@ export type Database = {
           name: string
           progress: number
           remaining_budget: number
+          source: string | null
           spent: number
           start_date: string
           status: Database["public"]["Enums"]["project_status"]
@@ -461,6 +465,7 @@ export type Database = {
           name: string
           progress?: number
           remaining_budget?: number
+          source?: string | null
           spent?: number
           start_date: string
           status?: Database["public"]["Enums"]["project_status"]
@@ -478,6 +483,7 @@ export type Database = {
           name?: string
           progress?: number
           remaining_budget?: number
+          source?: string | null
           spent?: number
           start_date?: string
           status?: Database["public"]["Enums"]["project_status"]

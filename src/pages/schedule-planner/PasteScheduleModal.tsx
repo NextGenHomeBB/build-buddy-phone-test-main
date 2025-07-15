@@ -7,9 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { parseDagschema, type ParsedSchedule } from '@/lib/parseDagschema';
-import { useUpsertSchedule } from '@/hooks/schedule';
+import { useUpsertSchedule, useNewItemsPreview } from '@/hooks/schedule';
 import { format } from 'date-fns';
-import { CheckCircle, AlertCircle, Clock, Users, MapPin } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, Users, MapPin, Plus } from 'lucide-react';
 import { ScheduleCategoryBadge } from '@/components/ui/ScheduleCategoryBadge';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,17 +22,24 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
   const [scheduleText, setScheduleText] = useState('');
   const [parsedSchedule, setParsedSchedule] = useState<ParsedSchedule | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [newItemsPreview, setNewItemsPreview] = useState<{newProjects: string[], newWorkers: string[]} | null>(null);
   
   const upsertSchedule = useUpsertSchedule();
+  const newItemsPreviewMutation = useNewItemsPreview();
   const { toast } = useToast();
 
-  const handleParseSchedule = () => {
+  const handleParseSchedule = async () => {
     console.log('🔍 Parsing schedule text:', scheduleText.length, 'characters');
     try {
       const parsed = parseDagschema(scheduleText);
       console.log('✅ Schedule parsed successfully:', parsed);
       setParsedSchedule(parsed);
       setParseError(null);
+      
+      // Get preview of new items that will be created
+      const preview = await newItemsPreviewMutation.mutateAsync(parsed);
+      setNewItemsPreview(preview);
+      
       toast({
         title: "Schedule parsed successfully",
         description: `Found ${parsed.items.length} schedule items and ${parsed.absences.length} absences`,
@@ -42,6 +49,7 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
       console.error('❌ Parse error:', error);
       setParseError(errorMsg);
       setParsedSchedule(null);
+      setNewItemsPreview(null);
       toast({
         title: "Parse error",
         description: errorMsg,
@@ -59,12 +67,18 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
     console.log('🚀 Starting schedule import...', parsedSchedule);
     
     try {
-      await upsertSchedule.mutateAsync(parsedSchedule);
+      const result = await upsertSchedule.mutateAsync(parsedSchedule);
       console.log('✅ Schedule imported successfully');
+      
+      const autoImportResult = result.autoImportResult;
+      const successMsg = `Imported ${parsedSchedule.items.length} schedule items for ${format(parsedSchedule.workDate, 'MMM d, yyyy')}`;
+      const autoCreatedMsg = autoImportResult.createdProjects > 0 || autoImportResult.createdWorkers > 0 
+        ? ` Created ${autoImportResult.createdProjects} new projects and ${autoImportResult.createdWorkers} new worker profiles (placeholders).`
+        : '';
       
       toast({
         title: "Schedule imported successfully",
-        description: `Imported ${parsedSchedule.items.length} schedule items for ${format(parsedSchedule.workDate, 'MMM d, yyyy')}`,
+        description: successMsg + autoCreatedMsg,
       });
       
       // Reset form and close modal
@@ -87,6 +101,7 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
     setScheduleText('');
     setParsedSchedule(null);
     setParseError(null);
+    setNewItemsPreview(null);
   };
 
   // Debug logging
@@ -179,6 +194,23 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
                     </div>
                   </div>
 
+                  {newItemsPreview && (newItemsPreview.newProjects.length > 0 || newItemsPreview.newWorkers.length > 0) && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-blue-800 font-medium mb-2">
+                        <Plus className="h-4 w-4" />
+                        Auto-create Missing Items
+                      </div>
+                      <div className="text-sm text-blue-700 space-y-1">
+                        {newItemsPreview.newProjects.length > 0 && (
+                          <div>• {newItemsPreview.newProjects.length} new projects will be created</div>
+                        )}
+                        {newItemsPreview.newWorkers.length > 0 && (
+                          <div>• {newItemsPreview.newWorkers.length} new worker profiles (placeholders) will be created</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {parsedSchedule.items.length > 0 && (
                     <div className="space-y-3">
                       <h4 className="font-medium">Schedule Items</h4>
@@ -188,6 +220,11 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{item.address}</span>
                               <ScheduleCategoryBadge category={item.category} />
+                              {newItemsPreview?.newProjects.includes(item.address) && (
+                                <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50">
+                                  🟡 NEW
+                                </Badge>
+                              )}
                             </div>
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <Clock className="h-3 w-3" />
@@ -198,14 +235,20 @@ export function PasteScheduleModal({ open, onOpenChange }: PasteScheduleModalPro
                           {item.workers.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {item.workers.map((worker, workerIndex) => (
-                                <Badge 
-                                  key={workerIndex}
-                                  variant={worker.isAssistant ? "outline" : "secondary"}
-                                  className="text-xs"
-                                >
-                                  {worker.name}
-                                  {worker.isAssistant && ' (assist)'}
-                                </Badge>
+                                <div key={workerIndex} className="flex items-center gap-1">
+                                  <Badge 
+                                    variant={worker.isAssistant ? "outline" : "secondary"}
+                                    className="text-xs"
+                                  >
+                                    {worker.name}
+                                    {worker.isAssistant && ' (assist)'}
+                                  </Badge>
+                                  {newItemsPreview?.newWorkers.includes(worker.name) && (
+                                    <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 text-xs">
+                                      NEW
+                                    </Badge>
+                                  )}
+                                </div>
                               ))}
                             </div>
                           )}
