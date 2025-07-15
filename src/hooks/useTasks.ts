@@ -201,6 +201,8 @@ export function useUnassignedTasks(projectId: string) {
   return useQuery({
     queryKey: ['unassigned-tasks', projectId],
     queryFn: async () => {
+      console.log('🔍 Fetching unassigned tasks for project:', projectId);
+      
       const { data, error } = await supabase
         .from('tasks')
         .select(`
@@ -216,7 +218,12 @@ export function useUnassignedTasks(projectId: string) {
         .eq('status', 'todo')
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching unassigned tasks:', error);
+        throw error;
+      }
+      
+      console.log('📋 Unassigned tasks result:', data);
       return data || [];
     },
     enabled: !!projectId,
