@@ -292,10 +292,10 @@ export default function Projects() {
           <QuickAssignDrawer>
             <Button
               size="lg"
-              className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0"
+              className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-2xl hover:shadow-3xl z-50 p-0 bg-primary hover:bg-primary/90 border-2 border-background"
               title="Quick Assign Tasks"
             >
-              <Users className="h-6 w-6" />
+              <Users className="h-7 w-7" />
             </Button>
           </QuickAssignDrawer>
         )}
