@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from '@/components/TaskCard';
 import { SearchChip } from '@/components/ui/SearchChip';
-import { QuickAssignDrawer } from '@/components/QuickAssignDrawer';
+import { WorkerQuickTasks } from '@/components/WorkerQuickTasks';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks, useTaskStats, Task, TaskFilters } from '@/hooks/useTasks';
 import { 
@@ -114,16 +114,16 @@ export default function MyTasks() {
                 Track your assigned tasks and progress
               </p>
             </div>
-            <QuickAssignDrawer projectId={undefined}>
+            <WorkerQuickTasks>
               <Button 
                 variant="ghost" 
                 size="icon"
                 className="w-10 h-10 bg-primary/10 hover:bg-primary/20 rounded-lg"
-                title="View Quick Assigned Tasks"
+                title="View My Quick Assigned Tasks"
               >
                 <Zap className="w-5 h-5 text-primary" />
               </Button>
-            </QuickAssignDrawer>
+            </WorkerQuickTasks>
           </div>
 
           {/* Search + filter chips */}
