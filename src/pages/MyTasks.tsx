@@ -101,78 +101,78 @@ export default function MyTasks() {
 
   return (
     <AppLayout>
-      <div className="space-y-3 sm:space-y-4 md:space-y-6 px-3 sm:px-4 lg:px-6 pb-6">
+      <div className="space-y-2 xs:space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6 px-2 xs:px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="pt-2 sm:pt-4">
+        <div className="pt-1 xs:pt-2 sm:pt-3 md:pt-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-foreground truncate">
                 My Tasks
               </h1>
-              <p className="text-muted-foreground mt-0.5 text-xs sm:text-sm md:text-base">
+              <p className="text-muted-foreground mt-0.5 xs:mt-1 text-xs xs:text-sm sm:text-sm md:text-base">
                 Track your assigned tasks and progress
               </p>
             </div>
-            <div className="hidden sm:flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-muted-foreground" />
+            <div className="hidden xs:flex items-center gap-1 xs:gap-2 flex-shrink-0 ml-2">
+              <BarChart3 className="w-4 h-4 xs:w-5 xs:h-5 text-muted-foreground" />
             </div>
           </div>
         </div>
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-            <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 bg-gradient-to-br from-background to-muted/20 border-border/50">
-              <CardContent className="p-3 sm:p-4 md:p-5">
-                <div className="flex items-center justify-between">
+          <div className="grid grid-cols-2 xs:grid-cols-2 md:grid-cols-4 gap-1.5 xs:gap-2 sm:gap-3 md:gap-4 lg:gap-5">
+            <Card className="hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-gradient-to-br from-background to-muted/20 border-border/50 touch-manipulation">
+              <CardContent className="p-2 xs:p-3 sm:p-4 md:p-5">
+                <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground font-medium truncate">Total</p>
-                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mt-1">{stats.total}</p>
+                    <p className="text-xs xs:text-xs sm:text-sm text-muted-foreground font-medium truncate">Total</p>
+                    <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mt-0.5 xs:mt-1">{stats.total}</p>
                   </div>
-                  <div className="flex-shrink-0 ml-2">
-                    <Target className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary/70" />
+                  <div className="flex-shrink-0">
+                    <Target className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-primary/70" />
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 bg-gradient-to-br from-background to-green-50/50 border-green-200/30">
-              <CardContent className="p-3 sm:p-4 md:p-5">
-                <div className="flex items-center justify-between">
+            <Card className="hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-gradient-to-br from-background to-green-50/50 border-green-200/30 touch-manipulation">
+              <CardContent className="p-2 xs:p-3 sm:p-4 md:p-5">
+                <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground font-medium truncate">Done</p>
-                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600 mt-1">{stats.completed}</p>
+                    <p className="text-xs xs:text-xs sm:text-sm text-muted-foreground font-medium truncate">Done</p>
+                    <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-green-600 mt-0.5 xs:mt-1">{stats.completed}</p>
                   </div>
-                  <div className="flex-shrink-0 ml-2">
-                    <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-green-500" />
+                  <div className="flex-shrink-0">
+                    <CheckCircle className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-green-500" />
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 bg-gradient-to-br from-background to-blue-50/50 border-blue-200/30">
-              <CardContent className="p-3 sm:p-4 md:p-5">
-                <div className="flex items-center justify-between">
+            <Card className="hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-gradient-to-br from-background to-blue-50/50 border-blue-200/30 touch-manipulation">
+              <CardContent className="p-2 xs:p-3 sm:p-4 md:p-5">
+                <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground font-medium truncate">Active</p>
-                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 mt-1">{stats.inProgress}</p>
+                    <p className="text-xs xs:text-xs sm:text-sm text-muted-foreground font-medium truncate">Active</p>
+                    <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-blue-600 mt-0.5 xs:mt-1">{stats.inProgress}</p>
                   </div>
-                  <div className="flex-shrink-0 ml-2">
-                    <Play className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-blue-500" />
+                  <div className="flex-shrink-0">
+                    <Play className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-blue-500" />
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 bg-gradient-to-br from-background to-red-50/50 border-red-200/30">
-              <CardContent className="p-3 sm:p-4 md:p-5">
-                <div className="flex items-center justify-between">
+            <Card className="hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-gradient-to-br from-background to-red-50/50 border-red-200/30 touch-manipulation">
+              <CardContent className="p-2 xs:p-3 sm:p-4 md:p-5">
+                <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground font-medium truncate">Overdue</p>
-                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-red-600 mt-1">{taskCounts.overdue}</p>
+                    <p className="text-xs xs:text-xs sm:text-sm text-muted-foreground font-medium truncate">Overdue</p>
+                    <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-red-600 mt-0.5 xs:mt-1">{taskCounts.overdue}</p>
                   </div>
-                  <div className="flex-shrink-0 ml-2">
-                    <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-red-500" />
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-red-500" />
                   </div>
                 </div>
               </CardContent>
@@ -182,22 +182,22 @@ export default function MyTasks() {
 
         {/* Completion Progress */}
         {stats && (
-          <Card className="hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-background to-muted/20 border-border/50">
-            <CardContent className="p-3 sm:p-4 md:p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <span className="text-xs sm:text-sm md:text-base font-medium text-foreground">Progress</span>
+          <Card className="hover:shadow-lg active:scale-[0.99] transition-all duration-200 bg-gradient-to-r from-background to-muted/20 border-border/50 touch-manipulation">
+            <CardContent className="p-2 xs:p-3 sm:p-4 md:p-5 lg:p-6">
+              <div className="flex items-center justify-between mb-2 xs:mb-3">
+                <div className="flex items-center gap-1 xs:gap-2">
+                  <TrendingUp className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 text-primary" />
+                  <span className="text-xs xs:text-sm sm:text-base md:text-lg font-medium text-foreground">Progress</span>
                 </div>
-                <span className="text-sm sm:text-base md:text-lg font-bold text-primary">
+                <span className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-primary">
                   {stats ? Math.round((stats.completed / stats.total) * 100) || 0 : 0}%
                 </span>
               </div>
               <Progress 
                 value={stats ? Math.round((stats.completed / stats.total) * 100) || 0 : 0} 
-                className="h-2 sm:h-3 md:h-4" 
+                className="h-1.5 xs:h-2 sm:h-3 md:h-4 lg:h-5" 
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-2">
+              <div className="flex justify-between text-xs xs:text-xs sm:text-sm text-muted-foreground mt-1.5 xs:mt-2">
                 <span>{stats.completed} completed</span>
                 <span>{stats.total - stats.completed} remaining</span>
               </div>
@@ -206,18 +206,18 @@ export default function MyTasks() {
         )}
 
         {/* Search and Filters */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 md:gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <div className="flex flex-col gap-1.5 xs:gap-2 sm:flex-row sm:gap-3 md:gap-4 lg:gap-5">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-2.5 xs:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3.5 h-3.5 xs:w-4 xs:h-4" />
             <Input
               placeholder="Search tasks..."
-              className="pl-10 h-10 sm:h-11 text-sm sm:text-base rounded-lg border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200"
+              className="pl-8 xs:pl-10 h-9 xs:h-10 sm:h-11 md:h-12 text-xs xs:text-sm sm:text-base rounded-lg border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200 touch-manipulation"
               value={filters.search || ''}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             />
           </div>
           
-          <div className="flex gap-2 sm:gap-3">
+          <div className="flex gap-1.5 xs:gap-2 sm:gap-3 flex-shrink-0">
             <Select
               value={filters.priority?.[0] || 'all'}
               onValueChange={(value) => 
@@ -227,11 +227,11 @@ export default function MyTasks() {
                 })
               }
             >
-              <SelectTrigger className="w-full sm:w-32 md:w-36 h-10 sm:h-11 rounded-lg border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200">
-                <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+              <SelectTrigger className="w-20 xs:w-24 sm:w-32 md:w-36 lg:w-40 h-9 xs:h-10 sm:h-11 md:h-12 rounded-lg border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200 touch-manipulation">
+                <Filter className="w-3 h-3 xs:w-4 xs:h-4 mr-1 xs:mr-2 text-muted-foreground" />
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
-              <SelectContent className="rounded-lg border-border/50">
+              <SelectContent className="rounded-lg border-border/50 min-w-[160px] xs:min-w-[180px]">
                 <SelectItem value="all">All Priority</SelectItem>
                 <SelectItem value="urgent">🔴 Urgent</SelectItem>
                 <SelectItem value="high">🟠 High</SelectItem>
