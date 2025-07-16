@@ -275,8 +275,8 @@ export const useAccess = ({
   phaseId?: string;
   taskId?: string;
 }) => {
-  const { profile } = useAuth();
-  const userId = profile?.user_id;
+  const { user, loading } = useAuth();
+  const userId = user?.id;
 
   return useQuery({
     queryKey: ['access', userId, projectId, phaseId, taskId],
@@ -290,7 +290,8 @@ export const useAccess = ({
       }
       return accessService.getAccess(userId, { projectId, phaseId, taskId });
     },
-    enabled: !!userId,
+    enabled: !!userId && !loading,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
   });
 };
