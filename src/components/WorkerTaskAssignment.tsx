@@ -262,100 +262,116 @@ export function WorkerTaskAssignment({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[90vh] sm:h-[80vh] flex flex-col p-0">
+        <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
             Assign Tasks to {worker.profiles?.name || worker.name}
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="tasks" className="flex items-center gap-2">
-              <ListTodo className="h-4 w-4" />
-              Tasks ({assignableTasks.length})
-            </TabsTrigger>
-            <TabsTrigger value="checklists" className="flex items-center gap-2">
-              <CheckSquare className="h-4 w-4" />
-              Checklist Items ({assignableChecklistItems.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="tasks" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={assignableTasks.length > 0 && assignableTasks.every(task => selectedItems.includes(task.id))}
-                  onCheckedChange={(checked) => 
-                    handleSelectAll(assignableTasks, checked as boolean)
-                  }
-                />
-                <span className="text-sm font-medium">Select All Tasks</span>
-              </div>
-              <Badge variant="outline">
-                {selectedItems.filter(id => assignableTasks.find(t => t.id === id)).length} selected
-              </Badge>
+        <div className="flex-1 flex flex-col min-h-0">
+          <Tabs value={selectedTab} onValueChange={setSelectedTab} className="flex-1 flex flex-col">
+            <div className="px-6 py-2 border-b">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="tasks" className="flex items-center gap-2">
+                  <ListTodo className="h-4 w-4" />
+                  Tasks ({assignableTasks.length})
+                </TabsTrigger>
+                <TabsTrigger value="checklists" className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4" />
+                  Checklist Items ({assignableChecklistItems.length})
+                </TabsTrigger>
+              </TabsList>
             </div>
 
-            <ScrollArea className="h-[400px]">
-              {assignableTasks.length > 0 ? (
-                assignableTasks.map(renderAssignableItem)
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <ListTodo className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No available tasks to assign</p>
+            <div className="flex-1 overflow-hidden">
+              <TabsContent value="tasks" className="mt-0 h-full flex flex-col">
+                <div className="px-6 py-3 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={assignableTasks.length > 0 && assignableTasks.every(task => selectedItems.includes(task.id))}
+                        onCheckedChange={(checked) => 
+                          handleSelectAll(assignableTasks, checked as boolean)
+                        }
+                      />
+                      <span className="text-sm font-medium">Select All Tasks</span>
+                    </div>
+                    <Badge variant="outline">
+                      {selectedItems.filter(id => assignableTasks.find(t => t.id === id)).length} selected
+                    </Badge>
+                  </div>
                 </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
 
-          <TabsContent value="checklists" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={assignableChecklistItems.length > 0 && assignableChecklistItems.every(item => selectedItems.includes(item.id))}
-                  onCheckedChange={(checked) => 
-                    handleSelectAll(assignableChecklistItems, checked as boolean)
-                  }
-                />
-                <span className="text-sm font-medium">Select All Checklist Items</span>
-              </div>
-              <Badge variant="outline">
-                {selectedItems.filter(id => assignableChecklistItems.find(c => c.id === id)).length} selected
-              </Badge>
+                <ScrollArea className="flex-1">
+                  <div className="px-6 py-2">
+                    {assignableTasks.length > 0 ? (
+                      assignableTasks.map(renderAssignableItem)
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <ListTodo className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No available tasks to assign</p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+
+              <TabsContent value="checklists" className="mt-0 h-full flex flex-col">
+                <div className="px-6 py-3 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={assignableChecklistItems.length > 0 && assignableChecklistItems.every(item => selectedItems.includes(item.id))}
+                        onCheckedChange={(checked) => 
+                          handleSelectAll(assignableChecklistItems, checked as boolean)
+                        }
+                      />
+                      <span className="text-sm font-medium">Select All Checklist Items</span>
+                    </div>
+                    <Badge variant="outline">
+                      {selectedItems.filter(id => assignableChecklistItems.find(c => c.id === id)).length} selected
+                    </Badge>
+                  </div>
+                </div>
+
+                <ScrollArea className="flex-1">
+                  <div className="px-6 py-2">
+                    {assignableChecklistItems.length > 0 ? (
+                      assignableChecklistItems.map(renderAssignableItem)
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No available checklist items to assign</p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
             </div>
+          </Tabs>
+        </div>
 
-            <ScrollArea className="h-[400px]">
-              {assignableChecklistItems.length > 0 ? (
-                assignableChecklistItems.map(renderAssignableItem)
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No available checklist items to assign</p>
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-
-        <div className="flex items-center justify-between pt-4 border-t">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4" />
-            {selectedItems.length} items selected
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAssignSelected}
-              disabled={selectedItems.length === 0 || isLoading}
-            >
-              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Assign Selected ({selectedItems.length})
-            </Button>
+        <div className="px-6 py-4 border-t bg-background">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              {selectedItems.length} items selected
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAssignSelected}
+                disabled={selectedItems.length === 0 || isLoading}
+              >
+                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Assign ({selectedItems.length})
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
