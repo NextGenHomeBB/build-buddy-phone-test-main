@@ -14,21 +14,31 @@ export const taskService = {
       
       const linkedProfileIds = linkedProfiles?.map(p => p.user_id) || [];
       
-      // Get task IDs from task_workers table
-      const { data: taskWorkerTasks } = await supabase
+      // Get task IDs from task_workers table (both direct and via linked profiles)
+      let taskWorkerTaskIds = [];
+      
+      // Direct assignments in task_workers
+      const { data: directTaskWorkers } = await supabase
         .from('task_workers')
         .select('task_id')
-        .or(`user_id.eq.${userId},user_id.in.(${linkedProfileIds.join(',')})`);
+        .eq('user_id', userId);
       
-      const taskWorkerTaskIds = taskWorkerTasks?.map(tw => tw.task_id) || [];
+      // Assignments via linked placeholder profiles in task_workers
+      if (linkedProfileIds.length > 0) {
+        const { data: linkedTaskWorkers } = await supabase
+          .from('task_workers')
+          .select('task_id')
+          .in('user_id', linkedProfileIds);
+        
+        taskWorkerTaskIds = [
+          ...(directTaskWorkers?.map(tw => tw.task_id) || []),
+          ...(linkedTaskWorkers?.map(tw => tw.task_id) || [])
+        ];
+      } else {
+        taskWorkerTaskIds = directTaskWorkers?.map(tw => tw.task_id) || [];
+      }
       
-      // Build the main query with all assignment methods
-      const allConditions = [
-        `assigned_to.eq.${userId}`,
-        linkedProfileIds.length > 0 ? `assigned_to.in.(${linkedProfileIds.join(',')})` : null,
-        taskWorkerTaskIds.length > 0 ? `id.in.(${taskWorkerTaskIds.join(',')})` : null
-      ].filter(Boolean);
-      
+      // Build the comprehensive query
       query = supabase
         .from('tasks')
         .select(`
@@ -47,8 +57,27 @@ export const taskService = {
             *,
             user:profiles(name)
           )
-        `)
-        .or(allConditions.join(','));
+        `);
+      
+      // Add all the OR conditions for task assignment
+      const conditions = [];
+      
+      // Direct assignment to auth user
+      conditions.push(`assigned_to.eq.${userId}`);
+      
+      // Assignment to linked placeholder profiles
+      if (linkedProfileIds.length > 0) {
+        conditions.push(`assigned_to.in.(${linkedProfileIds.join(',')})`);
+      }
+      
+      // Assignment via task_workers table
+      if (taskWorkerTaskIds.length > 0) {
+        conditions.push(`id.in.(${taskWorkerTaskIds.join(',')})`);
+      }
+      
+      if (conditions.length > 0) {
+        query = query.or(conditions.join(','));
+      }
     } else {
       // For admin/manager queries without userId, use regular tasks table
       query = supabase
