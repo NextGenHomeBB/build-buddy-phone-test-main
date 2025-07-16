@@ -188,9 +188,18 @@ export const taskService = {
     
     if (error) throw error;
 
-    // Auto-assign user to project if task has an assignee
-    if (data.assigned_to && data.project_id) {
-      await upsertUserProjectRole(data.assigned_to, data.project_id, 'worker');
+    // Auto-assign current authenticated user to project (not the placeholder assigned_to)
+    // This ensures the user has access to the project they're working on
+    if (data.project_id) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        try {
+          await upsertUserProjectRole(user.id, data.project_id, 'worker');
+        } catch (roleError) {
+          // Don't fail the task update if role assignment fails
+          console.warn('Failed to assign user to project role:', roleError);
+        }
+      }
     }
 
     return data;
