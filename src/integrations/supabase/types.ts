@@ -84,6 +84,13 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "checklist_items_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
         ]
       }
       checklists: {
@@ -714,6 +721,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "task_comments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -750,6 +764,13 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_workers_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -899,6 +920,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "time_sheets_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "time_sheets_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1043,7 +1071,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_tasks: {
+        Row: {
+          actual_hours: number | null
+          approved_at: string | null
+          approved_by: string | null
+          assigned_by: string | null
+          assigned_by_user_name: string | null
+          assigned_to: string | null
+          assigned_user_name: string | null
+          attachments: string[] | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string | null
+          phase_id: string | null
+          phase_name: string | null
+          priority: Database["public"]["Enums"]["task_priority"] | null
+          project_id: string | null
+          project_name: string | null
+          signature_url: string | null
+          status: Database["public"]["Enums"]["task_status"] | null
+          tags: string[] | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tasks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       assign_unassigned_tasks: {
@@ -1077,6 +1161,10 @@ export type Database = {
       import_schedule_tx: {
         Args: { payload: Json }
         Returns: Json
+      }
+      link_placeholder_to_auth_user: {
+        Args: { placeholder_name: string; auth_user_id: string }
+        Returns: boolean
       }
       sync_task_workers_to_assigned_to: {
         Args: Record<PropertyKey, never>

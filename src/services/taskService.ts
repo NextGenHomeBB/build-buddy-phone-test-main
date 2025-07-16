@@ -3,32 +3,49 @@ import { upsertUserProjectRole } from '@/services/userProjectRole.service';
 
 export const taskService = {
   async getTasks(userId?: string, filters?: any) {
-    let query = supabase
-      .from('tasks')
-      .select(`
-        *,
-        project:projects(name),
-        phase:project_phases(name),
-        assigned_user:profiles!assigned_to(name),
-        assigned_by_user:profiles!assigned_by(name),
-        workers:task_workers(
-          id,
-          is_primary,
-          user_id,
-          user_profile:profiles(id, name, avatar_url)
-        ),
-        comments:task_comments(
-          *,
-          user:profiles(name)
-        )
-      `);
-
+    let query;
+    
     if (userId) {
-      // Simplified query: RLS policies now handle both assigned_to and task_workers
-      query = query.or(`assigned_to.eq.${userId},task_workers.user_id.eq.${userId}`);
+      // Use the new user_tasks view that handles both direct assignment and linked profiles
+      query = supabase
+        .from('user_tasks')
+        .select(`
+          *,
+          workers:task_workers(
+            id,
+            is_primary,
+            user_id,
+            user_profile:profiles(id, name, avatar_url)
+          ),
+          comments:task_comments(
+            *,
+            user:profiles(name)
+          )
+        `);
+    } else {
+      // For admin/manager queries without userId, use regular tasks table
+      query = supabase
+        .from('tasks')
+        .select(`
+          *,
+          project:projects(name),
+          phase:project_phases(name),
+          assigned_user:profiles!assigned_to(name),
+          assigned_by_user:profiles!assigned_by(name),
+          workers:task_workers(
+            id,
+            is_primary,
+            user_id,
+            user_profile:profiles(id, name, avatar_url)
+          ),
+          comments:task_comments(
+            *,
+            user:profiles(name)
+          )
+        `);
     }
 
-    // If no userId, apply other filters
+    // Apply filters
     if (filters?.status?.length) {
       query = query.in('status', filters.status);
     }
@@ -247,11 +264,10 @@ export const taskService = {
   },
 
   async getTaskStats(userId: string) {
-    // Simplified query: RLS policies now handle both assigned_to and task_workers
+    // Use the user_tasks view that handles both direct assignment and linked profiles
     const { data, error } = await supabase
-      .from('tasks')
-      .select('status')
-      .or(`assigned_to.eq.${userId},task_workers.user_id.eq.${userId}`);
+      .from('user_tasks')
+      .select('status');
     
     if (error) throw error;
     
