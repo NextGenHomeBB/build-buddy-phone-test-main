@@ -38,6 +38,7 @@ import { EditPhaseDialog } from '@/components/project/EditPhaseDialog';
 import { PhaseCalendar } from '@/components/PhaseCalendar';
 import { ProjectMaterials } from '@/components/project/ProjectMaterials';
 import { ProjectChecklistsTab } from '@/components/project/ProjectChecklistsTab';
+import { ProjectDocuments } from '@/components/project/ProjectDocuments';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -523,19 +524,7 @@ export default function ProjectDetail() {
           </TabsContent>
 
           <TabsContent value="docs">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Documents & Files
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Document management coming soon...
-                </div>
-              </CardContent>
-            </Card>
+            <ProjectDocuments projectId={id!} />
           </TabsContent>
 
           <TabsContent value="activity">
