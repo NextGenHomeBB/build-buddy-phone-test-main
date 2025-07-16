@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Search, ChevronRight, ChevronDown, Users, CheckSquare, Square } from 'lucide-react';
+import { Search, ChevronRight, ChevronDown, Users, CheckSquare, Square, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useProjectPhases, useTasksByPhase, useChecklistItems, useBulkAssign } from '@/hooks/useAssignTasks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { DrillStack } from './DrillStack';
 
 interface AssignTreeSheetProps {
   open: boolean;
@@ -24,6 +25,8 @@ interface SelectedItems {
   expandedTasks: Set<string>;
 }
 
+type DrillLevel = 1 | 2 | 3; // 1: Phases, 2: Tasks, 3: Checklist Items
+
 export function AssignTreeSheet({ 
   open, 
   onOpenChange, 
@@ -32,7 +35,9 @@ export function AssignTreeSheet({
   phaseDefault 
 }: AssignTreeSheetProps) {
   const isMobile = useIsMobile();
+  const [currentLevel, setCurrentLevel] = useState<DrillLevel>(phaseDefault ? 2 : 1);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(phaseDefault || null);
+  const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selected, setSelected] = useState<SelectedItems>({
     taskIds: new Set(),
@@ -63,10 +68,28 @@ export function AssignTreeSheet({
     return { totalTasks, totalChecklistItems, totalSelected };
   }, [selected]);
 
-  // Handle phase selection - just set the selected phase for now
+  // Handle phase selection - drill to task level
   const handlePhaseSelect = useCallback((phaseId: string) => {
     setSelectedPhase(phaseId);
+    setCurrentLevel(2);
   }, []);
+
+  // Handle task selection - drill to checklist level
+  const handleTaskSelect = useCallback((taskId: string) => {
+    setSelectedTask(taskId);
+    setCurrentLevel(3);
+  }, []);
+
+  // Handle back navigation
+  const handleBack = useCallback(() => {
+    if (currentLevel === 3) {
+      setCurrentLevel(2);
+      setSelectedTask(null);
+    } else if (currentLevel === 2) {
+      setCurrentLevel(1);
+      setSelectedPhase(null);
+    }
+  }, [currentLevel]);
 
   // Handle phase header click to select all tasks in phase
   const handlePhaseHeaderSelect = useCallback(() => {
@@ -165,26 +188,14 @@ export function AssignTreeSheet({
 
   // Render phase list
   const PhaseList = () => (
-    <div className="flex-1 min-w-0">
-      <div className="p-4 border-b space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Phases
-          </h3>
-          {selectedPhase && filteredTasks.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handlePhaseHeaderSelect}
-              className="text-xs"
-            >
-              Select All ({filteredTasks.length})
-            </Button>
-          )}
-        </div>
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b">
+        <h3 className="font-medium flex items-center gap-2">
+          <Users className="w-4 h-4" />
+          Select Phase
+        </h3>
       </div>
-      <ScrollArea className="h-[calc(100%-60px)]">
+      <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
           {phasesLoading ? (
             <div className="p-4 text-muted-foreground">Loading phases...</div>
@@ -197,16 +208,16 @@ export function AssignTreeSheet({
                 onClick={() => handlePhaseSelect(phase.id)}
                 className={cn(
                   "w-full text-left p-3 rounded-md min-h-11 transition-colors",
-                  "hover:bg-muted/50",
-                  selectedPhase === phase.id && "bg-muted"
+                  "hover:bg-muted/50 flex items-center justify-between"
                 )}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{phase.name}</span>
-                  <Badge variant={phase.status === 'active' ? 'default' : 'secondary'}>
-                    {phase.status}
-                  </Badge>
+                <div className="flex-1">
+                  <div className="font-medium">{phase.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Status: {phase.status}
+                  </div>
                 </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
             ))
           )}
@@ -216,65 +227,147 @@ export function AssignTreeSheet({
   );
 
   // Render task list with search
-  const TaskList = () => (
-    <div className="flex-1 min-w-0 border-l">
-      <div className="p-4 border-b space-y-3">
-        <h3 className="font-medium flex items-center gap-2">
-          <CheckSquare className="w-4 h-4" />
-          Tasks
-          {selectedPhase && (
-            <Badge variant="secondary">
-              {filteredTasks.length}
-            </Badge>
-          )}
-        </h3>
-        {selectedPhase && (
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+  const TaskList = () => {
+    const currentPhase = phases.find(p => p.id === selectedPhase);
+    
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-4 border-b space-y-3">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="p-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h3 className="font-medium flex items-center gap-2">
+              <CheckSquare className="w-4 h-4" />
+              {currentPhase?.name} - Tasks
+              <Badge variant="secondary">
+                {filteredTasks.length}
+              </Badge>
+            </h3>
           </div>
-        )}
-      </div>
-      <ScrollArea className="h-[calc(100%-120px)]">
-        <div className="p-2 space-y-1">
-          {!selectedPhase ? (
-            <div className="p-4 text-muted-foreground">Select a phase to view tasks</div>
-          ) : tasksLoading ? (
-            <div className="p-4 text-muted-foreground">Loading tasks...</div>
-          ) : filteredTasks.length === 0 ? (
-            <div className="p-4 text-muted-foreground">
-              {searchQuery ? 'No tasks match your search' : 'No unassigned tasks in this phase'}
-            </div>
-          ) : (
-            filteredTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                isSelected={selected.taskIds.has(task.id)}
-                isExpanded={selected.expandedTasks.has(task.id)}
-                onToggle={handleTaskToggle}
-                onExpand={handleTaskExpand}
-                selectedChecklistItems={selected.checklistItemIds}
-                onChecklistItemToggle={handleChecklistItemToggle}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tasks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
               />
-            ))
-          )}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handlePhaseHeaderSelect}
+              disabled={filteredTasks.length === 0}
+            >
+              Select All
+            </Button>
+          </div>
         </div>
-      </ScrollArea>
-    </div>
-  );
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {tasksLoading ? (
+              <div className="p-4 text-muted-foreground">Loading tasks...</div>
+            ) : filteredTasks.length === 0 ? (
+              <div className="p-4 text-muted-foreground">
+                {searchQuery ? 'No tasks match your search' : 'No unassigned tasks in this phase'}
+              </div>
+            ) : (
+              filteredTasks.map((task) => (
+                <TaskItemDrill
+                  key={task.id}
+                  task={task}
+                  isSelected={selected.taskIds.has(task.id)}
+                  onToggle={handleTaskToggle}
+                  onSelect={handleTaskSelect}
+                />
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  };
 
-  // Main content
+  // Render checklist items
+  const ChecklistList = () => {
+    const currentTask = filteredTasks.find(t => t.id === selectedTask);
+    const { data: checklistItems = [] } = useChecklistItems(selectedTask || '');
+    
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-4 border-b">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="p-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h3 className="font-medium flex items-center gap-2">
+              <CheckSquare className="w-4 h-4" />
+              {currentTask?.title} - Checklist
+              <Badge variant="secondary">
+                {checklistItems.length}
+              </Badge>
+            </h3>
+          </div>
+        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {checklistItems.length === 0 ? (
+              <div className="p-4 text-muted-foreground">No checklist items for this task</div>
+            ) : (
+              checklistItems.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => handleChecklistItemToggle(item.id)}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-muted/50 min-h-11",
+                    selected.checklistItemIds.has(item.id) && "bg-primary/10"
+                  )}
+                >
+                  {selected.checklistItemIds.has(item.id) ? (
+                    <CheckSquare className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                  <div className="flex-1">
+                    <div className="font-medium">{item.title}</div>
+                    {item.description && (
+                      <div className="text-sm text-muted-foreground">{item.description}</div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  };
+
+  // Main content with drill stack
   const content = (
     <div className="flex flex-col h-full">
-      <div className="flex-1 flex gap-2 min-h-0">
-        <PhaseList />
-        <TaskList />
+      <div className="flex-1 relative overflow-hidden">
+        <DrillStack level={1} isActive={currentLevel === 1}>
+          <PhaseList />
+        </DrillStack>
+        <DrillStack level={2} isActive={currentLevel === 2}>
+          <TaskList />
+        </DrillStack>
+        <DrillStack level={3} isActive={currentLevel === 3}>
+          <ChecklistList />
+        </DrillStack>
       </div>
       
       {/* Footer */}
@@ -324,101 +417,71 @@ export function AssignTreeSheet({
   );
 }
 
-// Task item component with checklist expansion
-function TaskItem({ 
+// Simplified task item for drill-down navigation
+function TaskItemDrill({ 
   task, 
   isSelected, 
-  isExpanded, 
-  onToggle, 
-  onExpand,
-  selectedChecklistItems,
-  onChecklistItemToggle 
+  onToggle,
+  onSelect
 }: {
   task: any;
   isSelected: boolean;
-  isExpanded: boolean;
   onToggle: (taskId: string, checklistItemIds: string[]) => void;
-  onExpand: (taskId: string) => void;
-  selectedChecklistItems: Set<string>;
-  onChecklistItemToggle: (itemId: string) => void;
+  onSelect: (taskId: string) => void;
 }) {
   const { data: checklistItems = [] } = useChecklistItems(task.id);
   
-  const handleTaskClick = () => {
+  const handleTaskToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const checklistItemIds = checklistItems.map(item => item.id);
     onToggle(task.id, checklistItemIds);
   };
 
+  const handleTaskClick = () => {
+    if (checklistItems.length > 0) {
+      onSelect(task.id);
+    } else {
+      // If no checklist items, just toggle the task
+      const checklistItemIds = checklistItems.map(item => item.id);
+      onToggle(task.id, checklistItemIds);
+    }
+  };
+
   return (
-    <div className="border rounded-md">
+    <div 
+      className={cn(
+        "flex items-center gap-3 p-3 rounded-md min-h-11 cursor-pointer hover:bg-muted/50 transition-colors",
+        isSelected && "bg-primary/10"
+      )}
+      onClick={handleTaskClick}
+    >
       <div 
-        className={cn(
-          "flex items-center gap-3 p-3 min-h-11 cursor-pointer hover:bg-muted/50",
-          isSelected && "bg-primary/10"
-        )}
+        onClick={handleTaskToggle}
+        className="flex items-center gap-3 flex-1"
       >
-        <div 
-          onClick={handleTaskClick}
-          className="flex items-center gap-3 flex-1"
-        >
-          {isSelected ? (
-            <CheckSquare className="w-4 h-4 text-primary" />
-          ) : (
-            <Square className="w-4 h-4" />
-          )}
-          <div className="flex-1">
-            <div className="font-medium">{task.title}</div>
-            <div className="text-sm text-muted-foreground">
-              Status: {task.status} • Priority: {task.priority}
-            </div>
+        {isSelected ? (
+          <CheckSquare className="w-4 h-4 text-primary" />
+        ) : (
+          <Square className="w-4 h-4" />
+        )}
+        <div className="flex-1">
+          <div className="font-medium">{task.title}</div>
+          <div className="text-sm text-muted-foreground">
+            Status: {task.status} • Priority: {task.priority}
           </div>
         </div>
-        
-        {checklistItems.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onExpand(task.id)}
-            className="p-1"
-          >
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronRight className="w-4 h-4" />
-            )}
-            <Badge variant="secondary" className="ml-1">
-              {checklistItems.length}
-            </Badge>
-          </Button>
-        )}
       </div>
       
-      {isExpanded && checklistItems.length > 0 && (
-        <div className="border-t bg-muted/20">
-          {checklistItems.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => onChecklistItemToggle(item.id)}
-              className={cn(
-                "flex items-center gap-3 p-3 ml-6 cursor-pointer hover:bg-muted/50 min-h-11",
-                selectedChecklistItems.has(item.id) && "bg-primary/10"
-              )}
-            >
-              {selectedChecklistItems.has(item.id) ? (
-                <CheckSquare className="w-4 h-4 text-primary" />
-              ) : (
-                <Square className="w-4 h-4" />
-              )}
-              <div className="flex-1">
-                <div className="font-medium">{item.title}</div>
-                {item.description && (
-                  <div className="text-sm text-muted-foreground">{item.description}</div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        {checklistItems.length > 0 && (
+          <Badge variant="secondary">
+            {checklistItems.length} items
+          </Badge>
+        )}
+        {checklistItems.length > 0 && (
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        )}
+      </div>
     </div>
   );
 }
