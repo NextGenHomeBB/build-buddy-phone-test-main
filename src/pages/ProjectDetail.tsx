@@ -39,6 +39,7 @@ import { PhaseCalendar } from '@/components/PhaseCalendar';
 import { ProjectMaterials } from '@/components/project/ProjectMaterials';
 import { ProjectChecklistsTab } from '@/components/project/ProjectChecklistsTab';
 import { ProjectDocuments } from '@/components/project/ProjectDocuments';
+import { LabourTracking } from '@/components/project/LabourTracking';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -508,19 +509,7 @@ export default function ProjectDetail() {
           </TabsContent>
 
           <TabsContent value="labour">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Labour & Time Tracking
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Labour tracking coming soon...
-                </div>
-              </CardContent>
-            </Card>
+            <LabourTracking projectId={id!} />
           </TabsContent>
 
           <TabsContent value="docs">

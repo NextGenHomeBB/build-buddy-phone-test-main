@@ -249,6 +249,82 @@ export type Database = {
           },
         ]
       }
+      labour_entries: {
+        Row: {
+          break_duration_minutes: number | null
+          created_at: string | null
+          end_time: string | null
+          hourly_rate: number
+          id: string
+          notes: string | null
+          phase_id: string | null
+          project_id: string
+          start_time: string
+          status: string | null
+          task_description: string
+          total_cost: number | null
+          total_hours: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          break_duration_minutes?: number | null
+          created_at?: string | null
+          end_time?: string | null
+          hourly_rate?: number
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          project_id: string
+          start_time: string
+          status?: string | null
+          task_description: string
+          total_cost?: number | null
+          total_hours?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          break_duration_minutes?: number | null
+          created_at?: string | null
+          end_time?: string | null
+          hourly_rate?: number
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          project_id?: string
+          start_time?: string
+          status?: string | null
+          task_description?: string
+          total_cost?: number | null
+          total_hours?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_entries_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labour_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labour_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       material_costs: {
         Row: {
           category: string
