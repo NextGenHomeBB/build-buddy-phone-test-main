@@ -101,79 +101,79 @@ export default function MyTasks() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen w-full">
-        <div className="space-y-4 md:space-y-6 lg:space-y-8 px-4 md:px-6 lg:px-8 xl:px-10 py-4 md:py-6 lg:py-8 max-w-7xl mx-auto">
+      <div className="min-h-screen w-full bg-background">
+        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 max-w-7xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
           {/* Header */}
-          <div className="mb-6 md:mb-8">
-            <div className="flex items-start justify-between gap-4 md:gap-6">
+          <div className="pt-safe-top">
+            <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1">
                   My Tasks
                 </h1>
-                <p className="text-muted-foreground text-base md:text-lg">
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Track your assigned tasks and progress
                 </p>
               </div>
-              <div className="hidden md:flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 bg-muted rounded-xl flex-shrink-0">
-                <BarChart3 className="w-6 h-6 lg:w-7 lg:h-7 text-muted-foreground" />
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex-shrink-0">
+                <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
             </div>
           </div>
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
-              <Card className="hover:shadow-lg transition-all duration-200 bg-card border-border">
-                <CardContent className="p-5 md:p-6">
-                  <div className="flex items-center justify-between gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <Card className="hover:shadow-md transition-all duration-200 bg-card border-border">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm md:text-base text-muted-foreground font-medium mb-2">Total</p>
-                      <p className="text-3xl md:text-4xl font-bold text-foreground">{stats.total}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">Total</p>
+                      <p className="text-lg sm:text-2xl font-bold text-foreground">{stats.total}</p>
                     </div>
                     <div className="flex-shrink-0">
-                      <Target className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+                      <Target className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="hover:shadow-lg transition-all duration-200 bg-card border-border">
-                <CardContent className="p-5 md:p-6">
-                  <div className="flex items-center justify-between gap-4">
+              <Card className="hover:shadow-md transition-all duration-200 bg-card border-border">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm md:text-base text-muted-foreground font-medium mb-2">Done</p>
-                      <p className="text-3xl md:text-4xl font-bold text-green-600">{stats.completed}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">Done</p>
+                      <p className="text-lg sm:text-2xl font-bold text-green-600">{stats.completed}</p>
                     </div>
                     <div className="flex-shrink-0">
-                      <CheckCircle className="w-8 h-8 md:w-10 md:h-10 text-green-500" />
+                      <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="hover:shadow-lg transition-all duration-200 bg-card border-border">
-                <CardContent className="p-5 md:p-6">
-                  <div className="flex items-center justify-between gap-4">
+              <Card className="hover:shadow-md transition-all duration-200 bg-card border-border">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm md:text-base text-muted-foreground font-medium mb-2">Active</p>
-                      <p className="text-3xl md:text-4xl font-bold text-blue-600">{stats.inProgress}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">Active</p>
+                      <p className="text-lg sm:text-2xl font-bold text-blue-600">{stats.inProgress}</p>
                     </div>
                     <div className="flex-shrink-0">
-                      <Play className="w-8 h-8 md:w-10 md:h-10 text-blue-500" />
+                      <Play className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="hover:shadow-lg transition-all duration-200 bg-card border-border">
-                <CardContent className="p-5 md:p-6">
-                  <div className="flex items-center justify-between gap-4">
+              <Card className="hover:shadow-md transition-all duration-200 bg-card border-border">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm md:text-base text-muted-foreground font-medium mb-2">Overdue</p>
-                      <p className="text-3xl md:text-4xl font-bold text-red-600">{taskCounts.overdue}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">Overdue</p>
+                      <p className="text-lg sm:text-2xl font-bold text-red-600">{taskCounts.overdue}</p>
                     </div>
                     <div className="flex-shrink-0">
-                      <AlertCircle className="w-8 h-8 md:w-10 md:h-10 text-red-500" />
+                      <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-red-500" />
                     </div>
                   </div>
                 </CardContent>
@@ -184,21 +184,21 @@ export default function MyTasks() {
           {/* Completion Progress */}
           {stats && (
             <Card className="bg-card border-border">
-              <CardContent className="p-4 sm:p-5">
-                <div className="flex items-center justify-between mb-3">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-primary" />
-                    <span className="text-sm sm:text-base font-medium text-foreground">Progress</span>
+                    <span className="text-sm font-medium text-foreground">Progress</span>
                   </div>
-                  <span className="text-lg sm:text-xl font-bold text-primary">
+                  <span className="text-base sm:text-lg font-bold text-primary">
                     {stats ? Math.round((stats.completed / stats.total) * 100) || 0 : 0}%
                   </span>
                 </div>
                 <Progress 
                   value={stats ? Math.round((stats.completed / stats.total) * 100) || 0 : 0} 
-                  className="h-3 sm:h-4 mb-2" 
+                  className="h-2 sm:h-3 mb-2" 
                 />
-                <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
+                <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{stats.completed} completed</span>
                   <span>{stats.total - stats.completed} remaining</span>
                 </div>
@@ -207,18 +207,18 @@ export default function MyTasks() {
           )}
 
           {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Search tasks..."
-                className="pl-12 h-12 md:h-14 text-base md:text-lg rounded-xl border-border shadow-sm"
+                className="pl-10 h-11 sm:h-12 text-sm sm:text-base rounded-lg border-border shadow-sm"
                 value={filters.search || ''}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               />
             </div>
             
-            <div className="flex gap-4">
+            <div className="w-full sm:w-48">
               <Select
                 value={filters.priority?.[0] || 'all'}
                 onValueChange={(value) => 
@@ -228,11 +228,11 @@ export default function MyTasks() {
                   })
                 }
               >
-                <SelectTrigger className="w-full md:w-48 h-12 md:h-14 rounded-xl border-border shadow-sm">
-                  <Filter className="w-5 h-5 mr-3 text-muted-foreground" />
+                <SelectTrigger className="w-full h-11 sm:h-12 rounded-lg border-border shadow-sm">
+                  <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl z-50 bg-background border shadow-lg">
+                <SelectContent className="rounded-lg z-50 bg-background border shadow-lg">
                   <SelectItem value="all">All Priority</SelectItem>
                   <SelectItem value="urgent">🔴 Urgent</SelectItem>
                   <SelectItem value="high">🟠 High</SelectItem>
@@ -245,74 +245,74 @@ export default function MyTasks() {
 
           {/* Task Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-12 p-1 bg-muted rounded-lg">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-11 sm:h-12 p-1 bg-muted rounded-lg">
               <TabsTrigger 
                 value="all" 
-                className="flex items-center justify-center gap-2 text-sm py-2 px-3 rounded-md transition-all"
+                className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 rounded-md transition-all"
               >
-                <Target className="w-4 h-4 sm:hidden" />
-                <span className="font-medium">All</span>
-                <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5">
+                <Target className="w-3 h-3 sm:w-4 sm:h-4 md:hidden" />
+                <span className="font-medium truncate">All</span>
+                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 h-4 sm:h-5 min-w-0">
                   {taskCounts.all}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger 
                 value="active" 
-                className="flex items-center justify-center gap-2 text-sm py-2 px-3 rounded-md transition-all"
+                className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 rounded-md transition-all"
               >
-                <Play className="w-4 h-4 sm:hidden" />
-                <span className="font-medium">Active</span>
-                <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5">
+                <Play className="w-3 h-3 sm:w-4 sm:h-4 md:hidden" />
+                <span className="font-medium truncate">Active</span>
+                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 h-4 sm:h-5 min-w-0">
                   {taskCounts.active}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger 
                 value="completed" 
-                className="flex items-center justify-center gap-2 text-sm py-2 px-3 rounded-md transition-all"
+                className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 rounded-md transition-all"
               >
-                <CheckCircle className="w-4 h-4 sm:hidden" />
-                <span className="font-medium">Done</span>
-                <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5">
+                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 md:hidden" />
+                <span className="font-medium truncate">Done</span>
+                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 h-4 sm:h-5 min-w-0">
                   {taskCounts.completed}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger 
                 value="overdue" 
-                className="flex items-center justify-center gap-2 text-sm py-2 px-3 rounded-md transition-all"
+                className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 rounded-md transition-all"
               >
-                <AlertCircle className="w-4 h-4 sm:hidden" />
-                <span className="font-medium">Overdue</span>
-                <Badge variant="destructive" className="text-xs px-1.5 py-0.5 h-5">
+                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 md:hidden" />
+                <span className="font-medium truncate">Overdue</span>
+                <Badge variant="destructive" className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 h-4 sm:h-5 min-w-0">
                   {taskCounts.overdue}
                 </Badge>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value={activeTab} className="mt-4">
-              <div className="min-h-[50vh]">
+            <TabsContent value={activeTab} className="mt-3 sm:mt-4">
+              <div className="min-h-[40vh] sm:min-h-[50vh]">
                 {isLoading ? (
-                  <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-3">
                     {[...Array(3)].map((_, i) => (
                       <Card key={i} className="animate-pulse">
-                        <CardHeader className="pb-3">
-                          <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                          <div className="h-3 bg-muted rounded w-1/2"></div>
+                        <CardHeader className="pb-2 sm:pb-3">
+                          <div className="h-3 sm:h-4 bg-muted rounded w-3/4 mb-2"></div>
+                          <div className="h-2 sm:h-3 bg-muted rounded w-1/2"></div>
                         </CardHeader>
                         <CardContent className="pt-0">
-                          <div className="h-3 bg-muted rounded w-full mb-2"></div>
-                          <div className="h-3 bg-muted rounded w-2/3"></div>
+                          <div className="h-2 sm:h-3 bg-muted rounded w-full mb-2"></div>
+                          <div className="h-2 sm:h-3 bg-muted rounded w-2/3"></div>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                 ) : filteredTasks.length === 0 ? (
                   <Card className="border-dashed border-2">
-                    <CardContent className="py-12 text-center">
-                      <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                        <Target className="w-8 h-8 text-muted-foreground" />
+                    <CardContent className="py-8 sm:py-12 text-center">
+                      <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-muted rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                        <Target className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">No tasks found</h3>
-                      <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      <h3 className="text-base sm:text-lg font-semibold mb-2">No tasks found</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto px-4">
                         {activeTab === 'all' 
                           ? "You don't have any tasks assigned yet. Check back later or contact your project manager."
                           : `No ${activeTab} tasks at the moment. Great job staying on top of things!`}
@@ -320,7 +320,7 @@ export default function MyTasks() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="space-y-3 sm:space-y-4 pb-6">
+                  <div className="space-y-3 pb-4 sm:pb-6">
                     {filteredTasks.map((task) => (
                       <TaskCard 
                         key={task.id} 
@@ -364,9 +364,9 @@ export default function MyTasks() {
           </Tabs>
 
           {/* Swipe Instructions */}
-          <Card className="bg-muted/30 border-dashed">
-            <CardContent className="p-3 sm:p-4">
-              <p className="text-xs sm:text-sm text-muted-foreground text-center">
+          <Card className="bg-muted/30 border-dashed mb-safe-bottom">
+            <CardContent className="p-2 sm:p-3">
+              <p className="text-xs text-muted-foreground text-center">
                 💡 Swipe right on any task to move it to the next status
               </p>
             </CardContent>
