@@ -107,17 +107,23 @@ export function TaskCard({
   const isDueToday = task.dueDate && isToday(new Date(task.dueDate));
   const StatusIcon = statusIcons[task.status];
   return <Card {...isPrimaryWorker ? swipeHandlers : {}} className={`relative cursor-pointer hover:shadow-md transition-all duration-200 ${isOverdue ? 'border-red-200 bg-red-50' : ''} ${isDueToday ? 'border-orange-200 bg-orange-50' : ''} ${!isAssigned ? 'opacity-75' : ''}`}>
-      {/* Play Button Overlay - only for primary worker */}
-      {task.status === 'todo' && isPrimaryWorker && <div className="absolute top-3 right-3 z-10">
-          <Button variant="secondary" size="sm" onClick={handlePlayClick} className="h-8 w-8 p-0 rounded-full bg-primary/10 hover:bg-primary/20">
-            <Play className="h-4 w-4 text-primary" fill="currentColor" />
-          </Button>
-        </div>}
-      
-      {/* Complete Button Overlay - only for primary worker */}
-      {task.status === 'in-progress' && isPrimaryWorker && <div className="absolute top-3 right-3 z-10">
-          <Button variant="secondary" size="sm" onClick={handleCompleteClick} className="h-8 w-8 p-0 rounded-full bg-green-100 hover:bg-green-200">
-            <CheckCircle className="h-4 w-4 text-green-600" />
+      {/* Action Button Overlay - only for primary worker */}
+      {(task.status === 'todo' || task.status === 'in-progress') && isPrimaryWorker && <div className="absolute top-3 right-3 z-10">
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={task.status === 'todo' ? handlePlayClick : handleCompleteClick}
+            className={`h-8 w-8 p-0 rounded-full transition-all duration-200 ${
+              task.status === 'todo' 
+                ? 'bg-primary/10 hover:bg-primary/20' 
+                : 'bg-green-100 hover:bg-green-200'
+            }`}
+          >
+            {task.status === 'todo' ? (
+              <Play className="h-4 w-4 text-primary" fill="currentColor" />
+            ) : (
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            )}
           </Button>
         </div>}
 
