@@ -177,7 +177,7 @@ export default function MyTasks() {
               {({ height, width }) => {
                 const columnCount = width < 640 ? 1 : width < 1024 ? 2 : 3;
                 const columnWidth = width / columnCount;
-                const rowHeight = 144; // TaskCard min height
+                const rowHeight = 180; // Increased height to prevent overlapping
                 const rowCount = Math.ceil(filteredTasks.length / columnCount);
 
                 return (
