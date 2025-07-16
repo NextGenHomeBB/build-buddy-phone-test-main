@@ -53,7 +53,7 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
         .from('project_documents')
         .select(`
           *,
-          profiles!project_documents_uploaded_by_fkey(name)
+          uploader:profiles!project_documents_uploaded_by_fkey(name)
         `)
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
@@ -62,7 +62,7 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
       
       return data.map(doc => ({
         ...doc,
-        uploaded_by_name: doc.profiles?.name || 'Unknown'
+        uploaded_by_name: doc.uploader?.name || 'Unknown'
       })) as ProjectDocument[];
     },
   });
@@ -180,12 +180,12 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
       if (error) throw error;
 
       const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
+      const a = window.document.createElement('a');
       a.href = url;
       a.download = document.name;
-      document.body.appendChild(a);
+      window.document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
       toast({
