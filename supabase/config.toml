@@ -1,1 +1,4 @@
 project_id = "kgrjpyxoymhwillhmjjh"
+
+[functions.assign_bulk]
+verify_jwt = false

@@ -34,6 +34,7 @@ import { ProjectScheduleAssignment } from '@/components/ProjectScheduleAssignmen
 import { ProjectSelectionDialog } from '@/components/ProjectSelectionDialog';
 import { WorkerTaskAssignment } from '@/components/WorkerTaskAssignment';
 import { WorkerSelectSheet } from '@/components/WorkerSelectSheet';
+import { AssignTreeSheet } from '@/components/AssignTreeSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useDebouncedCallback } from 'use-debounce';
@@ -275,6 +276,17 @@ export default function SchedulePlanner() {
     open: false,
     worker: null,
     projectId: undefined
+  });
+  const [assignTreeSheet, setAssignTreeSheet] = useState<{
+    open: boolean;
+    projectId: string;
+    workerId: string;
+    phaseDefault?: string;
+  }>({
+    open: false,
+    projectId: '',
+    workerId: '',
+    phaseDefault: undefined
   });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -544,13 +556,13 @@ export default function SchedulePlanner() {
                               key={worker.user_id}
                               worker={worker}
                               isFromSchedule={false}
-                              onClick={() => {
-                                setWorkerTaskAssignmentModal({
-                                  open: true,
-                                  worker: worker,
-                                  projectId: undefined
-                                });
-                              }}
+                           onClick={() => {
+                             setWorkerTaskAssignmentModal({
+                               open: true,
+                               worker: worker,
+                               projectId: undefined
+                             });
+                           }}
                             />
                           ))}
                         </SortableContext>
@@ -594,13 +606,13 @@ export default function SchedulePlanner() {
                           key={worker.user_id}
                           worker={worker}
                           isFromSchedule={false}
-                          onClick={() => {
-                            setWorkerTaskAssignmentModal({
-                              open: true,
-                              worker: worker,
-                              projectId: undefined
-                            });
-                          }}
+                         onClick={() => {
+                           setWorkerTaskAssignmentModal({
+                             open: true,
+                             worker: worker,
+                             projectId: undefined
+                           });
+                         }}
                         />
                       ))}
                     </SortableContext>
@@ -661,11 +673,20 @@ export default function SchedulePlanner() {
                         }
                       }}
                       onWorkerTaskAssign={(worker, projectId) => {
-                        setWorkerTaskAssignmentModal({
-                          open: true,
-                          worker: worker,
-                          projectId: projectId
-                        });
+                        if (projectId) {
+                          setAssignTreeSheet({
+                            open: true,
+                            projectId: projectId,
+                            workerId: worker.user_id,
+                            phaseDefault: undefined
+                          });
+                        } else {
+                          setWorkerTaskAssignmentModal({
+                            open: true,
+                            worker: worker,
+                            projectId: projectId
+                          });
+                        }
                       }}
                     />
                   ))}
@@ -762,6 +783,17 @@ export default function SchedulePlanner() {
         }
         worker={workerTaskAssignmentModal.worker}
         projectId={workerTaskAssignmentModal.projectId}
+      />
+
+      {/* Assign Tree Sheet - New Phase-Aware Assignment */}
+      <AssignTreeSheet
+        open={assignTreeSheet.open}
+        onOpenChange={(open) => 
+          setAssignTreeSheet(prev => ({ ...prev, open }))
+        }
+        projectId={assignTreeSheet.projectId}
+        workerId={assignTreeSheet.workerId}
+        phaseDefault={assignTreeSheet.phaseDefault}
       />
     </DndContext>
   );
