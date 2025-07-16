@@ -68,7 +68,7 @@ export function useTasks(filters?: TaskFilters) {
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Task> }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       taskService.updateTask(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -90,7 +90,7 @@ export function useTasks(filters?: TaskFilters) {
       id: taskId,
       updates: { 
         status: 'completed',
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       }
     });
   };
@@ -100,7 +100,7 @@ export function useTasks(filters?: TaskFilters) {
       id: taskId,
       updates: { 
         status,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       }
     });
   };
