@@ -36,7 +36,7 @@ function GridCell({ columnIndex, rowIndex, style, data }: GridCellProps) {
   if (!task) return null;
 
   return (
-    <div style={style} className="p-3">
+    <div style={style} className="p-4">
       <TaskCard 
         task={task}
         onStatusUpdate={onStatusUpdate}
