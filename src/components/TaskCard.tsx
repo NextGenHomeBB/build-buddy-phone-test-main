@@ -143,7 +143,7 @@ export function TaskCard({ task, onStatusUpdate }: TaskCardProps) {
               {task.projectName} {task.phaseName && `• ${task.phaseName}`}
             </p>
           </div>
-          <div className="flex items-center gap-2 ml-4">
+          <div className="flex items-center gap-2 mx-30">
             <Badge className={priorityColors[task.priority]} variant="outline">
               {task.priority}
             </Badge>
