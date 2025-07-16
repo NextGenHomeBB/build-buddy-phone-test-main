@@ -57,12 +57,21 @@ export function TaskCard({
     }
   };
   const handlePlayClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
+    console.log('Play button clicked', { taskId: task.id, status: task.status, isPrimaryWorker });
+    
     if (task.status === 'todo' && isPrimaryWorker) {
       onStatusUpdate(task.id, 'in-progress');
       toast({
         title: "Task Started",
         description: "Task is now in progress!"
+      });
+    } else {
+      console.log('Play button conditions not met', { 
+        taskStatus: task.status, 
+        isPrimaryWorker, 
+        expectedStatus: 'todo' 
       });
     }
   };
