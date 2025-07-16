@@ -46,7 +46,7 @@ export const taskService = {
       
       console.log('🎯 Task worker task IDs:', taskWorkerTaskIds);
       
-      // Build the comprehensive query
+      // Build the comprehensive query with fixed foreign key relationship
       query = supabase
         .from('tasks')
         .select(`
@@ -59,7 +59,7 @@ export const taskService = {
             id,
             is_primary,
             user_id,
-            user_profile:profiles(id, name, avatar_url)
+            user_profile:profiles!fk_task_workers_user_id(id, name, avatar_url)
           ),
           comments:task_comments(
             *,
@@ -102,7 +102,7 @@ export const taskService = {
             id,
             is_primary,
             user_id,
-            user_profile:profiles(id, name, avatar_url)
+            user_profile:profiles!fk_task_workers_user_id(id, name, avatar_url)
           ),
           comments:task_comments(
             *,

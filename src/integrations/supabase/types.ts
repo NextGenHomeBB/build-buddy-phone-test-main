@@ -760,6 +760,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_task_workers_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "task_workers_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
