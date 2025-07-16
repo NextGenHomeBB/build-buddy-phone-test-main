@@ -38,13 +38,26 @@ export function TaskCard({
   const {
     toast
   } = useToast();
-  const {
-    user
-  } = useAuth();
+  const { profile } = useAuth();
 
   // Check if current user is primary worker or assigned
-  const isPrimaryWorker = task.workers?.some(w => w.id === user?.id && w.is_primary) || task.assignedTo === user?.id;
-  const isAssigned = task.workers?.some(w => w.id === user?.id) || task.assignedTo === user?.id;
+  // Account for both direct assignment and linked profile assignment
+  // Note: The task data uses snake_case from the API
+  const taskData = task as any; // Type assertion for raw API data
+  
+  const isPrimaryWorker = taskData.workers?.some(
+    (worker: any) => worker.user_id === profile?.user_id && worker.is_primary
+  ) || taskData.workers?.some(
+    (worker: any) => worker.user_id === profile?.auth_user_id && worker.is_primary
+  );
+  
+  const isDirectlyAssigned = taskData.assigned_to === profile?.user_id;
+  const isAssignedViaAuth = taskData.assigned_to === profile?.auth_user_id;
+  const isAssignedViaWorkers = taskData.workers?.some((w: any) => 
+    w.user_id === profile?.user_id || w.user_id === profile?.auth_user_id
+  );
+  
+  const isAssigned = isDirectlyAssigned || isAssignedViaAuth || isAssignedViaWorkers;
   const handleSwipeRight = () => {
     // Only primary worker can swipe to change status
     if (task.status !== 'completed' && isPrimaryWorker) {
@@ -115,7 +128,7 @@ export function TaskCard({
               {task.title}
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {task.projectName} {task.phaseName && `• ${task.phaseName}`}
+              {taskData.project?.name} {taskData.phase?.name && `• ${taskData.phase.name}`}
             </p>
           </div>
           <div className="flex items-center gap-2 mx-30 mx-[30px]">
@@ -136,9 +149,9 @@ export function TaskCard({
           </p>}
 
         {/* Workers Display */}
-        {task.workers && task.workers.length > 0 && <div className="flex items-center gap-2">
+        {taskData.workers && taskData.workers.length > 0 && <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Assigned:</span>
-            <StackedAvatars workers={task.workers} maxVisible={3} size="sm" />
+            <StackedAvatars workers={taskData.workers} maxVisible={3} size="sm" />
           </div>}
         
         <div className="flex items-center justify-between text-sm">
