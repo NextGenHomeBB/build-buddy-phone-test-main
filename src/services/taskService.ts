@@ -3,6 +3,7 @@ import { upsertUserProjectRole } from '@/services/userProjectRole.service';
 
 export const taskService = {
   async getTasks(userId?: string, filters?: any) {
+    console.log('🔍 getTasks called with userId:', userId, 'filters:', filters);
     let query;
     
     if (userId) {
@@ -13,6 +14,7 @@ export const taskService = {
         .eq('auth_user_id', userId);
       
       const linkedProfileIds = linkedProfiles?.map(p => p.user_id) || [];
+      console.log('👥 Linked profiles found:', linkedProfileIds);
       
       // Get task IDs from task_workers table (both direct and via linked profiles)
       let taskWorkerTaskIds = [];
@@ -23,12 +25,16 @@ export const taskService = {
         .select('task_id')
         .eq('user_id', userId);
       
+      console.log('📝 Direct task workers:', directTaskWorkers);
+      
       // Assignments via linked placeholder profiles in task_workers
       if (linkedProfileIds.length > 0) {
         const { data: linkedTaskWorkers } = await supabase
           .from('task_workers')
           .select('task_id')
           .in('user_id', linkedProfileIds);
+        
+        console.log('🔗 Linked task workers:', linkedTaskWorkers);
         
         taskWorkerTaskIds = [
           ...(directTaskWorkers?.map(tw => tw.task_id) || []),
@@ -37,6 +43,8 @@ export const taskService = {
       } else {
         taskWorkerTaskIds = directTaskWorkers?.map(tw => tw.task_id) || [];
       }
+      
+      console.log('🎯 Task worker task IDs:', taskWorkerTaskIds);
       
       // Build the comprehensive query
       query = supabase
@@ -74,6 +82,8 @@ export const taskService = {
       if (taskWorkerTaskIds.length > 0) {
         conditions.push(`id.in.(${taskWorkerTaskIds.join(',')})`);
       }
+      
+      console.log('🔍 Query conditions:', conditions);
       
       if (conditions.length > 0) {
         query = query.or(conditions.join(','));
@@ -120,7 +130,13 @@ export const taskService = {
 
     const { data, error } = await query.order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error in getTasks:', error);
+      throw error;
+    }
+    
+    console.log('✅ getTasks result:', data?.length, 'tasks found');
+    console.log('📋 Tasks data:', data);
     return data;
   },
 
