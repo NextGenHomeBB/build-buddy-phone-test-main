@@ -39,9 +39,9 @@ const StackedAvatars = React.memo(({
             }`}
             style={{ zIndex: visibleWorkers.length - index }}
           >
-            <AvatarImage src={worker.avatar_url || ''} />
+            <AvatarImage src={worker.user_profile?.avatar_url || worker.avatar_url || ''} />
             <AvatarFallback className="text-xs">
-              {worker.name.charAt(0).toUpperCase()}
+              {(worker.user_profile?.name || worker.name || 'U').charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         ))}
@@ -58,7 +58,7 @@ const StackedAvatars = React.memo(({
       
       {primaryWorker && workers.length > 1 && (
         <Badge variant="secondary" className="ml-2 text-xs">
-          Primary: {primaryWorker.name}
+          Primary: {primaryWorker.user_profile?.name || primaryWorker.name || 'Unknown'}
         </Badge>
       )}
       

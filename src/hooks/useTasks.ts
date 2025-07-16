@@ -6,9 +6,14 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface WorkerSummary {
   id: string;
-  name: string;
-  avatar_url: string | null;
+  name?: string; // fallback for direct name
+  avatar_url?: string | null; // fallback for direct avatar
   is_primary: boolean;
+  user_profile?: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  };
 }
 
 export interface Task {
