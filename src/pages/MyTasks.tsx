@@ -36,7 +36,7 @@ function GridCell({ columnIndex, rowIndex, style, data }: GridCellProps) {
   if (!task) return null;
 
   return (
-    <div style={style} className="p-4">
+    <div style={style} className="p-6">
       <TaskCard 
         task={task}
         onStatusUpdate={onStatusUpdate}
@@ -177,7 +177,7 @@ export default function MyTasks() {
               {({ height, width }) => {
                 const columnCount = width < 640 ? 1 : width < 1024 ? 2 : 3;
                 const columnWidth = width / columnCount;
-                const rowHeight = 180; // Increased height to prevent overlapping
+                const rowHeight = 200; // Further increased height for better spacing
                 const rowCount = Math.ceil(filteredTasks.length / columnCount);
 
                 return (
