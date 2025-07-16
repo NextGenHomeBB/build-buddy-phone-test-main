@@ -6,11 +6,37 @@ export const taskService = {
     let query;
     
     if (userId) {
-      // Use the new user_tasks view that handles both direct assignment and linked profiles
+      // Get linked profile IDs for this auth user
+      const { data: linkedProfiles } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('auth_user_id', userId);
+      
+      const linkedProfileIds = linkedProfiles?.map(p => p.user_id) || [];
+      
+      // Get task IDs from task_workers table
+      const { data: taskWorkerTasks } = await supabase
+        .from('task_workers')
+        .select('task_id')
+        .or(`user_id.eq.${userId},user_id.in.(${linkedProfileIds.join(',')})`);
+      
+      const taskWorkerTaskIds = taskWorkerTasks?.map(tw => tw.task_id) || [];
+      
+      // Build the main query with all assignment methods
+      const allConditions = [
+        `assigned_to.eq.${userId}`,
+        linkedProfileIds.length > 0 ? `assigned_to.in.(${linkedProfileIds.join(',')})` : null,
+        taskWorkerTaskIds.length > 0 ? `id.in.(${taskWorkerTaskIds.join(',')})` : null
+      ].filter(Boolean);
+      
       query = supabase
-        .from('user_tasks')
+        .from('tasks')
         .select(`
           *,
+          project:projects(name),
+          phase:project_phases(name),
+          assigned_user:profiles!assigned_to(name),
+          assigned_by_user:profiles!assigned_by(name),
           workers:task_workers(
             id,
             is_primary,
@@ -21,7 +47,8 @@ export const taskService = {
             *,
             user:profiles(name)
           )
-        `);
+        `)
+        .or(allConditions.join(','));
     } else {
       // For admin/manager queries without userId, use regular tasks table
       query = supabase
@@ -264,10 +291,33 @@ export const taskService = {
   },
 
   async getTaskStats(userId: string) {
-    // Use the user_tasks view that handles both direct assignment and linked profiles
+    // Get linked profile IDs for this auth user
+    const { data: linkedProfiles } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('auth_user_id', userId);
+    
+    const linkedProfileIds = linkedProfiles?.map(p => p.user_id) || [];
+    
+    // Get task IDs from task_workers table
+    const { data: taskWorkerTasks } = await supabase
+      .from('task_workers')
+      .select('task_id')
+      .or(`user_id.eq.${userId},user_id.in.(${linkedProfileIds.join(',')})`);
+    
+    const taskWorkerTaskIds = taskWorkerTasks?.map(tw => tw.task_id) || [];
+    
+    // Build the query with all assignment methods
+    const allConditions = [
+      `assigned_to.eq.${userId}`,
+      linkedProfileIds.length > 0 ? `assigned_to.in.(${linkedProfileIds.join(',')})` : null,
+      taskWorkerTaskIds.length > 0 ? `id.in.(${taskWorkerTaskIds.join(',')})` : null
+    ].filter(Boolean);
+    
     const { data, error } = await supabase
-      .from('user_tasks')
-      .select('status');
+      .from('tasks')
+      .select('status')
+      .or(allConditions.join(','));
     
     if (error) throw error;
     
