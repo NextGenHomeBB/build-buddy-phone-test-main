@@ -371,18 +371,21 @@ export function AssignTreeSheet({
       </div>
       
       {/* Footer */}
-      <div className="border-t p-4 flex-shrink-0">
-        <div className="flex items-center justify-between gap-4">
-          <div className="text-sm text-muted-foreground">
-            Selected: {selectionCounts.totalTasks} tasks, {selectionCounts.totalChecklistItems} checklist items
+      <div className="border-t p-3 sm:p-4 flex-shrink-0 bg-background">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
+          <div className="text-xs sm:text-sm text-muted-foreground flex-1 min-w-0">
+            <span className="truncate">
+              Selected: {selectionCounts.totalTasks} tasks, {selectionCounts.totalChecklistItems} items
+            </span>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex gap-2 flex-shrink-0">
+            <Button variant="outline" onClick={() => onOpenChange(false)} size="sm">
               Cancel
             </Button>
             <Button 
               onClick={handleAssign}
               disabled={selectionCounts.totalSelected === 0 || bulkAssignMutation.isPending}
+              size="sm"
             >
               {bulkAssignMutation.isPending ? "Assigning..." : `Assign (${selectionCounts.totalSelected})`}
             </Button>
@@ -395,11 +398,13 @@ export function AssignTreeSheet({
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="h-[90vh] p-0">
-          <SheetHeader className="p-4 border-b">
+        <SheetContent side="bottom" className="h-[95vh] p-0 flex flex-col">
+          <SheetHeader className="p-4 border-b flex-shrink-0">
             <SheetTitle>Assign Tasks</SheetTitle>
           </SheetHeader>
-          {content}
+          <div className="flex-1 flex flex-col min-h-0">
+            {content}
+          </div>
         </SheetContent>
       </Sheet>
     );
