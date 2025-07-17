@@ -17,9 +17,19 @@ import { supabase } from '@/integrations/supabase/client';
 const labourCostSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   subcontractor_id: z.string().optional(),
-  hours: z.number().min(0.01, 'Hours must be greater than 0'),
+  hours: z.number().optional(),
   rate: z.number().min(0.01, 'Rate must be greater than 0'),
   bill_per_hour: z.boolean().default(true),
+}).refine((data) => {
+  // If billing per hour, hours must be provided and greater than 0
+  if (data.bill_per_hour) {
+    return data.hours && data.hours > 0;
+  }
+  // If fixed rate, hours is not required
+  return true;
+}, {
+  message: 'Hours must be greater than 0 when billing per hour',
+  path: ['hours'],
 });
 
 type LabourCostForm = z.infer<typeof labourCostSchema>;
@@ -105,17 +115,20 @@ export function LabourCostSheet({ phaseId, open, onClose }: LabourCostSheetProps
 
   const onSubmit = async (data: LabourCostForm) => {
     try {
+      const finalHours = data.bill_per_hour ? data.hours : 1; // Use 1 hour for fixed rate calculations
+      
       await insertLabourCostMutation.mutateAsync({
         phase_id: phaseId,
         task: data.description,
         subcontractor_id: data.subcontractor_id || undefined,
-        hours: data.hours,
+        hours: finalHours || 1,
         rate: data.rate,
       });
 
+      const totalCost = data.bill_per_hour ? (data.hours || 0) * data.rate : data.rate;
       toast({
         title: "Labour Cost Added",
-        description: `${data.description} - €${(data.hours * data.rate).toFixed(2)}`,
+        description: `${data.description} - €${totalCost.toFixed(2)}`,
       });
 
       onClose();
@@ -131,7 +144,7 @@ export function LabourCostSheet({ phaseId, open, onClose }: LabourCostSheetProps
   const billPerHour = watch('bill_per_hour');
   const hours = watch('hours');
   const rate = watch('rate');
-  const total = hours * rate;
+  const total = billPerHour ? (hours || 0) * rate : rate;
 
   return (
     <BottomSheet open={open} onOpenChange={onClose}>
@@ -185,21 +198,23 @@ export function LabourCostSheet({ phaseId, open, onClose }: LabourCostSheetProps
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="hours">Hours</Label>
-              <Input
-                id="hours"
-                type="number"
-                step="0.25"
-                min="0.01"
-                {...register('hours', { valueAsNumber: true })}
-                placeholder="0"
-              />
-              {errors.hours && (
-                <p className="text-sm text-destructive">{errors.hours.message}</p>
-              )}
-            </div>
+          <div className={billPerHour ? "grid grid-cols-2 gap-4" : ""}>
+            {billPerHour && (
+              <div className="space-y-2">
+                <Label htmlFor="hours">Hours</Label>
+                <Input
+                  id="hours"
+                  type="number"
+                  step="0.25"
+                  min="0.01"
+                  {...register('hours', { valueAsNumber: true })}
+                  placeholder="0"
+                />
+                {errors.hours && (
+                  <p className="text-sm text-destructive">{errors.hours.message}</p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="rate">
