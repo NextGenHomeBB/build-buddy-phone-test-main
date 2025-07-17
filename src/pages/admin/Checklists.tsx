@@ -10,18 +10,29 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Edit, Trash2, CheckSquare, List, Layers, Building2 } from 'lucide-react';
 import { useChecklists, useCreateChecklist, useUpdateChecklist, useDeleteChecklist } from '@/hooks/useChecklists';
-import { defaultPhases } from '@/templates/defaultPhases';
+import { useDefaultPhases, useUpdateDefaultPhase, DefaultPhase } from '@/hooks/useDefaultPhases';
 
 export default function AdminChecklists() {
   const { data: checklists = [], isLoading } = useChecklists();
+  const { data: defaultPhases = [], isLoading: phasesLoading } = useDefaultPhases();
   const createChecklistMutation = useCreateChecklist();
   const updateChecklistMutation = useUpdateChecklist();
   const deleteChecklistMutation = useDeleteChecklist();
+  const updateDefaultPhaseMutation = useUpdateDefaultPhase();
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<any>(null);
+  const [isPhaseDialogOpen, setIsPhaseDialogOpen] = useState(false);
+  const [editingPhase, setEditingPhase] = useState<DefaultPhase | null>(null);
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    items: ['']
+  });
+
+  const [phaseFormData, setPhaseFormData] = useState({
+    name: '',
     items: ['']
   });
 
@@ -87,6 +98,57 @@ export default function AdminChecklists() {
 
   const removeItem = (index: number) => {
     setFormData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleEditPhase = (phase: DefaultPhase) => {
+    setEditingPhase(phase);
+    setPhaseFormData({
+      name: phase.name,
+      items: [...phase.checklist, '']
+    });
+    setIsPhaseDialogOpen(true);
+  };
+
+  const handleSubmitPhase = () => {
+    if (!editingPhase) return;
+    
+    const checklistItems = phaseFormData.items
+      .filter(item => item.trim())
+      .map(item => item.trim());
+
+    updateDefaultPhaseMutation.mutate({
+      id: editingPhase.id,
+      updates: {
+        name: phaseFormData.name,
+        checklist: checklistItems,
+      }
+    });
+
+    resetPhaseForm();
+  };
+
+  const resetPhaseForm = () => {
+    setPhaseFormData({ name: '', items: [''] });
+    setEditingPhase(null);
+    setIsPhaseDialogOpen(false);
+  };
+
+  const addPhaseItem = () => {
+    setPhaseFormData(prev => ({ ...prev, items: [...prev.items, ''] }));
+  };
+
+  const updatePhaseItem = (index: number, value: string) => {
+    setPhaseFormData(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) => i === index ? value : item)
+    }));
+  };
+
+  const removePhaseItem = (index: number) => {
+    setPhaseFormData(prev => ({
       ...prev,
       items: prev.items.filter((_, i) => i !== index)
     }));
@@ -183,6 +245,74 @@ export default function AdminChecklists() {
                     {editingChecklist ? 'Update' : 'Create'} Template
                   </Button>
                   <Button variant="outline" onClick={resetForm}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Phase Edit Dialog */}
+          <Dialog open={isPhaseDialogOpen} onOpenChange={setIsPhaseDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Default Phase</DialogTitle>
+                <DialogDescription>
+                  Edit this default phase. Changes will apply to all future projects.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="phase-name">Phase Name</Label>
+                  <Input
+                    id="phase-name"
+                    value={phaseFormData.name}
+                    onChange={(e) => setPhaseFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter phase name"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Checklist Items</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addPhaseItem}>
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Item
+                    </Button>
+                  </div>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {phaseFormData.items.map((item, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={item}
+                          onChange={(e) => updatePhaseItem(index, e.target.value)}
+                          placeholder="Enter checklist item"
+                        />
+                        {phaseFormData.items.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removePhaseItem(index)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    onClick={handleSubmitPhase} 
+                    className="flex-1"
+                    disabled={updateDefaultPhaseMutation.isPending}
+                  >
+                    Update Phase
+                  </Button>
+                  <Button variant="outline" onClick={resetPhaseForm}>
                     Cancel
                   </Button>
                 </div>
@@ -337,56 +467,86 @@ export default function AdminChecklists() {
           <TabsContent value="phases" className="space-y-4">
             {/* Desktop View */}
             <div className="hidden md:block space-y-4">
-              {defaultPhases.map((phase, index) => (
-                <Card key={index}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Layers className="h-5 w-5" />
-                      {phase.name}
-                    </CardTitle>
-                    <CardDescription>
-                      {phase.checklist.length} checklist items
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-2">
-                      {phase.checklist.map((item, itemIndex) => (
-                        <div key={itemIndex} className="flex items-center gap-2 p-2 rounded border">
-                          <CheckSquare className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{item}</span>
+              {phasesLoading ? (
+                <div className="text-center p-8 text-muted-foreground">
+                  Loading default phases...
+                </div>
+              ) : (
+                defaultPhases.map((phase) => (
+                  <Card key={phase.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Layers className="h-5 w-5" />
+                          <CardTitle>{phase.name}</CardTitle>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditPhase(phase)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <CardDescription>
+                        {phase.checklist.length} checklist items
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-2">
+                        {phase.checklist.map((item, itemIndex) => (
+                          <div key={itemIndex} className="flex items-center gap-2 p-2 rounded border">
+                            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
 
             {/* Mobile View */}
             <div className="md:hidden space-y-4">
-              {defaultPhases.map((phase, index) => (
-                <Card key={index}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Layers className="h-4 w-4" />
-                      {phase.name}
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      {phase.checklist.length} items
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-2">
-                      {phase.checklist.map((item, itemIndex) => (
-                        <div key={itemIndex} className="flex items-start gap-2 text-sm">
-                          <CheckSquare className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <span>{item}</span>
+              {phasesLoading ? (
+                <div className="text-center p-8 text-muted-foreground">
+                  Loading default phases...
+                </div>
+              ) : (
+                defaultPhases.map((phase) => (
+                  <Card key={phase.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Layers className="h-4 w-4" />
+                          <CardTitle className="text-base">{phase.name}</CardTitle>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditPhase(phase)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <CardDescription className="text-sm">
+                        {phase.checklist.length} items
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="space-y-2">
+                        {phase.checklist.map((item, itemIndex) => (
+                          <div key={itemIndex} className="flex items-start gap-2 text-sm">
+                            <CheckSquare className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>
