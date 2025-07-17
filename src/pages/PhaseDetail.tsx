@@ -278,8 +278,10 @@ export default function PhaseDetail() {
               {phaseCosts && (
                 <BudgetBadge amount={phaseCosts.remainingBudget} />
               )}
-              <Button variant="outline" size="sm">
-                Edit Phase
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/projects/${projectId}/phase/${phaseId}/edit`}>
+                  Edit Phase
+                </Link>
               </Button>
               <Button size="sm" asChild>
                 <Link to={`/projects/${projectId}?tab=calendar`}>
