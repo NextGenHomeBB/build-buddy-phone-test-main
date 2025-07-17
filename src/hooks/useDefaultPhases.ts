@@ -50,9 +50,12 @@ export function useUpdateDefaultPhase() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['default-phases'] });
+      // Also invalidate any project phase queries to show the updates
+      queryClient.invalidateQueries({ queryKey: ['phases'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({
         title: "Success",
-        description: "Default phase updated successfully",
+        description: "Default phase updated successfully. All existing project phases with the same name have been automatically updated.",
       });
     },
     onError: (error) => {
