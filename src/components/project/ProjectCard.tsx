@@ -57,10 +57,6 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
               {project.description}
             </p>
           </div>
-          
-          <Badge variant={status.variant} className="shrink-0">
-            {status.label}
-          </Badge>
         </div>
       </CardHeader>
 
