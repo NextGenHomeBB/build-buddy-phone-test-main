@@ -46,6 +46,7 @@ import { LabourTracking } from '@/components/project/LabourTracking';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 import { useToast } from '@/hooks/use-toast';
 import { useProjectSeeding } from '@/hooks/useProjectSeeding';
+import { QuickAssignDrawer } from '@/components/QuickAssignDrawer';
 
 // Force rebuild after revert to fix dynamic import issue
 export default function ProjectDetail() {
@@ -54,7 +55,7 @@ export default function ProjectDetail() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: project, isLoading: projectLoading, refetch: refetchProject } = useProject(id!);
   const { data: phases, isLoading: phasesLoading } = useProjectPhases(id!);
-  const { canEditProject, canAddPhase, canEditPhase, canViewReports } = useRoleAccess();
+  const { canEditProject, canAddPhase, canEditPhase, canViewReports, canCreateProject } = useRoleAccess();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const seedPhases = useProjectSeeding(id!);
@@ -643,6 +644,19 @@ export default function ProjectDetail() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Quick Assign FAB */}
+        {canCreateProject() && (
+          <QuickAssignDrawer projectId={id!}>
+            <Button 
+              size="lg" 
+              title="Quick Assign Tasks" 
+              className="fixed bottom-[65px] right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0"
+            >
+              <Users className="h-6 w-6" />
+            </Button>
+          </QuickAssignDrawer>
+        )}
       </div>
     </AppLayout>
   );
