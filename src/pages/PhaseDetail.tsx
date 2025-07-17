@@ -136,6 +136,8 @@ export default function PhaseDetail() {
     if (!user) return;
 
     try {
+      const previousPhase = phase;
+      
       await updateChecklistItem.mutateAsync({
         phaseId: phase.id,
         itemId: item.id,
@@ -143,12 +145,29 @@ export default function PhaseDetail() {
         completedBy: !item.completed ? profile?.name || user?.email : undefined,
       });
 
-      toast({
-        title: item.completed ? "Task reopened" : "Task completed!",
-        description: item.completed 
-          ? `"${item.title}" has been marked as incomplete.`
-          : `"${item.title}" has been completed.`,
-      });
+      // Check if this completion would complete all items
+      if (!item.completed) {
+        const remainingIncomplete = phase.checklist.filter(checklistItem => 
+          checklistItem.id !== item.id && !checklistItem.completed
+        );
+        
+        if (remainingIncomplete.length === 0) {
+          toast({
+            title: "Phase Completed! 🎉",
+            description: `All tasks in "${phase.name}" are now complete. Phase status has been automatically updated to "Completed".`,
+          });
+        } else {
+          toast({
+            title: "Task completed!",
+            description: `"${item.title}" has been completed.`,
+          });
+        }
+      } else {
+        toast({
+          title: "Task reopened",
+          description: `"${item.title}" has been marked as incomplete.`,
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",

@@ -144,6 +144,32 @@ export function useUpdateChecklistItem() {
       
       if (progressError) throw progressError;
 
+      // Check if all checklist items are completed and auto-update phase status
+      if (completed) {
+        // Get all tasks for this phase
+        const { data: allTasks, error: tasksError } = await supabase
+          .from('tasks')
+          .select('id, status')
+          .eq('phase_id', phaseId);
+
+        if (!tasksError && allTasks) {
+          // Check if all tasks are completed
+          const allCompleted = allTasks.every(task => task.status === 'completed');
+          
+          if (allCompleted && allTasks.length > 0) {
+            // Auto-update phase status to completed
+            const { error: phaseError } = await supabase
+              .from('project_phases')
+              .update({ status: 'completed' })
+              .eq('id', phaseId);
+            
+            if (phaseError) {
+              console.warn('Failed to auto-update phase status:', phaseError);
+            }
+          }
+        }
+      }
+
       return data;
     },
     onMutate: async ({ phaseId, itemId, completed, completedBy }) => {
