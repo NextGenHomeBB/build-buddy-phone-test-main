@@ -132,8 +132,8 @@ export default function ProjectDetail() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-success text-success-foreground';
-      case 'completed': return 'bg-primary text-primary-foreground';
+      case 'active': return 'bg-blue-500 text-white';
+      case 'completed': return 'bg-green-500 text-white';
       case 'on-hold': return 'bg-warning text-warning-foreground';
       case 'cancelled': return 'bg-destructive text-destructive-foreground';
       default: return 'bg-muted text-muted-foreground';
