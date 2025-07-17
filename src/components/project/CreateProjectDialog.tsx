@@ -236,13 +236,10 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
+                         <Calendar
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date()
-                          }
                           initialFocus
                         />
                       </PopoverContent>
@@ -277,12 +274,12 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
+                         <Calendar
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
                           disabled={(date) =>
-                            date < form.watch("start_date") || date < new Date()
+                            date < form.watch("start_date")
                           }
                           initialFocus
                         />
