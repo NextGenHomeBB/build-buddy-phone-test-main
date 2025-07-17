@@ -6,7 +6,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
-import { navigationItems, adminItems } from "./sidebar/navigationItems";
+import { getNavigationItems, getAdminItems } from "./sidebar/navigationItems";
+import { useNavigationCounts } from "@/hooks/useNavigationCounts";
 import { SidebarHeader } from "./sidebar/SidebarHeader";
 import { SidebarNavigation } from "./sidebar/SidebarNavigation";
 import { SidebarAdminSection } from "./sidebar/SidebarAdminSection";
@@ -17,11 +18,16 @@ export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const { hasAdminAccess, canViewReports, hasFullAccess } = useRoleAccess();
-  const [adminExpanded, setAdminExpanded] = useState(
-    adminItems.some(item => item.url === currentPath)
-  );
+  const counts = useNavigationCounts();
   
+  const [adminExpanded, setAdminExpanded] = useState(
+    location.pathname.startsWith('/admin')
+  );
+
   const collapsed = state === "collapsed";
+  
+  const navigationItems = getNavigationItems(counts);
+  const adminItems = getAdminItems(counts);
 
   const getNavClasses = (active: boolean) =>
     active

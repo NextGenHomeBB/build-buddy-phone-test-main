@@ -1,6 +1,13 @@
 import { Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield, Package, MessageSquarePlus, CalendarDays, ClipboardList } from "lucide-react";
 
-export const navigationItems = [
+interface NavigationCounts {
+  projectsCount: number;
+  myTasksCount: number;
+  usersCount: number;
+  pendingFeedbackCount: number;
+}
+
+export const getNavigationItems = (counts: NavigationCounts) => [
   {
     title: "Dashboard",
     url: "/dashboard",
@@ -11,13 +18,13 @@ export const navigationItems = [
     title: "Projects",
     url: "/projects",
     icon: FolderOpen,
-    badge: "12",
+    badge: counts.projectsCount > 0 ? counts.projectsCount.toString() : null,
   },
   {
     title: "My Tasks",
     url: "/my-tasks",
     icon: CheckSquare,
-    badge: "3",
+    badge: counts.myTasksCount > 0 ? counts.myTasksCount.toString() : null,
   },
   {
     title: "Schedule",
@@ -39,12 +46,12 @@ export const navigationItems = [
   },
 ];
 
-export const adminItems = [
+export const getAdminItems = (counts: NavigationCounts) => [
   {
     title: "User Management",
     url: "/admin/users",
     icon: Users,
-    badge: "5",
+    badge: counts.usersCount > 0 ? counts.usersCount.toString() : null,
   },
   {
     title: "User Access",
@@ -74,7 +81,7 @@ export const adminItems = [
     title: "Feedback Admin",
     url: "/admin/feedback",
     icon: MessageSquarePlus,
-    badge: null,
+    badge: counts.pendingFeedbackCount > 0 ? counts.pendingFeedbackCount.toString() : null,
   },
   {
     title: "Schedule Planner",
