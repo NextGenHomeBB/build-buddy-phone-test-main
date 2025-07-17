@@ -75,6 +75,7 @@ export default function ProjectDetail() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projects', id, 'phases'] });
+      queryClient.invalidateQueries({ queryKey: ['phases', id, 'calendar'] });
       toast({
         title: "Status Updated",
         description: `Phase status changed to ${data.status}`,
