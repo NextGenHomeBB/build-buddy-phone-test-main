@@ -19,6 +19,7 @@ const TimeSheet = lazy(() => import("./pages/TimeSheet"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Reports = lazy(() => import("./pages/Reports"));
+const ProjectReports = lazy(() => import("./pages/ProjectReports"));
 const ReportsOverview = lazy(() => import("./pages/Reports/Overview"));
 const ReportsMaterials = lazy(() => import("./pages/Reports/Materials"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
@@ -141,6 +142,7 @@ const App = () => (
               <Route path="/reports" element={<RequireAuth roles={['admin', 'manager']}><Reports /></RequireAuth>} />
               <Route path="/reports/overview" element={<RequireAuth roles={['admin', 'manager']}><ReportsOverview /></RequireAuth>} />
               <Route path="/reports/materials" element={<RequireAuth roles={['admin', 'manager']}><ReportsMaterials /></RequireAuth>} />
+              <Route path="/projects/:id/reports" element={<RequireAuth roles={['admin', 'manager']}><ProjectReports /></RequireAuth>} />
               
               {/* Feedback routes */}
               <Route path="/feedback" element={<RequireAuth><FeedbackHome /></RequireAuth>} />
