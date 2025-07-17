@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { userService } from "@/services/userService";
 
 interface AddUserDialogProps {
   isOpen: boolean;
@@ -12,6 +15,53 @@ interface AddUserDialogProps {
 }
 
 export function AddUserDialog({ isOpen, onOpenChange, onAddUser }: AddUserDialogProps) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    role: '' as 'admin' | 'manager' | 'worker' | '',
+  });
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.email || !formData.role) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await userService.createUser({
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+      });
+      
+      toast({
+        title: "Success",
+        description: "User created successfully",
+      });
+      
+      // Reset form
+      setFormData({ name: '', email: '', role: '' });
+      onOpenChange(false);
+      onAddUser(); // This will refresh the user list
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create user. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
@@ -30,35 +80,44 @@ export function AddUserDialog({ isOpen, onOpenChange, onAddUser }: AddUserDialog
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Name</Label>
-            <Input id="name" className="col-span-3" />
+            <Input 
+              id="name" 
+              className="col-span-3" 
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="email" className="text-right">Email</Label>
-            <Input id="email" type="email" className="col-span-3" />
+            <Input 
+              id="email" 
+              type="email" 
+              className="col-span-3" 
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+            />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="role" className="text-right">Role</Label>
-            <Select>
+            <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value as any }))}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="team_member">Team Member</SelectItem>
+                <SelectItem value="worker">Worker</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="department" className="text-right">Department</Label>
-            <Input id="department" className="col-span-3" />
-          </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={onAddUser}>Add User</Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? "Creating..." : "Add User"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

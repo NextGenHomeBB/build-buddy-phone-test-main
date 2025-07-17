@@ -22,6 +22,22 @@ export const userService = {
     return data as UserProfile[];
   },
 
+  async createUser(userData: {
+    name: string;
+    email: string;
+    role: UserProfile['role'];
+  }) {
+    const { data, error } = await supabase
+      .rpc('create_user_profile', {
+        user_email: userData.email,
+        user_name: userData.name,
+        user_role: userData.role
+      });
+    
+    if (error) throw error;
+    return data;
+  },
+
   async updateUserRole(userId: string, newRole: UserProfile['role']) {
     const { data, error } = await supabase
       .rpc('update_user_role', {
