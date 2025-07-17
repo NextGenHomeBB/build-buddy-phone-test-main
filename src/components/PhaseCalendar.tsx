@@ -249,13 +249,13 @@ export function PhaseCalendar({ projectId }: PhaseCalendarProps) {
                   >
                     <div className="text-sm font-medium mb-1">{day.dayNumber}</div>
                     <div className="space-y-1">
-                      {day.events.map(event => {
+                      {day.events.map((event, eventIndex) => {
                         const phase = phases.find(p => p.id === event.id);
                         if (!phase) return null;
                         
                         return (
                           <div
-                            key={event.id}
+                            key={`${index}-${event.id}-${eventIndex}`}
                             className="cursor-pointer"
                             onClick={() => handleCalendarDateClick(day.date, event.id)}
                           >
@@ -385,8 +385,8 @@ function GanttRow({ phase, onDateChange, onDelete, view }: GanttRowProps) {
 function getPhaseColor(status: string): string {
   switch (status) {
     case 'planning': return '#6b7280';
-    case 'active': return '#3b82f6';
-    case 'completed': return '#10b981';
+    case 'active': return '#3b82f6'; // Blue to match ProjectDetail
+    case 'completed': return '#10b981'; // Green to match ProjectDetail  
     case 'on-hold': return '#f59e0b';
     case 'cancelled': return '#ef4444';
     default: return '#6b7280';
