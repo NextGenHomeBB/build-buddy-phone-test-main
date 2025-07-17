@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -57,6 +58,7 @@ export default function ProjectDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const seedPhases = useProjectSeeding(id!);
+  const isMobile = useIsMobile();
 
   // Mutation to update phase status
   const updatePhaseStatus = useMutation({
@@ -206,29 +208,30 @@ export default function ProjectDetail() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className={`space-y-4 ${isMobile ? 'pb-20' : 'space-y-6'}`}>
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/projects">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Projects
+              {!isMobile && "Back to Projects"}
             </Link>
           </Button>
         </div>
 
         {/* Project Overview */}
-        <div className="space-y-4">
+        <div className={`space-y-4 ${isMobile ? 'px-4' : ''}`}>
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-                  {project.name}
-                </h1>
-                {canEditProject() ? (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                 <h1 className={`${isMobile ? 'text-xl' : 'text-2xl lg:text-3xl'} font-bold text-foreground`}>
+                   {project.name}
+                 </h1>
+                 <div className="flex items-center gap-2 flex-wrap">
+                 {canEditProject() ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className={`${getStatusColor(project.status)} cursor-pointer`}>
+                      <Button variant="outline" size={isMobile ? "sm" : "sm"} className={`${getStatusColor(project.status)} cursor-pointer ${isMobile ? 'text-xs' : ''}`}>
                         {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                         <ChevronDown className="h-3 w-3 ml-1" />
                       </Button>
@@ -259,7 +262,7 @@ export default function ProjectDetail() {
                 {canEditProject() ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size={isMobile ? "sm" : "sm"} className={isMobile ? 'text-xs' : ''}>
                         {project.type.charAt(0).toUpperCase() + project.type.slice(1)}
                         <ChevronDown className="h-3 w-3 ml-1" />
                       </Button>
@@ -280,28 +283,29 @@ export default function ProjectDetail() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Badge variant="outline">
+                  <Badge variant="outline" className={isMobile ? 'text-xs' : ''}>
                     {project.type.charAt(0).toUpperCase() + project.type.slice(1)}
                   </Badge>
-                )}
+                 )}
+                </div>
               </div>
               <p className="text-muted-foreground">
                 {project.description}
               </p>
             </div>
             
-            <div className="flex gap-2">
+            <div className={`flex gap-2 ${isMobile ? 'w-full' : ''}`}>
               {canEditProject() && (
                 <EditProjectDialog project={project}>
-                  <Button variant="outline" size="sm">
-                    Edit Project
+                  <Button variant="outline" size="sm" className={isMobile ? 'flex-1 text-xs' : ''}>
+                    {isMobile ? 'Edit' : 'Edit Project'}
                   </Button>
                 </EditProjectDialog>
               )}
               {canViewReports() && (
-                <Button size="sm" asChild>
+                <Button size="sm" asChild className={isMobile ? 'flex-1 text-xs' : ''}>
                   <Link to={`/projects/${id}/reports`}>
-                    View Reports
+                    {isMobile ? 'Reports' : 'View Reports'}
                   </Link>
                 </Button>
               )}
@@ -309,16 +313,16 @@ export default function ProjectDetail() {
           </div>
 
           {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className={`grid grid-cols-1 ${isMobile ? 'gap-3' : 'md:grid-cols-2 lg:grid-cols-4 gap-4'}`}>
             <Card>
-              <CardContent className="p-4">
+              <CardContent className={isMobile ? "p-3" : "p-4"}>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Activity className="h-4 w-4 text-primary" />
+                  <div className={`p-2 bg-primary/10 rounded-lg ${isMobile ? 'p-1.5' : ''}`}>
+                    <Activity className={`text-primary ${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground">Progress</div>
-                    <div className="text-lg font-semibold">{project.progress}%</div>
+                    <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Progress</div>
+                    <div className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>{project.progress}%</div>
                   </div>
                 </div>
                 <Progress value={project.progress} className="mt-2" />
@@ -326,14 +330,14 @@ export default function ProjectDetail() {
             </Card>
 
             <Card>
-              <CardContent className="p-4">
+              <CardContent className={isMobile ? "p-3" : "p-4"}>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-success/10 rounded-lg">
-                    <DollarSign className="h-4 w-4 text-success" />
+                  <div className={`p-2 bg-success/10 rounded-lg ${isMobile ? 'p-1.5' : ''}`}>
+                    <DollarSign className={`text-success ${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground">Budget</div>
-                    <div className="text-lg font-semibold">
+                    <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Budget</div>
+                    <div className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
                       ${(project.spent / 1000).toFixed(0)}k / ${(project.budget / 1000).toFixed(0)}k
                     </div>
                   </div>
@@ -343,15 +347,15 @@ export default function ProjectDetail() {
             </Card>
 
             <Card>
-              <CardContent className="p-4">
+              <CardContent className={isMobile ? "p-3" : "p-4"}>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-warning/10 rounded-lg">
-                    <Calendar className="h-4 w-4 text-warning" />
+                  <div className={`p-2 bg-warning/10 rounded-lg ${isMobile ? 'p-1.5' : ''}`}>
+                    <Calendar className={`text-warning ${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground">Timeline</div>
-                    <div className="text-sm font-medium">
-                      {format(new Date(project.start_date), 'MMM dd')} - {format(new Date(project.end_date), 'MMM dd, yyyy')}
+                    <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Timeline</div>
+                    <div className={`font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                      {format(new Date(project.start_date), 'MMM dd')} - {format(new Date(project.end_date), isMobile ? 'MMM dd, yyyy' : 'MMM dd, yyyy')}
                     </div>
                   </div>
                 </div>
@@ -359,14 +363,14 @@ export default function ProjectDetail() {
             </Card>
 
             <Card>
-              <CardContent className="p-4">
+              <CardContent className={isMobile ? "p-3" : "p-4"}>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-accent/10 rounded-lg">
-                    <MapPin className="h-4 w-4 text-accent-foreground" />
+                  <div className={`p-2 bg-accent/10 rounded-lg ${isMobile ? 'p-1.5' : ''}`}>
+                    <MapPin className={`text-accent-foreground ${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground">Location</div>
-                    <div className="text-sm font-medium">{project.location}</div>
+                    <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Location</div>
+                    <div className={`font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>{project.location}</div>
                   </div>
                 </div>
               </CardContent>
@@ -375,17 +379,29 @@ export default function ProjectDetail() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-9 sm:grid-cols-9">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-            <TabsTrigger value="phases" className="text-xs sm:text-sm">Phases</TabsTrigger>
-            <TabsTrigger value="calendar" className="text-xs sm:text-sm">Calendar</TabsTrigger>
-            <TabsTrigger value="checklists" className="text-xs sm:text-sm">Checklists</TabsTrigger>
-            <TabsTrigger value="materials" className="text-xs sm:text-sm">Materials</TabsTrigger>
-            <TabsTrigger value="labour" className="text-xs sm:text-sm">Labour</TabsTrigger>
-            <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>
-            <TabsTrigger value="docs" className="text-xs sm:text-sm">Docs</TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs sm:text-sm">Activity</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className={`space-y-4 ${isMobile ? 'px-4' : ''}`}>
+          <TabsList className={`grid w-full ${isMobile ? 'grid-cols-4 overflow-x-auto' : 'grid-cols-9'}`}>
+            <TabsTrigger value="overview" className={`${isMobile ? 'text-xs px-2' : 'text-xs sm:text-sm'}`}>
+              {isMobile ? 'Overview' : 'Overview'}
+            </TabsTrigger>
+            <TabsTrigger value="phases" className={`${isMobile ? 'text-xs px-2' : 'text-xs sm:text-sm'}`}>
+              {isMobile ? 'Phases' : 'Phases'}
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className={`${isMobile ? 'text-xs px-2' : 'text-xs sm:text-sm'}`}>
+              {isMobile ? 'Calendar' : 'Calendar'}
+            </TabsTrigger>
+            <TabsTrigger value="checklists" className={`${isMobile ? 'text-xs px-2' : 'text-xs sm:text-sm'}`}>
+              {isMobile ? 'Lists' : 'Checklists'}
+            </TabsTrigger>
+            {!isMobile && (
+              <>
+                <TabsTrigger value="materials" className="text-xs sm:text-sm">Materials</TabsTrigger>
+                <TabsTrigger value="labour" className="text-xs sm:text-sm">Labour</TabsTrigger>
+                <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>
+                <TabsTrigger value="docs" className="text-xs sm:text-sm">Docs</TabsTrigger>
+                <TabsTrigger value="activity" className="text-xs sm:text-sm">Activity</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
