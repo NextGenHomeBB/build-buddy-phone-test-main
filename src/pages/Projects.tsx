@@ -193,9 +193,6 @@ export default function Projects() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor(project.status)} variant="secondary">
-                        {project.status}
-                      </Badge>
                       {canCreateProject() && <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={e => {
                   e.preventDefault();
                   handleDeleteProject(project.id, project.name);
