@@ -228,37 +228,6 @@ export default function ProjectDetail() {
                    {project.name}
                  </h1>
                  <div className="flex items-center gap-2 flex-wrap">
-                 {canEditProject() ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size={isMobile ? "sm" : "sm"} className={`${getStatusColor(project.status)} cursor-pointer ${isMobile ? 'text-xs' : ''}`}>
-                        {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
-                        <ChevronDown className="h-3 w-3 ml-1" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => updateProjectStatus('planning')}>
-                        Planning
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateProjectStatus('active')}>
-                        Active
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateProjectStatus('on-hold')}>
-                        On Hold
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateProjectStatus('completed')}>
-                        Completed
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateProjectStatus('cancelled')}>
-                        Cancelled
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <Badge className={getStatusColor(project.status)}>
-                    {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
-                  </Badge>
-                )}
                 {canEditProject() ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
