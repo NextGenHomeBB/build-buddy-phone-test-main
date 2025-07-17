@@ -380,29 +380,59 @@ export default function ProjectDetail() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className={`space-y-4 ${isMobile ? 'px-4' : ''}`}>
-          <TabsList className={`grid w-full ${isMobile ? 'grid-cols-4 overflow-x-auto' : 'grid-cols-9'}`}>
-            <TabsTrigger value="overview" className={`${isMobile ? 'text-xs px-2' : 'text-xs sm:text-sm'}`}>
-              {isMobile ? 'Overview' : 'Overview'}
-            </TabsTrigger>
-            <TabsTrigger value="phases" className={`${isMobile ? 'text-xs px-2' : 'text-xs sm:text-sm'}`}>
-              {isMobile ? 'Phases' : 'Phases'}
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className={`${isMobile ? 'text-xs px-2' : 'text-xs sm:text-sm'}`}>
-              {isMobile ? 'Calendar' : 'Calendar'}
-            </TabsTrigger>
-            <TabsTrigger value="checklists" className={`${isMobile ? 'text-xs px-2' : 'text-xs sm:text-sm'}`}>
-              {isMobile ? 'Lists' : 'Checklists'}
-            </TabsTrigger>
-            {!isMobile && (
-              <>
-                <TabsTrigger value="materials" className="text-xs sm:text-sm">Materials</TabsTrigger>
-                <TabsTrigger value="labour" className="text-xs sm:text-sm">Labour</TabsTrigger>
-                <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>
-                <TabsTrigger value="docs" className="text-xs sm:text-sm">Docs</TabsTrigger>
-                <TabsTrigger value="activity" className="text-xs sm:text-sm">Activity</TabsTrigger>
-              </>
-            )}
-          </TabsList>
+          {isMobile ? (
+            // Mobile: Two rows of tabs
+            <div className="space-y-2">
+              <div className="flex overflow-x-auto scrollbar-hide gap-1">
+                <TabsList className="inline-flex min-w-max">
+                  <TabsTrigger value="overview" className="text-xs px-3 py-2 whitespace-nowrap">
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger value="phases" className="text-xs px-3 py-2 whitespace-nowrap">
+                    Phases
+                  </TabsTrigger>
+                  <TabsTrigger value="calendar" className="text-xs px-3 py-2 whitespace-nowrap">
+                    Calendar
+                  </TabsTrigger>
+                  <TabsTrigger value="checklists" className="text-xs px-3 py-2 whitespace-nowrap">
+                    Lists
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              <div className="flex overflow-x-auto scrollbar-hide gap-1">
+                <TabsList className="inline-flex min-w-max">
+                  <TabsTrigger value="materials" className="text-xs px-3 py-2 whitespace-nowrap">
+                    Materials
+                  </TabsTrigger>
+                  <TabsTrigger value="labour" className="text-xs px-3 py-2 whitespace-nowrap">
+                    Labour
+                  </TabsTrigger>
+                  <TabsTrigger value="team" className="text-xs px-3 py-2 whitespace-nowrap">
+                    Team
+                  </TabsTrigger>
+                  <TabsTrigger value="docs" className="text-xs px-3 py-2 whitespace-nowrap">
+                    Docs
+                  </TabsTrigger>
+                  <TabsTrigger value="activity" className="text-xs px-3 py-2 whitespace-nowrap">
+                    Activity
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+            </div>
+          ) : (
+            // Desktop: Single row
+            <TabsList className="grid w-full grid-cols-9">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+              <TabsTrigger value="phases" className="text-xs sm:text-sm">Phases</TabsTrigger>
+              <TabsTrigger value="calendar" className="text-xs sm:text-sm">Calendar</TabsTrigger>
+              <TabsTrigger value="checklists" className="text-xs sm:text-sm">Checklists</TabsTrigger>
+              <TabsTrigger value="materials" className="text-xs sm:text-sm">Materials</TabsTrigger>
+              <TabsTrigger value="labour" className="text-xs sm:text-sm">Labour</TabsTrigger>
+              <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>
+              <TabsTrigger value="docs" className="text-xs sm:text-sm">Docs</TabsTrigger>
+              <TabsTrigger value="activity" className="text-xs sm:text-sm">Activity</TabsTrigger>
+            </TabsList>
+          )}
 
           <TabsContent value="overview" className="space-y-4">
             <ProjectOverview project={project} phases={phases} />
