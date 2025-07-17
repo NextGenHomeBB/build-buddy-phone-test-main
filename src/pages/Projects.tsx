@@ -186,7 +186,7 @@ export default function Projects() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">
-                      <CardTitle className="text-lg line-clamp-1">{project.name}</CardTitle>
+                      <CardTitle className="text-lg line-clamp-1 uppercase">{project.name}</CardTitle>
                       <CardDescription className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {project.location}
