@@ -420,21 +420,23 @@ export default function PhaseDetail() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-warning/10 rounded-lg">
-                    <Calendar className="h-4 w-4 text-warning" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">Timeline</div>
-                    <div className="text-sm font-medium">
-                      {format(new Date(phase.startDate), 'MMM dd')} - {format(new Date(phase.endDate), 'MMM dd')}
+            <EditPhaseDialog phase={phase} projectId={projectId!}>
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-warning/10 rounded-lg">
+                      <Calendar className="h-4 w-4 text-warning" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Timeline</div>
+                      <div className="text-sm font-medium">
+                        {format(new Date(phase.startDate), 'MMM dd')} - {format(new Date(phase.endDate), 'MMM dd')}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </EditPhaseDialog>
 
             <Card>
               <CardContent className="p-4">
