@@ -171,6 +171,24 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
     setUploading(false);
   };
 
+  const handleView = async (document: ProjectDocument) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('project-documents')
+        .createSignedUrl(document.file_path, 3600); // 1 hour expiry
+
+      if (error) throw error;
+
+      window.open(data.signedUrl, '_blank');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to view document",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDownload = async (document: ProjectDocument) => {
     try {
       const { data, error } = await supabase.storage
@@ -272,7 +290,8 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
                 return (
                   <div
                     key={document.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleView(document)}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <FileIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
@@ -288,7 +307,16 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleView(document)}
+                        className="gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
