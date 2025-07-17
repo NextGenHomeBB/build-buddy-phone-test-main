@@ -7,9 +7,11 @@ import { UserFilters } from "@/components/admin/UserFilters";
 import { UserTable } from "@/components/admin/UserTable";
 import { UserCardList } from "@/components/admin/UserCardList";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
+import { InviteUserDialog } from "@/components/admin/InviteUserDialog";
 import { Loader2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 export default function UserManagement() {
   const isMobile = useIsMobile();
@@ -27,6 +29,12 @@ export default function UserManagement() {
     stats,
     refreshUsers
   } = useUserManagement();
+
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+
+  const handleInviteSent = () => {
+    refreshUsers();
+  };
 
   return (
     <AppLayout>
@@ -48,6 +56,11 @@ export default function UserManagement() {
                 Project Access
               </Link>
             </Button>
+            <InviteUserDialog 
+              isOpen={isInviteOpen}
+              onOpenChange={setIsInviteOpen}
+              onInviteSent={handleInviteSent}
+            />
             <AddUserDialog 
               isOpen={isAddUserOpen}
               onOpenChange={setIsAddUserOpen}
