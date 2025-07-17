@@ -31,9 +31,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (!error && data) {
         setProfile(data);
+      } else if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist, create it as fallback
+        console.log('Profile not found, creating new profile for user:', userId);
+        await createProfile(userId);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+    }
+  };
+
+  const createProfile = async (userId: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userName = userData.user?.user_metadata?.name || 
+                     userData.user?.user_metadata?.full_name || 
+                     userData.user?.email?.split('@')[0] || 
+                     'User';
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: userId,
+          auth_user_id: userId,
+          name: userName,
+          role: 'worker',
+          is_placeholder: false
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        setProfile(data);
+        console.log('Profile created successfully:', data);
+      } else {
+        console.error('Error creating profile:', error);
+      }
+    } catch (error) {
+      console.error('Error in createProfile:', error);
     }
   };
 
