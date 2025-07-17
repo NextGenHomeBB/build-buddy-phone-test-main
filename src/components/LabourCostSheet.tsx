@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +12,7 @@ import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Calculator, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useInsertLabourCost, useEstimatePhaseCosts } from '@/services/phaseCosts.service';
+import { supabase } from '@/integrations/supabase/client';
 
 const labourCostSchema = z.object({
   description: z.string().min(1, 'Description is required'),
@@ -28,24 +30,27 @@ interface LabourCostSheetProps {
   onClose: () => void;
 }
 
-const subcontractors = [
-  { id: 'internal', name: 'Internal Team' },
-  { id: 'electrician-1', name: 'Smith Electrical Ltd.' },
-  { id: 'plumber-1', name: 'Johnson Plumbing Co.' },
-  { id: 'carpenter-1', name: 'Wood Masters Inc.' },
-  { id: 'painter-1', name: 'Color Pro Painters' },
-  { id: 'concrete-1', name: 'Concrete Solutions LLC' },
-  { id: 'roofing-1', name: 'Apex Roofing Services' },
-  { id: 'hvac-1', name: 'Climate Control Systems' },
-  { id: 'flooring-1', name: 'Premium Flooring Co.' },
-];
-
 export function LabourCostSheet({ phaseId, open, onClose }: LabourCostSheetProps) {
   const [isCalculating, setIsCalculating] = useState(false);
   const { toast } = useToast();
   
   const insertLabourCostMutation = useInsertLabourCost();
   const estimatePhaseCostsMutation = useEstimatePhaseCosts();
+
+  // Fetch workers for the subcontractor dropdown
+  const { data: workers = [] } = useQuery({
+    queryKey: ['workers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, name')
+        .eq('role', 'worker')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const form = useForm<LabourCostForm>({
     resolver: zodResolver(labourCostSchema),
@@ -159,9 +164,10 @@ export function LabourCostSheet({ phaseId, open, onClose }: LabourCostSheetProps
                 <SelectValue placeholder="Select subcontractor (optional)" />
               </SelectTrigger>
               <SelectContent className="bg-background border z-50">
-                {subcontractors.map((contractor) => (
-                  <SelectItem key={contractor.id} value={contractor.id}>
-                    {contractor.name}
+                <SelectItem value="internal">Internal Team</SelectItem>
+                {workers.map((worker) => (
+                  <SelectItem key={worker.user_id} value={worker.user_id}>
+                    {worker.name}
                   </SelectItem>
                 ))}
               </SelectContent>
