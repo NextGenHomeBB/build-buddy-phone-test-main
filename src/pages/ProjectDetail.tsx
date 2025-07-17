@@ -1,5 +1,7 @@
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useProject, useProjectPhases } from '@/hooks/useProjects';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,7 +43,6 @@ import { ProjectChecklistsTab } from '@/components/project/ProjectChecklistsTab'
 import { ProjectDocuments } from '@/components/project/ProjectDocuments';
 import { LabourTracking } from '@/components/project/LabourTracking';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useProjectSeeding } from '@/hooks/useProjectSeeding';
 
@@ -54,6 +55,7 @@ export default function ProjectDetail() {
   const { data: phases, isLoading: phasesLoading } = useProjectPhases(id!);
   const { canEditProject, canAddPhase, canEditPhase, canViewReports } = useRoleAccess();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const seedPhases = useProjectSeeding(id!);
 
   // Get current tab from URL or default to overview
@@ -170,6 +172,35 @@ export default function ProjectDetail() {
       });
     }
   };
+
+  // Mutation to update phase status
+  const updatePhaseStatus = useMutation({
+    mutationFn: async ({ phaseId, newStatus }: { phaseId: string; newStatus: 'planning' | 'active' | 'on-hold' | 'completed' | 'cancelled' }) => {
+      const { data, error } = await supabase
+        .from('project_phases')
+        .update({ status: newStatus })
+        .eq('id', phaseId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['projects', id, 'phases'] });
+      toast({
+        title: "Status Updated",
+        description: `Phase status changed to ${data.status}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update phase status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
 
   return (
@@ -411,10 +442,73 @@ export default function ProjectDetail() {
                                 const Icon = getPhaseStatusIcon(phase.status);
                                 return <Icon className="h-4 w-4" />;
                               })()}
-                              <h4 className="font-semibold">{phase.name}</h4>
-                              <Badge variant="outline" className={getStatusColor(phase.status)}>
-                                {phase.status}
-                              </Badge>
+                               <h4 className="font-semibold">{phase.name}</h4>
+                               {canEditPhase() ? (
+                                 <DropdownMenu>
+                                   <DropdownMenuTrigger asChild>
+                                     <Button 
+                                       variant="outline" 
+                                       size="sm"
+                                       className={`${getStatusColor(phase.status)} hover:opacity-80 transition-opacity border-0`}
+                                       onClick={(e) => e.stopPropagation()}
+                                     >
+                                       {phase.status.charAt(0).toUpperCase() + phase.status.slice(1)}
+                                       <ChevronDown className="ml-2 h-4 w-4" />
+                                     </Button>
+                                   </DropdownMenuTrigger>
+                                   <DropdownMenuContent className="z-50 bg-background border border-border shadow-lg">
+                                     <DropdownMenuItem 
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         updatePhaseStatus.mutate({ phaseId: phase.id, newStatus: 'planning' });
+                                       }}
+                                       className="cursor-pointer hover:bg-muted"
+                                     >
+                                       Planning
+                                     </DropdownMenuItem>
+                                     <DropdownMenuItem 
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         updatePhaseStatus.mutate({ phaseId: phase.id, newStatus: 'active' });
+                                       }}
+                                       className="cursor-pointer hover:bg-muted"
+                                     >
+                                       Active
+                                     </DropdownMenuItem>
+                                     <DropdownMenuItem 
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         updatePhaseStatus.mutate({ phaseId: phase.id, newStatus: 'on-hold' });
+                                       }}
+                                       className="cursor-pointer hover:bg-muted"
+                                     >
+                                       On Hold
+                                     </DropdownMenuItem>
+                                     <DropdownMenuItem 
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         updatePhaseStatus.mutate({ phaseId: phase.id, newStatus: 'completed' });
+                                       }}
+                                       className="cursor-pointer hover:bg-muted"
+                                     >
+                                       Completed
+                                     </DropdownMenuItem>
+                                     <DropdownMenuItem 
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                       updatePhaseStatus.mutate({ phaseId: phase.id, newStatus: 'cancelled' });
+                                       }}
+                                       className="cursor-pointer hover:bg-muted"
+                                     >
+                                       Cancelled
+                                     </DropdownMenuItem>
+                                   </DropdownMenuContent>
+                                 </DropdownMenu>
+                               ) : (
+                                 <Badge variant="outline" className={getStatusColor(phase.status)}>
+                                   {phase.status}
+                                 </Badge>
+                               )}
                             </div>
                             <p className="text-sm text-muted-foreground">
                               {phase.description}
