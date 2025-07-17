@@ -1268,6 +1268,14 @@ export type Database = {
         Args: { work_date: string }
         Returns: undefined
       }
+      create_placeholder_user: {
+        Args: {
+          user_name: string
+          user_email: string
+          user_role?: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: string
+      }
       create_user_profile: {
         Args: {
           user_email: string
