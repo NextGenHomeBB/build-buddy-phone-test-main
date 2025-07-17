@@ -4,6 +4,22 @@ import { toast } from '@/hooks/use-toast';
 
 // Data hooks for the phase-aware assign tasks workflow
 
+export function useAvailableProjects() {
+  return useQuery({
+    queryKey: ['available-projects-for-assignment'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, status')
+        .eq('status', 'active')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 export function useProjectPhases(projectId?: string) {
   return useQuery({
     queryKey: ['project-phases', projectId],

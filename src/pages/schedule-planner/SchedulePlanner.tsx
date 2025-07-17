@@ -556,13 +556,14 @@ export default function SchedulePlanner() {
                               key={worker.user_id}
                               worker={worker}
                               isFromSchedule={false}
-                           onClick={() => {
-                             setWorkerTaskAssignmentModal({
-                               open: true,
-                               worker: worker,
-                               projectId: undefined
-                             });
-                           }}
+                            onClick={() => {
+                              setAssignTreeSheet({
+                                open: true,
+                                projectId: undefined,
+                                workerId: worker.user_id,
+                                phaseDefault: undefined
+                              });
+                            }}
                             />
                           ))}
                         </SortableContext>
@@ -606,13 +607,14 @@ export default function SchedulePlanner() {
                           key={worker.user_id}
                           worker={worker}
                           isFromSchedule={false}
-                         onClick={() => {
-                           setWorkerTaskAssignmentModal({
-                             open: true,
-                             worker: worker,
-                             projectId: undefined
-                           });
-                         }}
+                          onClick={() => {
+                            setAssignTreeSheet({
+                              open: true,
+                              projectId: undefined,
+                              workerId: worker.user_id,
+                              phaseDefault: undefined
+                            });
+                          }}
                         />
                       ))}
                     </SortableContext>

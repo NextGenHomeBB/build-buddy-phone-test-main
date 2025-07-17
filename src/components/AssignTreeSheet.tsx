@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Search, ChevronRight, ChevronDown, Users, CheckSquare, Square, ArrowLeft } from 'lucide-react';
+import { Search, ChevronRight, ChevronDown, Users, CheckSquare, Square, ArrowLeft, Building } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useProjectPhases, useTasksByPhase, useChecklistItems, useBulkAssign } from '@/hooks/useAssignTasks';
+import { useAvailableProjects, useProjectPhases, useTasksByPhase, useChecklistItems, useBulkAssign } from '@/hooks/useAssignTasks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { DrillStack } from './DrillStack';
@@ -14,7 +14,7 @@ import { DrillStack } from './DrillStack';
 interface AssignTreeSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: string;
+  projectId?: string; // Made optional for multi-project support
   workerId: string;
   phaseDefault?: string;
 }
@@ -25,7 +25,7 @@ interface SelectedItems {
   expandedTasks: Set<string>;
 }
 
-type DrillLevel = 1 | 2 | 3; // 1: Phases, 2: Tasks, 3: Checklist Items
+type DrillLevel = 0 | 1 | 2 | 3; // 0: Projects, 1: Phases, 2: Tasks, 3: Checklist Items
 
 export function AssignTreeSheet({ 
   open, 
@@ -35,7 +35,16 @@ export function AssignTreeSheet({
   phaseDefault 
 }: AssignTreeSheetProps) {
   const isMobile = useIsMobile();
-  const [currentLevel, setCurrentLevel] = useState<DrillLevel>(phaseDefault ? 2 : 1);
+  
+  // Determine initial level based on whether projectId is provided
+  const getInitialLevel = (): DrillLevel => {
+    if (!projectId) return 0; // Start with project selection
+    if (phaseDefault) return 2; // Go directly to tasks if phase is specified
+    return 1; // Start with phases
+  };
+  
+  const [currentLevel, setCurrentLevel] = useState<DrillLevel>(getInitialLevel());
+  const [selectedProject, setSelectedProject] = useState<string | null>(projectId || null);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(phaseDefault || null);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +54,8 @@ export function AssignTreeSheet({
     expandedTasks: new Set(),
   });
 
-  const { data: phases = [], isLoading: phasesLoading } = useProjectPhases(projectId);
+  const { data: projects = [], isLoading: projectsLoading } = useAvailableProjects();
+  const { data: phases = [], isLoading: phasesLoading } = useProjectPhases(selectedProject || undefined);
   const { data: tasks = [], isLoading: tasksLoading } = useTasksByPhase(selectedPhase || undefined);
   const bulkAssignMutation = useBulkAssign();
 
@@ -68,6 +78,12 @@ export function AssignTreeSheet({
     return { totalTasks, totalChecklistItems, totalSelected };
   }, [selected]);
 
+  // Handle project selection - drill to phase level
+  const handleProjectSelect = useCallback((projectId: string) => {
+    setSelectedProject(projectId);
+    setCurrentLevel(1);
+  }, []);
+
   // Handle phase selection - drill to task level
   const handlePhaseSelect = useCallback((phaseId: string) => {
     setSelectedPhase(phaseId);
@@ -88,6 +104,9 @@ export function AssignTreeSheet({
     } else if (currentLevel === 2) {
       setCurrentLevel(1);
       setSelectedPhase(null);
+    } else if (currentLevel === 1) {
+      setCurrentLevel(0);
+      setSelectedProject(null);
     }
   }, [currentLevel]);
 
@@ -171,7 +190,7 @@ export function AssignTreeSheet({
         workerId,
         taskIds: Array.from(selected.taskIds),
         checklistItemIds: Array.from(selected.checklistItemIds),
-        projectId,
+        projectId: selectedProject || projectId || '',
       });
       
       // Reset selections and close
@@ -184,17 +203,72 @@ export function AssignTreeSheet({
     } catch (error) {
       console.error('Assignment failed:', error);
     }
-  }, [bulkAssignMutation, workerId, selected, projectId, selectionCounts.totalSelected, onOpenChange]);
+  }, [bulkAssignMutation, workerId, selected, selectedProject, projectId, selectionCounts.totalSelected, onOpenChange]);
 
-  // Render phase list
-  const PhaseList = () => (
+  // Render project list
+  const ProjectList = () => (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b">
         <h3 className="font-medium flex items-center gap-2">
-          <Users className="w-4 h-4" />
-          Select Phase
+          <Building className="w-4 h-4" />
+          Select Project
         </h3>
       </div>
+      <ScrollArea className="flex-1">
+        <div className="p-2 space-y-1">
+          {projectsLoading ? (
+            <div className="p-4 text-muted-foreground">Loading projects...</div>
+          ) : projects.length === 0 ? (
+            <div className="p-4 text-muted-foreground">No active projects found</div>
+          ) : (
+            projects.map((project) => (
+              <button
+                key={project.id}
+                onClick={() => handleProjectSelect(project.id)}
+                className={cn(
+                  "w-full text-left p-3 rounded-md min-h-11 transition-colors",
+                  "hover:bg-muted/50 flex items-center justify-between"
+                )}
+              >
+                <div className="flex-1">
+                  <div className="font-medium">{project.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Status: {project.status}
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            ))
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+
+  // Render phase list
+  const PhaseList = () => {
+    const currentProject = projects.find(p => p.id === selectedProject);
+    
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-4 border-b space-y-3">
+          <div className="flex items-center gap-2">
+            {!projectId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBack}
+                className="p-1"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            )}
+            <h3 className="font-medium flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              {currentProject?.name} - Phases
+            </h3>
+          </div>
+        </div>
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
           {phasesLoading ? (
@@ -223,8 +297,9 @@ export function AssignTreeSheet({
           )}
         </div>
       </ScrollArea>
-    </div>
-  );
+      </div>
+    );
+  };
 
   // Render task list with search
   const TaskList = () => {
@@ -359,6 +434,9 @@ export function AssignTreeSheet({
   const content = (
     <div className="flex flex-col h-full">
       <div className="flex-1 relative overflow-hidden">
+        <DrillStack level={0} isActive={currentLevel === 0}>
+          <ProjectList />
+        </DrillStack>
         <DrillStack level={1} isActive={currentLevel === 1}>
           <PhaseList />
         </DrillStack>
