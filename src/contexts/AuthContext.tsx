@@ -118,6 +118,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string) => {
     setLoading(true);
+    console.log('Starting signup process for:', email, name);
+    
     const redirectUrl = `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
@@ -131,11 +133,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
     
+    console.log('Signup result:', { data, error });
+    
     if (error) {
+      console.error('Signup error:', error);
       setLoading(false);
       return { error };
     }
 
+    // If signup successful but user not confirmed, try to create profile manually
+    if (data.user && !data.user.email_confirmed_at) {
+      console.log('User created but not confirmed, attempting to create profile manually');
+      try {
+        await createProfile(data.user.id);
+      } catch (profileError) {
+        console.error('Manual profile creation failed:', profileError);
+      }
+    }
+
+    console.log('Signup completed successfully');
     return {};
   };
 
