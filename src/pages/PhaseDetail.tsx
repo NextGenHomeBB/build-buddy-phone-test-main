@@ -18,6 +18,7 @@ import { BudgetBadge } from '@/components/BudgetBadge';
 import { PhaseCostDisplay } from '@/components/PhaseCostDisplay';
 import { MaterialCostSheet } from '@/components/MaterialCostSheet';
 import { LabourCostSheet } from '@/components/LabourCostSheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -61,6 +62,7 @@ export default function PhaseDetail() {
   const [activeTab, setActiveTab] = useState<'checklist' | 'costs'>('checklist');
   const [showMaterialCostSheet, setShowMaterialCostSheet] = useState(false);
   const [showLabourCostSheet, setShowLabourCostSheet] = useState(false);
+  const isMobile = useIsMobile();
 
   // Mutation to update phase status
   const updatePhaseStatus = useMutation({
@@ -194,8 +196,11 @@ export default function PhaseDetail() {
       onSwiped: () => {
         setSwipingItemId(null);
       },
-      trackMouse: true,
-      preventScrollOnSwipe: true,
+      trackMouse: !isMobile, // Only track mouse on desktop
+      preventScrollOnSwipe: false, // Allow scrolling
+      delta: 10, // Require more movement to trigger swipe
+      swipeDuration: 500,
+      touchEventOptions: { passive: false },
     });
 
     const isSwipping = swipingItemId === item.id;
@@ -301,23 +306,23 @@ export default function PhaseDetail() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className={`${isMobile ? 'space-y-4 pb-20 px-4' : 'space-y-6'} min-h-screen overflow-auto`}>
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size={isMobile ? "sm" : "sm"} asChild>
             <Link to={`/projects/${projectId}?tab=phases`}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Phases
+              <ArrowLeft className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4'} mr-2`} />
+              {isMobile ? 'Back' : 'Back to Phases'}
             </Link>
           </Button>
         </div>
 
         {/* Phase Overview */}
-        <div className="space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className={isMobile ? 'space-y-3' : 'space-y-4'}>
+          <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col lg:flex-row lg:items-start lg:justify-between gap-4'}`}>
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+                <h1 className={`${isMobile ? 'text-xl' : 'text-2xl lg:text-3xl'} font-bold text-foreground`}>
                   {phase.name}
                 </h1>
                 <DropdownMenu>
@@ -370,25 +375,25 @@ export default function PhaseDetail() {
               </p>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center ${isMobile ? 'flex-wrap' : ''} gap-2`}>
               {phaseCosts && (
                 <BudgetBadge amount={phaseCosts.remainingBudget} />
               )}
               <EditPhaseDialog phase={phase} projectId={projectId!}>
                 <Button variant="outline" size="sm">
-                  Edit Phase
+                  {isMobile ? 'Edit' : 'Edit Phase'}
                 </Button>
               </EditPhaseDialog>
               <Button size="sm" asChild>
                 <Link to={`/projects/${projectId}?tab=calendar`}>
-                  View Timeline
+                  {isMobile ? 'Timeline' : 'View Timeline'}
                 </Link>
               </Button>
             </div>
           </div>
 
           {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'}`}>
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
