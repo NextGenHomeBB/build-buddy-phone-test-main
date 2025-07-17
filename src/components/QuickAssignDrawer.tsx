@@ -262,7 +262,7 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
   }), [currentItems, selectedItems, handleItemToggle, isMobile]);
 
   const MainContent = () => (
-    <div className="flex flex-col h-full">
+    <div className={`flex flex-col ${isMobile ? 'h-full' : 'h-full'}`}>
       <div className="flex-shrink-0 mb-4">
         <div className="flex items-center gap-2 mb-2">
           <Zap className="h-5 w-5" />
@@ -310,9 +310,9 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         </div>
       </div>
 
-      <div className={`grid gap-6 flex-1 overflow-hidden ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+      <div className={`grid gap-6 flex-1 min-h-0 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
         {/* Items Section */}
-        <div className="space-y-4">
+        <div className={`space-y-4 flex flex-col ${isMobile ? 'min-h-0' : ''}`}>
           <div className="flex items-center justify-between">
             <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
               Unassigned {assignMode === 'tasks' ? 'Tasks' : 'Checklist Items'}
@@ -356,15 +356,17 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
               </p>
             </div>
           ) : (
-          <List
-            height={isMobile ? 200 : 250}
-            width="100%"
-            itemCount={Math.min(currentItems.length, 3)}
-            itemSize={isMobile ? 80 : 70}
-            itemData={itemRowData}
-          >
-            {ItemRow}
-          </List>
+          <div className={`flex-1 ${isMobile ? 'min-h-0' : ''}`}>
+            <List
+              height={isMobile ? 180 : 250}
+              width="100%"
+              itemCount={currentItems.length}
+              itemSize={isMobile ? 80 : 70}
+              itemData={itemRowData}
+            >
+              {ItemRow}
+            </List>
+          </div>
           )}
 
           {selectedItems.size > 0 && (
@@ -379,12 +381,12 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         {!isMobile && <Separator orientation="vertical" className="hidden lg:block" />}
 
         {/* Workers Section */}
-        <div className="space-y-4">
+        <div className={`space-y-4 flex flex-col ${isMobile ? 'min-h-0' : ''}`}>
           <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
             Select Worker
           </h3>
 
-          <ScrollArea className={`flex-1 ${isMobile ? 'max-h-[250px]' : 'max-h-[400px]'}`}>
+          <ScrollArea className={`flex-1 ${isMobile ? 'h-[200px]' : 'max-h-[400px]'}`}>
             {workersLoading ? (
               <div className="space-y-3 p-2">
                 {[...Array(5)].map((_, i) => (
@@ -447,8 +449,7 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className={`flex gap-3 pt-4 border-t flex-shrink-0 ${isMobile ? 'flex-col' : 'justify-end'}`}>
+      <div className={`flex gap-3 pt-4 border-t flex-shrink-0 sticky bottom-0 bg-background ${isMobile ? 'flex-col mt-4 pb-4' : 'justify-end'}`}>
         <Button 
           variant="outline" 
           onClick={() => setOpen(false)}
