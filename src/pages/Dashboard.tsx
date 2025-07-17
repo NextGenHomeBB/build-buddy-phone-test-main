@@ -36,7 +36,10 @@ export default function Dashboard() {
     currentPhase: project.phases?.[0]?.name || "Not started",
     urgentTasks: project.tasks?.filter(task => task.priority === 'urgent' && task.status !== 'completed')?.length || 0
   }));
-  const filteredProjects = transformedProjects.filter(project => project.name.toLowerCase().includes(searchQuery.toLowerCase()) || project.description.toLowerCase().includes(searchQuery.toLowerCase()));
+  
+  // Sort projects by progress (highest first)
+  const sortedProjects = transformedProjects.sort((a, b) => b.progress - a.progress);
+  const filteredProjects = sortedProjects.filter(project => project.name.toLowerCase().includes(searchQuery.toLowerCase()) || project.description.toLowerCase().includes(searchQuery.toLowerCase()));
   if (error) {
     return <div className="space-y-6 lg:space-y-8">
         <div className="text-center py-12">
