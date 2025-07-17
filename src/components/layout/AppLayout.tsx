@@ -99,7 +99,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               {/* Mobile Title */}
               <div className="md:hidden">
                 <h1 className="text-lg font-semibold text-foreground">
-                  Phase-Gate
+                  buildingbuddy
                 </h1>
               </div>
             </div>
