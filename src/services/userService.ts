@@ -27,16 +27,30 @@ export const userService = {
     email: string;
     role: UserProfile['role'];
   }) {
-    // Use the new placeholder user function
-    const { data, error } = await supabase
-      .rpc('create_placeholder_user', {
-        user_name: userData.name,
-        user_email: userData.email,
-        user_role: userData.role
-      });
-    
-    if (error) throw error;
-    return data;
+    try {
+      // Use the new placeholder user function
+      const { data, error } = await supabase
+        .rpc('create_placeholder_user', {
+          user_name: userData.name,
+          user_email: userData.email,
+          user_role: userData.role
+        });
+      
+      if (error) {
+        // Provide better error messages based on the error
+        if (error.message.includes('Only admins and managers can create users')) {
+          throw new Error('You need admin or manager privileges to create users. Please contact an administrator.');
+        }
+        if (error.message.includes('auth.users')) {
+          throw new Error('Authentication error. Please log in and try again.');
+        }
+        throw new Error(error.message || 'Failed to create user');
+      }
+      return data;
+    } catch (error: any) {
+      console.error('Create user error:', error);
+      throw error;
+    }
   },
 
   async updateUserRole(userId: string, newRole: UserProfile['role']) {

@@ -2,6 +2,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserManagement } from "@/hooks/useUserManagement";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { UserStatsGrid } from "@/components/admin/UserStatsGrid";
 import { UserFilters } from "@/components/admin/UserFilters";
 import { UserTable } from "@/components/admin/UserTable";
@@ -15,6 +16,7 @@ import { useState } from "react";
 
 export default function UserManagement() {
   const isMobile = useIsMobile();
+  const { canManageUsers } = useRoleAccess();
   const {
     filteredUsers,
     loading,
@@ -57,16 +59,20 @@ export default function UserManagement() {
                 Project Access
               </Link>
             </Button>
-            <InviteUserDialog 
-              isOpen={isInviteOpen}
-              onOpenChange={setIsInviteOpen}
-              onInviteSent={handleInviteSent}
-            />
-            <AddUserDialog 
-              isOpen={isAddUserOpen}
-              onOpenChange={setIsAddUserOpen}
-              onAddUser={handleAddUser}
-            />
+            {canManageUsers() && (
+              <>
+                <InviteUserDialog 
+                  isOpen={isInviteOpen}
+                  onOpenChange={setIsInviteOpen}
+                  onInviteSent={handleInviteSent}
+                />
+                <AddUserDialog 
+                  isOpen={isAddUserOpen}
+                  onOpenChange={setIsAddUserOpen}
+                  onAddUser={handleAddUser}
+                />
+              </>
+            )}
           </div>
         </div>
 

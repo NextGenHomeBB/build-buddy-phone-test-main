@@ -50,13 +50,23 @@ export const useUserManagement = () => {
     return matchesSearch && matchesRole;
   });
 
-  const handleAddUser = () => {
-    toast({
-      title: "User Added",
-      description: "New user has been successfully added to the system.",
-    });
-    setIsAddUserOpen(false);
-    loadUsers(); // Refresh the list
+  const handleAddUser = async () => {
+    try {
+      toast({
+        title: "User Added",
+        description: "User has been successfully added to the system.",
+      });
+      setIsAddUserOpen(false);
+      loadUsers(); // Refresh the list
+    } catch (error: any) {
+      console.error('Failed to add user:', error);
+      const errorMessage = error?.message || "Failed to add user. Please try again.";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUpdateRole = async (userId: string, newRole: UserProfile['role']) => {
