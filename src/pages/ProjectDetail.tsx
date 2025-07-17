@@ -58,6 +58,35 @@ export default function ProjectDetail() {
   const queryClient = useQueryClient();
   const seedPhases = useProjectSeeding(id!);
 
+  // Mutation to update phase status
+  const updatePhaseStatus = useMutation({
+    mutationFn: async ({ phaseId, newStatus }: { phaseId: string; newStatus: 'planning' | 'active' | 'on-hold' | 'completed' | 'cancelled' }) => {
+      const { data, error } = await supabase
+        .from('project_phases')
+        .update({ status: newStatus })
+        .eq('id', phaseId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['projects', id, 'phases'] });
+      toast({
+        title: "Status Updated",
+        description: `Phase status changed to ${data.status}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update phase status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Get current tab from URL or default to overview
   const currentTab = searchParams.get('tab') || 'overview';
   const validTabs = ['overview', 'phases', 'calendar', 'checklists', 'materials', 'labour', 'team', 'docs', 'activity'];
@@ -173,34 +202,6 @@ export default function ProjectDetail() {
     }
   };
 
-  // Mutation to update phase status
-  const updatePhaseStatus = useMutation({
-    mutationFn: async ({ phaseId, newStatus }: { phaseId: string; newStatus: 'planning' | 'active' | 'on-hold' | 'completed' | 'cancelled' }) => {
-      const { data, error } = await supabase
-        .from('project_phases')
-        .update({ status: newStatus })
-        .eq('id', phaseId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['projects', id, 'phases'] });
-      toast({
-        title: "Status Updated",
-        description: `Phase status changed to ${data.status}`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update phase status. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
 
 
   return (
