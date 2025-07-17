@@ -482,15 +482,15 @@ export default function ProjectDetail() {
                                      >
                                        Planning
                                      </DropdownMenuItem>
-                                     <DropdownMenuItem 
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         updatePhaseStatus.mutate({ phaseId: phase.id, newStatus: 'active' });
-                                       }}
-                                       className="cursor-pointer hover:bg-muted"
-                                     >
-                                       Active
-                                     </DropdownMenuItem>
+                                      <DropdownMenuItem 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          updatePhaseStatus.mutate({ phaseId: phase.id, newStatus: 'active' });
+                                        }}
+                                        className="cursor-pointer hover:bg-blue-50 text-blue-600 hover:text-blue-700"
+                                      >
+                                        Active
+                                      </DropdownMenuItem>
                                      <DropdownMenuItem 
                                        onClick={(e) => {
                                          e.stopPropagation();
@@ -500,15 +500,15 @@ export default function ProjectDetail() {
                                      >
                                        On Hold
                                      </DropdownMenuItem>
-                                     <DropdownMenuItem 
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         updatePhaseStatus.mutate({ phaseId: phase.id, newStatus: 'completed' });
-                                       }}
-                                       className="cursor-pointer hover:bg-muted"
-                                     >
-                                       Completed
-                                     </DropdownMenuItem>
+                                      <DropdownMenuItem 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          updatePhaseStatus.mutate({ phaseId: phase.id, newStatus: 'completed' });
+                                        }}
+                                        className="cursor-pointer hover:bg-green-50 text-green-600 hover:text-green-700"
+                                      >
+                                        Completed
+                                      </DropdownMenuItem>
                                      <DropdownMenuItem 
                                        onClick={(e) => {
                                          e.stopPropagation();
