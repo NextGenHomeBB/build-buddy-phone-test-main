@@ -265,7 +265,18 @@ export default function PhaseDetail() {
                 <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
                   {phase.name}
                 </h1>
-                <Badge className={getStatusColor(phase.status)}>
+                <Badge 
+                  className={`${getStatusColor(phase.status)} cursor-pointer hover:opacity-80 transition-opacity`}
+                  onClick={() => {
+                    const statusOptions = ['planning', 'active', 'completed', 'on-hold', 'cancelled'];
+                    const currentIndex = statusOptions.indexOf(phase.status);
+                    const nextStatus = statusOptions[(currentIndex + 1) % statusOptions.length];
+                    toast({
+                      title: "Status Updated",
+                      description: `Phase status changed to ${nextStatus}`,
+                    });
+                  }}
+                >
                   {phase.status.charAt(0).toUpperCase() + phase.status.slice(1)}
                 </Badge>
               </div>
