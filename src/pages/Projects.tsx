@@ -65,12 +65,15 @@ export default function Projects() {
     }
   };
 
-  // Filter projects based on search and filters
+  // Filter and sort projects based on search, filters, and progress
   const filteredProjects = projects?.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) || project.location.toLowerCase().includes(searchTerm.toLowerCase()) || project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     const matchesType = typeFilter === 'all' || project.type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
+  })?.sort((a, b) => {
+    // Sort by progress in descending order (highest progress first)
+    return (b.progress || 0) - (a.progress || 0);
   }) || [];
   if (error) {
     console.error('Projects error:', error);
