@@ -22,6 +22,31 @@ interface SidebarNavigationProps {
   getNavClasses: (active: boolean) => string;
 }
 
+const getBadgeStyles = (count: string, title: string) => {
+  const numCount = parseInt(count);
+  
+  // Different styling based on item type and count
+  if (title === "Projects") {
+    if (numCount >= 20) return "bg-success/20 text-success border-success/30";
+    if (numCount >= 10) return "bg-warning/20 text-warning border-warning/30";
+    return "bg-primary/20 text-primary border-primary/30";
+  }
+  
+  if (title === "My Tasks") {
+    if (numCount >= 10) return "bg-destructive/20 text-destructive border-destructive/30";
+    if (numCount >= 5) return "bg-warning/20 text-warning border-warning/30";
+    return "bg-primary/20 text-primary border-primary/30";
+  }
+  
+  if (title === "Feedback Admin") {
+    if (numCount >= 5) return "bg-destructive/20 text-destructive border-destructive/30";
+    return "bg-warning/20 text-warning border-warning/30";
+  }
+  
+  // Default styling for other items
+  return "bg-primary/20 text-primary border-primary/30";
+};
+
 export function SidebarNavigation({ items, collapsed, getNavClasses }: SidebarNavigationProps) {
   return (
     <SidebarGroup className="px-2 py-4">
@@ -48,7 +73,7 @@ export function SidebarNavigation({ items, collapsed, getNavClasses }: SidebarNa
                       {item.badge && (
                         <Badge 
                           variant="secondary" 
-                          className="ml-auto text-xs h-5 px-1.5 bg-primary/20 text-primary border-primary/30"
+                          className={`ml-auto text-xs h-5 px-1.5 ${getBadgeStyles(item.badge, item.title)}`}
                         >
                           {item.badge}
                         </Badge>
