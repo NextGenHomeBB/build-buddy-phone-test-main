@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AddTaskDialog } from '@/components/project/AddTaskDialog';
 import { QuickAddTask } from '@/components/project/QuickAddTask';
 import { EditPhaseDialog } from '@/components/project/EditPhaseDialog';
+import { EditPhaseDatesDialog } from '@/components/project/EditPhaseDatesDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -420,7 +421,7 @@ export default function PhaseDetail() {
               </CardContent>
             </Card>
 
-            <EditPhaseDialog phase={phase} projectId={projectId!}>
+            <EditPhaseDatesDialog phase={phase}>
               <Card className="cursor-pointer hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -436,7 +437,7 @@ export default function PhaseDetail() {
                   </div>
                 </CardContent>
               </Card>
-            </EditPhaseDialog>
+            </EditPhaseDatesDialog>
 
             <Card>
               <CardContent className="p-4">
