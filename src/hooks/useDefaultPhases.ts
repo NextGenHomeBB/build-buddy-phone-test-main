@@ -55,7 +55,7 @@ export function useUpdateDefaultPhase() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({
         title: "Success",
-        description: "Default phase updated successfully. All existing project phases with the same name have been automatically updated.",
+        description: "Default phase updated successfully. New tasks have been created in all existing project phases with the same name.",
       });
     },
     onError: (error) => {

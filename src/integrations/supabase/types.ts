@@ -1335,7 +1335,7 @@ export type Database = {
         Args: { placeholder_name: string; auth_user_id: string }
         Returns: boolean
       }
-      sync_project_phases_with_default: {
+      sync_project_phase_tasks_with_default: {
         Args: { default_phase_id: string }
         Returns: undefined
       }
