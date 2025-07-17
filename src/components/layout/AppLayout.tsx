@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { MobileTabBar } from "./MobileTabBar";
@@ -98,9 +99,11 @@ export function AppLayout({ children }: AppLayoutProps) {
 
               {/* Mobile Title */}
               <div className="md:hidden">
-                <h1 className="text-lg font-semibold text-foreground">
-                  buildingbuddy
-                </h1>
+                <Link to="/dashboard">
+                  <h1 className="text-lg font-semibold text-foreground cursor-pointer hover:opacity-80 transition-opacity">
+                    buildingbuddy
+                  </h1>
+                </Link>
               </div>
             </div>
 
