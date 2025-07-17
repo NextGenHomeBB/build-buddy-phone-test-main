@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AddTaskDialog } from '@/components/project/AddTaskDialog';
 import { QuickAddTask } from '@/components/project/QuickAddTask';
+import { EditPhaseDialog } from '@/components/project/EditPhaseDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -372,11 +373,11 @@ export default function PhaseDetail() {
               {phaseCosts && (
                 <BudgetBadge amount={phaseCosts.remainingBudget} />
               )}
-              <Button variant="outline" size="sm" asChild>
-                <Link to={`/projects/${projectId}/phase/${phaseId}/edit`}>
+              <EditPhaseDialog phase={phase} projectId={projectId!}>
+                <Button variant="outline" size="sm">
                   Edit Phase
-                </Link>
-              </Button>
+                </Button>
+              </EditPhaseDialog>
               <Button size="sm" asChild>
                 <Link to={`/projects/${projectId}?tab=calendar`}>
                   View Timeline
