@@ -27,18 +27,13 @@ export const userService = {
     email: string;
     role: UserProfile['role'];
   }) {
-    // Create a placeholder user profile that can be linked later when they sign up
-    const newUserId = crypto.randomUUID();
+    // Use the new placeholder user function
     const { data, error } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: newUserId,
-        name: userData.name,
-        role: userData.role,
-        is_placeholder: true
-      })
-      .select()
-      .single();
+      .rpc('create_placeholder_user', {
+        user_name: userData.name,
+        user_email: userData.email,
+        user_role: userData.role
+      });
     
     if (error) throw error;
     return data;
