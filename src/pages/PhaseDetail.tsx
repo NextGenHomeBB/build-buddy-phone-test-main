@@ -1,6 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
 import { useSwipeable } from 'react-swipeable';
 import { usePhase, useUpdateChecklistItem } from '@/hooks/useProjects';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { AddTaskDialog } from '@/components/project/AddTaskDialog';
 import { QuickAddTask } from '@/components/project/QuickAddTask';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,11 +51,41 @@ export default function PhaseDetail() {
   const { data: phaseCosts } = usePhaseCosts(phaseId!);
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const updateChecklistItem = useUpdateChecklistItem();
   const [swipingItemId, setSwipingItemId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'checklist' | 'costs'>('checklist');
   const [showMaterialCostSheet, setShowMaterialCostSheet] = useState(false);
   const [showLabourCostSheet, setShowLabourCostSheet] = useState(false);
+
+  // Mutation to update phase status
+  const updatePhaseStatus = useMutation({
+    mutationFn: async (newStatus: 'planning' | 'active' | 'on-hold' | 'completed' | 'cancelled') => {
+      const { data, error } = await supabase
+        .from('project_phases')
+        .update({ status: newStatus })
+        .eq('id', phaseId!)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['phases', phaseId] });
+      toast({
+        title: "Status Updated",
+        description: `Phase status changed to ${data.status}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update phase status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -268,13 +300,11 @@ export default function PhaseDetail() {
                 <Badge 
                   className={`${getStatusColor(phase.status)} cursor-pointer hover:opacity-80 transition-opacity`}
                   onClick={() => {
-                    const statusOptions = ['planning', 'active', 'completed', 'on-hold', 'cancelled'];
-                    const currentIndex = statusOptions.indexOf(phase.status);
+                    const statusOptions: Array<'planning' | 'active' | 'completed' | 'on-hold' | 'cancelled'> = 
+                      ['planning', 'active', 'completed', 'on-hold', 'cancelled'];
+                    const currentIndex = statusOptions.indexOf(phase.status as any);
                     const nextStatus = statusOptions[(currentIndex + 1) % statusOptions.length];
-                    toast({
-                      title: "Status Updated",
-                      description: `Phase status changed to ${nextStatus}`,
-                    });
+                    updatePhaseStatus.mutate(nextStatus);
                   }}
                 >
                   {phase.status.charAt(0).toUpperCase() + phase.status.slice(1)}
