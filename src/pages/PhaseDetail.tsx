@@ -10,6 +10,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { BudgetBadge } from '@/components/BudgetBadge';
 import { PhaseCostDisplay } from '@/components/PhaseCostDisplay';
@@ -24,6 +25,7 @@ import {
   Clock,
   AlertTriangle,
   ChevronRight,
+  ChevronDown,
   User,
   Trash2
 } from 'lucide-react';
@@ -297,18 +299,50 @@ export default function PhaseDetail() {
                 <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
                   {phase.name}
                 </h1>
-                <Badge 
-                  className={`${getStatusColor(phase.status)} cursor-pointer hover:opacity-80 transition-opacity`}
-                  onClick={() => {
-                    const statusOptions: Array<'planning' | 'active' | 'completed' | 'on-hold' | 'cancelled'> = 
-                      ['planning', 'active', 'completed', 'on-hold', 'cancelled'];
-                    const currentIndex = statusOptions.indexOf(phase.status as any);
-                    const nextStatus = statusOptions[(currentIndex + 1) % statusOptions.length];
-                    updatePhaseStatus.mutate(nextStatus);
-                  }}
-                >
-                  {phase.status.charAt(0).toUpperCase() + phase.status.slice(1)}
-                </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className={`${getStatusColor(phase.status)} hover:opacity-80 transition-opacity border-0`}
+                    >
+                      {phase.status.charAt(0).toUpperCase() + phase.status.slice(1)}
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="z-50 bg-background border border-border shadow-lg">
+                    <DropdownMenuItem 
+                      onClick={() => updatePhaseStatus.mutate('planning')}
+                      className="cursor-pointer hover:bg-muted"
+                    >
+                      Planning
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => updatePhaseStatus.mutate('active')}
+                      className="cursor-pointer hover:bg-muted"
+                    >
+                      Active
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => updatePhaseStatus.mutate('on-hold')}
+                      className="cursor-pointer hover:bg-muted"
+                    >
+                      On Hold
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => updatePhaseStatus.mutate('completed')}
+                      className="cursor-pointer hover:bg-muted"
+                    >
+                      Completed
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => updatePhaseStatus.mutate('cancelled')}
+                      className="cursor-pointer hover:bg-muted"
+                    >
+                      Cancelled
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <p className="text-muted-foreground">
                 {phase.description}
