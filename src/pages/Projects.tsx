@@ -101,7 +101,7 @@ export default function Projects() {
           </div>
           
           {canCreateProject() && <CreateProjectDialog>
-              <Button size="lg">
+              <Button size="lg" className="bg-green-500 hover:bg-green-400 text-slate-950">
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
               </Button>
