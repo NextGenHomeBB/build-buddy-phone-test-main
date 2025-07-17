@@ -41,12 +41,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if user already exists
-    const { data: existingUser } = await supabaseClient
-      .from('profiles')
-      .select('id, name')
-      .eq('user_id', email)
-      .single();
+    // For invitations, we don't need to check if user exists in profiles
+    // This is an invitation system, not user management
+    let existingUser = null;
 
     let emailSubject = "You're invited to join our team!";
     let emailContent = `
