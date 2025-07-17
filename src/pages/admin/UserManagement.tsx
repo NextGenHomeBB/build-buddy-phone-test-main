@@ -26,6 +26,7 @@ export default function UserManagement() {
     setIsAddUserOpen,
     handleAddUser,
     handleUpdateRole,
+    handleDeleteUser,
     stats,
     refreshUsers
   } = useUserManagement();
@@ -100,6 +101,7 @@ export default function UserManagement() {
                   users={filteredUsers} 
                   onUpdateRole={handleUpdateRole}
                   onUserUpdated={refreshUsers}
+                  onDeleteUser={handleDeleteUser}
                 />
               ) : (
                 <UserCardList 

@@ -77,6 +77,24 @@ export const useUserManagement = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await userService.deleteUser(userId);
+      toast({
+        title: "User Deleted",
+        description: "User has been successfully deleted.",
+      });
+      loadUsers(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     users,
     filteredUsers,
@@ -89,6 +107,7 @@ export const useUserManagement = () => {
     setIsAddUserOpen,
     handleAddUser,
     handleUpdateRole,
+    handleDeleteUser,
     stats,
     refreshUsers: loadUsers
   };

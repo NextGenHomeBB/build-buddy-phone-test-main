@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Edit } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { UserProfile } from "@/services/userService";
 import { getRoleBadge } from "./UserBadges";
 import { EditUserDialog } from "./EditUserDialog";
@@ -11,9 +11,10 @@ interface UserTableProps {
   users: UserProfile[];
   onUpdateRole: (userId: string, role: UserProfile['role']) => void;
   onUserUpdated: () => void;
+  onDeleteUser: (userId: string) => void;
 }
 
-export function UserTable({ users, onUpdateRole, onUserUpdated }: UserTableProps) {
+export function UserTable({ users, onUpdateRole, onUserUpdated, onDeleteUser }: UserTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -54,6 +55,14 @@ export function UserTable({ users, onUpdateRole, onUserUpdated }: UserTableProps
                       <Edit className="h-4 w-4" />
                     </Button>
                   </EditUserDialog>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => onDeleteUser(user.user_id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                   <Select
                     value={user.role}
                     onValueChange={(value) => 

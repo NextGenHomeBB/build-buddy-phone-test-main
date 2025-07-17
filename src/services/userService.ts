@@ -50,6 +50,15 @@ export const userService = {
     return data;
   },
 
+  async deleteUser(userId: string) {
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (error) throw error;
+  },
+
   async getUserStats() {
     const { data: users, error } = await supabase
       .from('profiles')
