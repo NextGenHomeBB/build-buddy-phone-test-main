@@ -298,6 +298,15 @@ export default function FeedbackAdminList() {
                 src={selectedImage} 
                 alt="Feedback attachment" 
                 className="max-w-full max-h-[80vh] object-contain"
+                onLoad={() => console.log('Image loaded successfully:', selectedImage)}
+                onError={(e) => {
+                  console.error('Failed to load image:', selectedImage);
+                  toast({
+                    title: "Error",
+                    description: "Failed to load image. The image may have been deleted or is not accessible.",
+                    variant: "destructive",
+                  });
+                }}
               />
             </div>
           )}
