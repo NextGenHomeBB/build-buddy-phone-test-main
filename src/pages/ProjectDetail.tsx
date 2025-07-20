@@ -64,6 +64,7 @@ export default function ProjectDetail() {
   // Mutation to update phase status
   const updatePhaseStatus = useMutation({
     mutationFn: async ({ phaseId, newStatus }: { phaseId: string; newStatus: 'planning' | 'active' | 'on-hold' | 'completed' | 'cancelled' }) => {
+      // Update the phase status
       const { data, error } = await supabase
         .from('project_phases')
         .update({ status: newStatus })
@@ -72,14 +73,45 @@ export default function ProjectDetail() {
         .single();
       
       if (error) throw error;
+
+      // If setting status to completed, automatically complete all tasks in this phase
+      if (newStatus === 'completed') {
+        const { error: tasksError } = await supabase
+          .from('tasks')
+          .update({ 
+            status: 'completed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('phase_id', phaseId)
+          .neq('status', 'completed'); // Only update tasks that aren't already completed
+        
+        if (tasksError) {
+          console.warn('Failed to auto-complete tasks:', tasksError);
+          // Don't throw error, just warn - phase status update succeeded
+        }
+
+        // Update phase progress to 100%
+        const { error: progressError } = await supabase.rpc('update_phase_progress', {
+          phase_id_param: phaseId
+        });
+        
+        if (progressError) {
+          console.warn('Failed to update phase progress:', progressError);
+        }
+      }
+      
       return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projects', id, 'phases'] });
       queryClient.invalidateQueries({ queryKey: ['phases', id, 'calendar'] });
+      
+      const isCompleted = data.status === 'completed';
       toast({
-        title: "Status Updated",
-        description: `Phase status changed to ${data.status}`,
+        title: isCompleted ? "Phase Completed! 🎉" : "Status Updated",
+        description: isCompleted 
+          ? `Phase "${data.name}" and all its tasks are now completed!`
+          : `Phase status changed to ${data.status}`,
       });
     },
     onError: (error) => {
@@ -205,8 +237,6 @@ export default function ProjectDetail() {
       });
     }
   };
-
-
 
   return (
     <AppLayout>
