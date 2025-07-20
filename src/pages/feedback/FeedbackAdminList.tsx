@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ExternalLink, ArrowLeft, Trash2 } from 'lucide-react'
+import { ExternalLink, ArrowLeft, Trash2, Image } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { FeedbackStatusBadge } from '@/components/ui/FeedbackStatusBadge'
 import { useFeedbackList, useUpdateFeedbackStatus } from '@/hooks/feedback'
@@ -19,6 +19,7 @@ export default function FeedbackAdminList() {
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const { toast } = useToast()
 
   const handleStatusChange = (id: string, status: 'open' | 'in_progress' | 'resolved') => {
@@ -151,6 +152,7 @@ export default function FeedbackAdminList() {
               <TableHead>Category</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Attachment</TableHead>
               <TableHead>Issue Link</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -188,6 +190,21 @@ export default function FeedbackAdminList() {
                 </TableCell>
                 <TableCell>
                   <FeedbackStatusBadge status={feedback.status as 'open' | 'in_progress' | 'resolved'} />
+                </TableCell>
+                <TableCell>
+                  {feedback.attachment_url ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedImage(feedback.attachment_url)}
+                      className="h-8 px-2"
+                    >
+                      <Image className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">No image</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {feedback.external_issue_url ? (
@@ -265,6 +282,23 @@ export default function FeedbackAdminList() {
                 <span>Category: <span className="capitalize">{selectedFeedback.category}</span></span>
                 <span>Date: {format(new Date(selectedFeedback.created_at), 'MMM d, yyyy')}</span>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Feedback Attachment</DialogTitle>
+          </DialogHeader>
+          {selectedImage && (
+            <div className="flex justify-center">
+              <img 
+                src={selectedImage} 
+                alt="Feedback attachment" 
+                className="max-w-full max-h-[80vh] object-contain"
+              />
             </div>
           )}
         </DialogContent>
