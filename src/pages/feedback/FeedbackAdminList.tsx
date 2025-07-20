@@ -1,16 +1,19 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ExternalLink, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { FeedbackStatusBadge } from '@/components/ui/FeedbackStatusBadge'
 import { useFeedbackList, useUpdateFeedbackStatus } from '@/hooks/feedback'
 import { format } from 'date-fns'
+import { useState } from 'react'
 
 export default function FeedbackAdminList() {
   const navigate = useNavigate()
   const { data: feedbackList, isLoading } = useFeedbackList({ all: true })
   const updateStatus = useUpdateFeedbackStatus()
+  const [selectedFeedback, setSelectedFeedback] = useState<any>(null)
 
   const handleStatusChange = (id: string, status: 'open' | 'in_progress' | 'resolved') => {
     updateStatus.mutate({ id, status })
@@ -89,7 +92,10 @@ export default function FeedbackAdminList() {
                 <TableCell className="capitalize">
                   {feedback.category}
                 </TableCell>
-                <TableCell>
+                <TableCell 
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => setSelectedFeedback(feedback)}
+                >
                   <div className="max-w-xs">
                     <div className="truncate font-medium" title={feedback.title}>
                       {feedback.title}
@@ -162,6 +168,26 @@ export default function FeedbackAdminList() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!selectedFeedback} onOpenChange={() => setSelectedFeedback(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Feedback Details</DialogTitle>
+          </DialogHeader>
+          {selectedFeedback && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-lg mb-2">{selectedFeedback.title}</h3>
+                <p className="text-muted-foreground whitespace-pre-wrap">{selectedFeedback.message}</p>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>Category: <span className="capitalize">{selectedFeedback.category}</span></span>
+                <span>Date: {format(new Date(selectedFeedback.created_at), 'MMM d, yyyy')}</span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
