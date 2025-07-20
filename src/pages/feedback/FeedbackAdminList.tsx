@@ -2,21 +2,73 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ExternalLink, ArrowLeft } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ExternalLink, ArrowLeft, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { FeedbackStatusBadge } from '@/components/ui/FeedbackStatusBadge'
 import { useFeedbackList, useUpdateFeedbackStatus } from '@/hooks/feedback'
 import { format } from 'date-fns'
 import { useState } from 'react'
+import { useToast } from '@/hooks/use-toast'
+import { supabase } from '@/integrations/supabase/client'
 
 export default function FeedbackAdminList() {
   const navigate = useNavigate()
-  const { data: feedbackList, isLoading } = useFeedbackList({ all: true })
+  const { data: feedbackList, isLoading, refetch } = useFeedbackList({ all: true })
   const updateStatus = useUpdateFeedbackStatus()
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null)
+  const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { toast } = useToast()
 
   const handleStatusChange = (id: string, status: 'open' | 'in_progress' | 'resolved') => {
     updateStatus.mutate({ id, status })
+  }
+
+  const handleSelectItem = (feedbackId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, feedbackId])
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== feedbackId))
+    }
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(feedbackList?.map(f => f.id) || [])
+    } else {
+      setSelectedItems([])
+    }
+  }
+
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) return
+    
+    setIsDeleting(true)
+    try {
+      const { error } = await supabase
+        .from('feedback')
+        .delete()
+        .in('id', selectedItems)
+      
+      if (error) throw error
+      
+      toast({
+        title: "Success",
+        description: `Deleted ${selectedItems.length} feedback item(s)`,
+      })
+      
+      setSelectedItems([])
+      refetch()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete feedback items",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (isLoading) {
@@ -67,10 +119,33 @@ export default function FeedbackAdminList() {
         </p>
       </div>
 
+      {selectedItems.length > 0 && (
+        <div className="mb-4 p-4 bg-muted rounded-lg flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">
+            {selectedItems.length} item(s) selected
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDeleteSelected}
+            disabled={isDeleting}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {isDeleting ? 'Deleting...' : 'Delete Selected'}
+          </Button>
+        </div>
+      )}
+
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={selectedItems.length === feedbackList.length}
+                  onCheckedChange={handleSelectAll}
+                />
+              </TableHead>
               <TableHead>Date</TableHead>
               <TableHead>User</TableHead>
               <TableHead>Category</TableHead>
@@ -83,6 +158,12 @@ export default function FeedbackAdminList() {
           <TableBody>
             {feedbackList.map((feedback) => (
               <TableRow key={feedback.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedItems.includes(feedback.id)}
+                    onCheckedChange={(checked) => handleSelectItem(feedback.id, checked as boolean)}
+                  />
+                </TableCell>
                 <TableCell>
                   {format(new Date(feedback.created_at), 'MMM d, yyyy')}
                 </TableCell>
