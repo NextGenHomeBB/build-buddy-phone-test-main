@@ -8,9 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Edit, Trash2, CheckSquare, List, Layers, Building2 } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckSquare, List, Layers, Building2, Home } from 'lucide-react';
 import { useChecklists, useCreateChecklist, useUpdateChecklist, useDeleteChecklist } from '@/hooks/useChecklists';
 import { useDefaultPhases, useUpdateDefaultPhase, DefaultPhase } from '@/hooks/useDefaultPhases';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function AdminChecklists() {
   const { data: checklists = [], isLoading } = useChecklists();
@@ -19,6 +21,7 @@ export default function AdminChecklists() {
   const updateChecklistMutation = useUpdateChecklist();
   const deleteChecklistMutation = useDeleteChecklist();
   const updateDefaultPhaseMutation = useUpdateDefaultPhase();
+  const { toast } = useToast();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<any>(null);
@@ -154,6 +157,124 @@ export default function AdminChecklists() {
     }));
   };
 
+  const handleSeedRenovationChecklists = async () => {
+    try {
+      // Renovation categories with questions
+      const renovationCategories = {
+        "Structuur & Indeling": [
+          "Moet de huidige indeling van de woning worden aangepast?",
+          "Zijn er dragende muren die verwijderd of verplaatst moeten worden?",
+          "Wil ik open ruimtes of aparte kamers?",
+          "Is de woningstructuur (fundering, dak, muren) in goede staat?",
+          "Heb ik voldoende bergruimte of moet ik extra opbergruimte voorzien?",
+          "Hoe wordt de looproute in huis het meest logisch en comfortabel?",
+          "Moet de woning levensloopbestendig worden gemaakt?",
+          "Wordt de zolder of kelder mee gerenoveerd?",
+          "Zijn er vergunningen nodig voor de indelingswijziging?",
+          "Hoe groot moet elke ruimte ongeveer zijn?"
+        ],
+        "Stijl & Interieurkeuzes": [
+          "Welke woonstijl wil ik (modern, landelijk, industrieel, Scandinavisch, etc.)?",
+          "Wat is het kleurenpalet voor wanden, vloeren en meubels?",
+          "Welk type vloer komt in elke ruimte (hout, laminaat, tegel, gietvloer)?",
+          "Wil ik vloerverwarming of radiatoren?",
+          "Moeten alle ruimtes dezelfde stijl uitstralen of mogen ze verschillen?",
+          "Welke materialen kies ik voor werkbladen, keukenkasten en badkamermeubels?",
+          "Welke kraankleur past bij mijn stijl (chroom, zwart, goud, koper, geborsteld staal)?",
+          "Wil ik inbouwkasten of losse meubels?",
+          "Welke wandafwerking komt waar (verf, behang, hout, steen)?",
+          "Hoe belangrijk is akoestiek in de gekozen materialen?"
+        ],
+        "Verlichting & Elektriciteit": [
+          "Wat is het verlichtingsplan per ruimte (basis, sfeer, taakverlichting)?",
+          "Waar moeten lichtpunten, schakelaars en stopcontacten komen?",
+          "Wil ik slimme verlichting of traditionele schakelaars?",
+          "Hoeveel stopcontacten heb ik nodig per kamer?",
+          "Wil ik wandlampen, hanglampen, spots of ledstrips?",
+          "Moet de elektrische installatie worden vernieuwd of uitgebreid?",
+          "Is er voldoende buitenverlichting gepland?",
+          "Wil ik dimmers op bepaalde lampen?",
+          "Wil ik USB-stopcontacten of geïntegreerde opladers?",
+          "Moeten er voorzieningen komen voor zonnepanelen of een laadpaal?"
+        ],
+        "Keuken & Badkamer": [
+          "Welke indeling is ideaal voor de keuken (kookeiland, L-vorm, U-vorm)?",
+          "Welke keukenapparatuur wil ik integreren?",
+          "Welke kraan past bij mijn spoelbak (hoog, laag, met uittrekbare slang)?",
+          "Kies ik voor een bad, een douche, of beide?",
+          "Welke douchekop en mengkraan wil ik?",
+          "Welk type wastafel en meubel komt in de badkamer?",
+          "Komt er een tweede toilet of gastenbadkamer?",
+          "Welke wand- en vloertegels gebruik ik in natte ruimtes?",
+          "Moet de ventilatie worden aangepast of verbeterd?",
+          "Wil ik ingebouwde of vrijstaande badkamermeubels?"
+        ],
+        "Techniek & Installaties": [
+          "Is het isolatieniveau voldoende (dak, muren, vloer, ramen)?",
+          "Moet de verwarming worden vervangen of uitgebreid?",
+          "Overweeg ik warmtepomp, zonneboiler of andere duurzame systemen?",
+          "Is de waterafvoer en -aanvoer nog up-to-date?",
+          "Is de woning voldoende geventileerd volgens de norm?",
+          "Zijn er voldoende voorzieningen voor internet, TV en domotica?",
+          "Moet er extra geluidsisolatie worden aangebracht (tussen kamers of naar buiten)?",
+          "Hoe energiezuinig moet de woning worden (BENG, energielabel A++)?",
+          "Is er ruimte voor toekomstige uitbreidingen of aanpassingen?",
+          "Wat is het totale renovatiebudget en welke posten hebben prioriteit?"
+        ]
+      };
+
+      // Create category-specific checklists
+      for (const [category, questions] of Object.entries(renovationCategories)) {
+        const checklistItems = questions.map((question, index) => ({
+          id: `${category.toLowerCase().replace(/\s+/g, '-')}-${index + 1}`,
+          title: question,
+          description: `Renovatievraag voor ${category}`
+        }));
+
+        await supabase
+          .from('checklists')
+          .insert({
+            name: `Renovatie: ${category}`,
+            description: `Checklist voor renovatievragen over ${category.toLowerCase()}. Deze template helpt bij het plannen en organiseren van renovatieprojecten.`,
+            items: checklistItems,
+            is_template: true
+          });
+      }
+
+      // Create comprehensive checklist
+      const allItems = Object.entries(renovationCategories).flatMap(([category, questions]) =>
+        questions.map((question, index) => ({
+          id: `all-${category.toLowerCase().replace(/\s+/g, '-')}-${index + 1}`,
+          title: question,
+          description: `${category} - Renovatievraag`
+        }))
+      );
+
+      await supabase
+        .from('checklists')
+        .insert({
+          name: 'Renovatie: Volledige Checklist',
+          description: 'Uitgebreide renovatiechecklist met alle 50 essentiële vragen voor woningrenovatie. Bevat structuur, stijl, techniek, keuken/badkamer en installatievragen.',
+          items: allItems,
+          is_template: true
+        });
+
+      toast({
+        title: "Success",
+        description: "Renovation checklist templates have been created successfully",
+      });
+      
+      // Refresh the checklists
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create renovation templates",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -167,13 +288,23 @@ export default function AdminChecklists() {
             </p>
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Template
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSeedRenovationChecklists}
+              className="hidden md:flex"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Add Renovation Templates
+            </Button>
+            
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => resetForm()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Template
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>
@@ -251,6 +382,7 @@ export default function AdminChecklists() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
 
           {/* Phase Edit Dialog */}
           <Dialog open={isPhaseDialogOpen} onOpenChange={setIsPhaseDialogOpen}>
