@@ -115,7 +115,7 @@ export function ProjectChecklistsTab({ projectId }: ProjectChecklistsTabProps) {
           projectChecklists.map((checklist) => {
             const itemCount = Array.isArray(checklist.items) ? checklist.items.length : 0;
             return (
-              <Card key={checklist.id}>
+              <Card key={checklist.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.href = `/projects/${projectId}/checklist/${checklist.id}`}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
@@ -130,7 +130,10 @@ export function ProjectChecklistsTab({ projectId }: ProjectChecklistsTabProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleUnassignChecklist(checklist.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnassignChecklist(checklist.id);
+                      }}
                       disabled={unassignChecklistMutation.isPending}
                     >
                       <Trash2 className="h-4 w-4" />
