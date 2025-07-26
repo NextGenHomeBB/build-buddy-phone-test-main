@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Edit, Trash2, Package } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const mockMaterials = [
   {
@@ -70,6 +71,52 @@ export default function AdminMaterials() {
     supplier: '',
     sku: ''
   });
+
+  // 🔍 Diagnostic test for Supabase connection
+  useEffect(() => {
+    const testConnection = async () => {
+      console.log('🔍 Testing Supabase connection...');
+      
+      try {
+        const { count, error } = await supabase
+          .from('materials')
+          .select('id', { count: 'exact' });
+          
+        console.log('✅ Supabase test result:', { count, error });
+        
+        if (error) {
+          console.error('❌ Supabase query error:', error);
+          toast({
+            title: "Database Connection Error",
+            description: `Error: ${error.message}`,
+            variant: "destructive",
+          });
+        } else if (count !== null && count > 0) {
+          console.log(`✅ Found ${count} materials in database`);
+          toast({
+            title: "Database Connection OK", 
+            description: `Found ${count} materials in database. Page is using mock data instead of live data!`,
+            variant: "destructive",
+          });
+        } else {
+          console.log('⚠️ No materials found in database');
+          toast({
+            title: "Database Empty",
+            description: "Connected to database but no materials found",
+          });
+        }
+      } catch (err) {
+        console.error('❌ Supabase connection failed:', err);
+        toast({
+          title: "Database Connection Error",
+          description: "Failed to connect to Supabase",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    testConnection();
+  }, []);
 
   const handleSubmit = () => {
     const newMaterial = {
