@@ -31,6 +31,8 @@ const defaultUnits = ['pieces', 'linear feet', 'square feet', 'cubic yards', 'ba
 
 export default function AdminMaterials() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [formData, setFormData] = useState({
@@ -137,6 +139,11 @@ export default function AdminMaterials() {
   const updatePriceRangeFilter = (priceRange: [number, number]) => {
     setFilters({ ...filters, priceRange });
     setPage(1);
+  };
+
+  const handleViewDetails = (material: any) => {
+    setSelectedMaterial(material);
+    setIsDetailDialogOpen(true);
   };
 
   const clearFilters = () => {
@@ -416,7 +423,12 @@ export default function AdminMaterials() {
                           <tr key={material.id} className="border-b hover:bg-muted/50">
                             <td className="p-3">
                               <div>
-                                <div className="font-medium">{material.name}</div>
+                                <div 
+                                  className="font-medium cursor-pointer hover:text-primary hover:underline"
+                                  onClick={() => handleViewDetails(material)}
+                                >
+                                  {material.name}
+                                </div>
                                 {material.description && (
                                   <div className="text-sm text-muted-foreground truncate max-w-xs">
                                     {material.description}
@@ -484,7 +496,12 @@ export default function AdminMaterials() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-base">{material.name}</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-primary hover:underline"
+                          onClick={() => handleViewDetails(material)}
+                        >
+                          {material.name}
+                        </CardTitle>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           {material.category ? (
                             <Badge variant="outline" className="text-xs">{material.category}</Badge>
@@ -583,6 +600,82 @@ export default function AdminMaterials() {
             )}
           </>
         )}
+
+        {/* Material Detail Dialog */}
+        <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                {selectedMaterial?.name}
+              </DialogTitle>
+              <DialogDescription>
+                Material details and specifications
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedMaterial && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Category</Label>
+                    <p className="text-sm">{selectedMaterial.category || 'Uncategorized'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Brand</Label>
+                    <p className="text-sm">{selectedMaterial.brand || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Unit</Label>
+                    <p className="text-sm">{selectedMaterial.unit}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Price per Unit</Label>
+                    <p className="text-sm font-mono">${selectedMaterial.price_per_unit?.toFixed(2) || '0.00'}</p>
+                  </div>
+                  {selectedMaterial.ean && (
+                    <div>
+                      <Label className="text-sm font-medium">EAN/Barcode</Label>
+                      <p className="text-sm font-mono">{selectedMaterial.ean}</p>
+                    </div>
+                  )}
+                  {selectedMaterial.article_nr && (
+                    <div>
+                      <Label className="text-sm font-medium">Article Number</Label>
+                      <p className="text-sm font-mono">{selectedMaterial.article_nr}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {selectedMaterial.description && (
+                  <div>
+                    <Label className="text-sm font-medium">Description</Label>
+                    <p className="text-sm">{selectedMaterial.description}</p>
+                  </div>
+                )}
+                
+                {selectedMaterial.specs && (
+                  <div>
+                    <Label className="text-sm font-medium">Specifications</Label>
+                    <p className="text-sm">{selectedMaterial.specs}</p>
+                  </div>
+                )}
+                
+                {selectedMaterial.url && (
+                  <div className="pt-4 border-t">
+                    <Button 
+                      onClick={() => window.open(selectedMaterial.url, '_blank')}
+                      className="w-full"
+                    >
+                      View Product Page
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
