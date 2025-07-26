@@ -132,7 +132,7 @@ export default function AdminMaterials() {
   };
 
   const updateCategoryFilter = (category: string) => {
-    setFilters({ ...filters, category });
+    setFilters({ ...filters, category: category === 'all' ? '' : category });
     setPage(1);
   };
 
@@ -346,12 +346,12 @@ export default function AdminMaterials() {
                 </div>
                 {showFilters && (
                   <>
-                    <Select value={filters.category} onValueChange={updateCategoryFilter}>
+                    <Select value={filters.category || 'all'} onValueChange={updateCategoryFilter}>
                       <SelectTrigger className="w-48">
                         <SelectValue placeholder="All categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All categories</SelectItem>
+                        <SelectItem value="all">All categories</SelectItem>
                         {defaultCategories.map(category => (
                           <SelectItem key={category} value={category}>{category}</SelectItem>
                         ))}
