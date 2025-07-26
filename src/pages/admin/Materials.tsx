@@ -20,7 +20,8 @@ import {
   Download,
   ArrowLeft,
   ArrowRight,
-  Loader2
+  Loader2,
+  Heart
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useMaterials } from '@/hooks/useMaterials';
@@ -173,6 +174,11 @@ export default function AdminMaterials() {
             <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
               <Filter className="h-4 w-4 mr-2" />
               Filters
+            </Button>
+
+            <Button variant="outline">
+              <Heart className="h-4 w-4 mr-2" />
+              Add to Favorites
             </Button>
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
