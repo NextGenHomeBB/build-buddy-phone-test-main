@@ -115,7 +115,7 @@ export function ProjectChecklistsTab({ projectId }: ProjectChecklistsTabProps) {
           projectChecklists.map((checklist) => {
             const itemCount = Array.isArray(checklist.items) ? checklist.items.length : 0;
             return (
-              <Card key={checklist.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.href = `/projects/${projectId}/checklist/${checklist.id}`}>
+              <Card key={checklist.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.href = `/admin/checklists`}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
