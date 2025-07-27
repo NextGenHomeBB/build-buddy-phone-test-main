@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useMaterials } from '@/hooks/useMaterials';
+import { useFavorites } from '@/hooks/useFavorites';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 const defaultCategories = ['Concrete', 'Steel', 'Lumber', 'Electrical', 'Plumbing', 'Roofing', 'Insulation', 'Interior', 'Hardware', 'Tools', 'General'];
@@ -67,6 +68,8 @@ export default function AdminMaterials() {
     isDeleting,
     isEnhancing
   } = useMaterials();
+
+  const { toggleFavorite, isFavorite, isToggling } = useFavorites();
 
   const handleSubmit = () => {
     const materialData = {
@@ -458,6 +461,15 @@ export default function AdminMaterials() {
                             </td>
                             <td className="p-3">
                               <div className="flex gap-1 justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => toggleFavorite(material.id)}
+                                  disabled={isToggling}
+                                  title={isFavorite(material.id) ? "Remove from favorites" : "Add to favorites"}
+                                >
+                                  <Heart className={`h-4 w-4 ${isFavorite(material.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                                </Button>
                                 {(!material.category || !material.brand) && (
                                   <Button
                                     variant="ghost"
@@ -520,6 +532,15 @@ export default function AdminMaterials() {
                         </div>
                       </div>
                       <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleFavorite(material.id)}
+                          disabled={isToggling}
+                          title={isFavorite(material.id) ? "Remove from favorites" : "Add to favorites"}
+                        >
+                          <Heart className={`h-4 w-4 ${isFavorite(material.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                        </Button>
                         {(!material.category || !material.brand) && (
                           <Button
                             variant="ghost"

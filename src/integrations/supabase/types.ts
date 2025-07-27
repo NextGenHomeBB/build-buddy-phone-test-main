@@ -398,31 +398,55 @@ export type Database = {
       }
       materials: {
         Row: {
+          article_nr: string | null
+          brand: string | null
+          category: string | null
           created_at: string
           description: string | null
+          ean: string | null
           id: string
           name: string
+          price_ex_vat: number | null
           price_per_unit: number
+          source_url: string | null
+          specs: string | null
           unit: string
           updated_at: string
+          url: string | null
         }
         Insert: {
+          article_nr?: string | null
+          brand?: string | null
+          category?: string | null
           created_at?: string
           description?: string | null
+          ean?: string | null
           id?: string
           name: string
+          price_ex_vat?: number | null
           price_per_unit?: number
+          source_url?: string | null
+          specs?: string | null
           unit: string
           updated_at?: string
+          url?: string | null
         }
         Update: {
+          article_nr?: string | null
+          brand?: string | null
+          category?: string | null
           created_at?: string
           description?: string | null
+          ean?: string | null
           id?: string
           name?: string
+          price_ex_vat?: number | null
           price_per_unit?: number
+          source_url?: string | null
+          specs?: string | null
           unit?: string
           updated_at?: string
+          url?: string | null
         }
         Relationships: []
       }
@@ -1156,6 +1180,35 @@ export type Database = {
             columns: ["schedule_item_id"]
             isOneToOne: false
             referencedRelation: "schedule_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_material_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          material_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          material_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          material_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_material_favorites_material"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
             referencedColumns: ["id"]
           },
         ]
