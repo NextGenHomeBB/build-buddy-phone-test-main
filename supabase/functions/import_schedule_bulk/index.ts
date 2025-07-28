@@ -1,7 +1,7 @@
 // deno-lint-ignore-file
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.6";
-import { v4 as uuidv4 } from "https://deno.land/std@0.203.0/uuid/mod.ts";
+import { v4 } from "https://deno.land/std@0.203.0/uuid/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +18,7 @@ async function logFailure(detail: unknown) {
   console.error("Logging failure to function_errors:", detail);
   try {
     await supabase.from("function_errors").insert({
-      id: uuidv4(),
+      id: v4.generate(),
       fn: "import_schedule_bulk",
       detail,
     });
@@ -37,8 +37,40 @@ serve(async (req) => {
 
   try {
     console.log("Import schedule bulk request received");
-    const body = await req.json();           // { workDate, scheduleItems }
-    console.log("Request payload:", JSON.stringify(body, null, 2));
+    
+    // Validate request has body
+    const contentLength = req.headers.get('content-length');
+    if (!contentLength || contentLength === '0') {
+      console.error("Request has no body");
+      throw new Error("Request body is required");
+    }
+    
+    // Get request text first to handle JSON parsing errors better
+    const requestText = await req.text();
+    console.log("Raw request body:", requestText);
+    
+    if (!requestText || requestText.trim() === '') {
+      console.error("Request body is empty");
+      throw new Error("Request body is empty");
+    }
+    
+    // Parse JSON with error handling
+    let body;
+    try {
+      body = JSON.parse(requestText);
+    } catch (parseError) {
+      console.error("JSON parsing failed:", parseError);
+      console.error("Request text that failed to parse:", requestText);
+      throw new Error(`Invalid JSON: ${parseError.message}`);
+    }
+    
+    // Validate required fields
+    if (!body.workDate || !body.scheduleItems) {
+      console.error("Missing required fields:", { workDate: !!body.workDate, scheduleItems: !!body.scheduleItems });
+      throw new Error("Missing required fields: workDate and scheduleItems are required");
+    }
+    
+    console.log("Parsed request payload:", JSON.stringify(body, null, 2));
     
     const { data, error } = await supabase
       .rpc("import_schedule_tx", { payload: body });
