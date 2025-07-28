@@ -70,14 +70,27 @@ export function usePhase(phaseId: string) {
   return useQuery({
     queryKey: ['phases', phaseId],
     queryFn: async () => {
+      console.log('🔄 Fetching phase data for:', phaseId);
+      
       const { data: phase, error: phaseError } = await supabase
         .from('project_phases')
         .select('*')
         .eq('id', phaseId)
         .single();
 
-      if (phaseError) throw phaseError;
+      if (phaseError) {
+        console.error('❌ Phase fetch error:', phaseError);
+        throw phaseError;
+      }
       if (!phase) return null;
+
+      console.log('✅ Phase data fetched:', { 
+        id: phase.id, 
+        name: phase.name, 
+        budget: phase.budget,
+        material_cost: phase.material_cost,
+        labour_cost: phase.labour_cost
+      });
 
       // Fetch tasks for this phase
       const { data: tasks, error: tasksError } = await supabase
@@ -109,6 +122,8 @@ export function usePhase(phaseId: string) {
       };
     },
     enabled: !!phaseId,
+    staleTime: 0, // Don't use stale data
+    gcTime: 0, // Don't cache for debugging
   });
 }
 

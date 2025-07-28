@@ -40,6 +40,13 @@ export function EditPhaseBudgetDialog({ phase, children }: EditPhaseBudgetDialog
       const materialValue = parseFloat(materialCost) || 0;
       const labourValue = parseFloat(labourCost) || 0;
 
+      console.log('Updating phase budget:', { 
+        phaseId: phase.id, 
+        budgetValue, 
+        materialValue, 
+        labourValue 
+      });
+
       const { data, error } = await supabase
         .from('project_phases')
         .update({
@@ -52,15 +59,33 @@ export function EditPhaseBudgetDialog({ phase, children }: EditPhaseBudgetDialog
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating phase budget:', error);
+        throw error;
+      }
+      
+      console.log('Phase budget updated successfully:', data);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['phases', phase.id] });
-      queryClient.invalidateQueries({ queryKey: ['phase-costs', phase.id] });
+    onSuccess: (data) => {
+      console.log('Budget update successful, invalidating queries...');
+      
+      // Invalidate all related queries with proper await to ensure they complete
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['phases', phase.id] }),
+        queryClient.invalidateQueries({ queryKey: ['phase-costs', phase.id] }),
+        queryClient.invalidateQueries({ queryKey: ['phases'] }),
+        queryClient.invalidateQueries({ queryKey: ['projects'] }),
+      ]).then(() => {
+        console.log('All queries invalidated');
+      });
+      
+      // Force a refetch immediately
+      queryClient.refetchQueries({ queryKey: ['phases', phase.id] });
+      
       toast({
         title: "Budget Updated",
-        description: `Phase "${phase.name}" budget has been updated successfully.`,
+        description: `Phase "${phase.name}" budget has been updated to $${data.budget?.toLocaleString()}.`,
       });
       setOpen(false);
     },
