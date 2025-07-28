@@ -7,6 +7,7 @@ import { AddTaskDialog } from '@/components/project/AddTaskDialog';
 import { QuickAddTask } from '@/components/project/QuickAddTask';
 import { EditPhaseDialog } from '@/components/project/EditPhaseDialog';
 import { EditPhaseDatesDialog } from '@/components/project/EditPhaseDatesDialog';
+import { EditPhaseBudgetDialog } from '@/components/project/EditPhaseBudgetDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -440,22 +441,24 @@ export default function PhaseDetail() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-success/10 rounded-lg">
-                    <DollarSign className="h-4 w-4 text-success" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">Budget</div>
-                    <div className="text-lg font-semibold">
-                      ${(phase.spent / 1000).toFixed(0)}k / ${(phase.budget / 1000).toFixed(0)}k
+            <EditPhaseBudgetDialog phase={phase}>
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-success/10 rounded-lg">
+                      <DollarSign className="h-4 w-4 text-success" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Budget</div>
+                      <div className="text-lg font-semibold">
+                        ${(phase.spent / 1000).toFixed(0)}k / ${(phase.budget / 1000).toFixed(0)}k
+                      </div>
                     </div>
                   </div>
-                </div>
-                <Progress value={(phase.spent / phase.budget) * 100} className="mt-2" />
-              </CardContent>
-            </Card>
+                  <Progress value={phase.budget > 0 ? (phase.spent / phase.budget) * 100 : 0} className="mt-2" />
+                </CardContent>
+              </Card>
+            </EditPhaseBudgetDialog>
 
             <EditPhaseDatesDialog phase={phase}>
               <Card className="cursor-pointer hover:shadow-md transition-shadow">
