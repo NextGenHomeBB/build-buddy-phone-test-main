@@ -37,6 +37,7 @@ export default function AdminMaterials() {
   const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -69,7 +70,12 @@ export default function AdminMaterials() {
     isEnhancing
   } = useMaterials();
 
-  const { toggleFavorite, isFavorite, isToggling } = useFavorites();
+  const { toggleFavorite, isFavorite, isToggling, favoriteIds } = useFavorites();
+
+  // Filter materials based on favorites toggle
+  const displayedMaterials = showOnlyFavorites 
+    ? materials.filter(material => favoriteIds.includes(material.id))
+    : materials;
 
   const handleSubmit = () => {
     const materialData = {
@@ -179,9 +185,12 @@ export default function AdminMaterials() {
               Filters
             </Button>
 
-            <Button variant="outline">
-              <Heart className="h-4 w-4 mr-2" />
-              Add to Favorites
+            <Button 
+              variant={showOnlyFavorites ? "default" : "outline"}
+              onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+            >
+              <Heart className={`h-4 w-4 mr-2 ${showOnlyFavorites ? 'fill-current' : ''}`} />
+              {showOnlyFavorites ? 'Show All' : 'Show Favorites'}
             </Button>
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -397,7 +406,7 @@ export default function AdminMaterials() {
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : materials.length === 0 ? (
+        ) : displayedMaterials.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -428,7 +437,7 @@ export default function AdminMaterials() {
                         </tr>
                       </thead>
                       <tbody>
-                        {materials.map((material) => (
+                        {displayedMaterials.map((material) => (
                           <tr key={material.id} className="border-b hover:bg-muted/50">
                             <td className="p-3">
                               <div>
@@ -509,7 +518,7 @@ export default function AdminMaterials() {
 
             {/* Mobile Cards */}
             <div className="md:hidden space-y-4">
-              {materials.map((material) => (
+              {displayedMaterials.map((material) => (
                 <Card key={material.id}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
