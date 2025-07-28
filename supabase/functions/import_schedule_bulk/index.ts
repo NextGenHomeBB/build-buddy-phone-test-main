@@ -38,39 +38,26 @@ serve(async (req) => {
   try {
     console.log("Import schedule bulk request received");
     
-    // Validate request has body
-    const contentLength = req.headers.get('content-length');
-    if (!contentLength || contentLength === '0') {
-      console.error("Request has no body");
-      throw new Error("Request body is required");
-    }
-    
-    // Get request text first to handle JSON parsing errors better
-    const requestText = await req.text();
-    console.log("Raw request body:", requestText);
-    
-    if (!requestText || requestText.trim() === '') {
-      console.error("Request body is empty");
-      throw new Error("Request body is empty");
-    }
-    
     // Parse JSON with error handling
     let body;
     try {
-      body = JSON.parse(requestText);
+      body = await req.json();
+      console.log("Parsed request payload:", JSON.stringify(body, null, 2));
     } catch (parseError) {
       console.error("JSON parsing failed:", parseError);
-      console.error("Request text that failed to parse:", requestText);
       throw new Error(`Invalid JSON: ${parseError.message}`);
     }
     
     // Validate required fields
+    if (!body || typeof body !== 'object') {
+      console.error("Request body is not a valid object:", body);
+      throw new Error("Request body must be a valid JSON object");
+    }
+    
     if (!body.workDate || !body.scheduleItems) {
       console.error("Missing required fields:", { workDate: !!body.workDate, scheduleItems: !!body.scheduleItems });
       throw new Error("Missing required fields: workDate and scheduleItems are required");
     }
-    
-    console.log("Parsed request payload:", JSON.stringify(body, null, 2));
     
     const { data, error } = await supabase
       .rpc("import_schedule_tx", { payload: body });
