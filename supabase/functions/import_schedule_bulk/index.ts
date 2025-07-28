@@ -1,7 +1,7 @@
 // deno-lint-ignore-file
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.6";
-import { v4 } from "https://deno.land/std@0.203.0/uuid/mod.ts";
+import { v4 as uuidv4 } from "https://deno.land/std@0.203.0/uuid/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +18,7 @@ async function logFailure(detail: unknown) {
   console.error("Logging failure to function_errors:", detail);
   try {
     await supabase.from("function_errors").insert({
-      id: v4.generate(),
+      id: uuidv4.generate(),
       fn: "import_schedule_bulk",
       detail,
     });
@@ -37,14 +37,35 @@ serve(async (req) => {
 
   try {
     console.log("Import schedule bulk request received");
+    console.log("Request headers:", JSON.stringify(Object.fromEntries(req.headers.entries())));
     
-    // Parse JSON with error handling
+    // Check if request has a body
+    const contentLength = req.headers.get('content-length');
+    const contentType = req.headers.get('content-type');
+    console.log("Content-Length:", contentLength, "Content-Type:", contentType);
+    
+    // Handle case where there's no body or empty body
+    if (!contentLength || contentLength === '0') {
+      console.error("Request has no body or empty body");
+      throw new Error("Request body is required but missing");
+    }
+    
+    // Read request body as text first, then parse as JSON
+    let bodyText;
     let body;
     try {
-      body = await req.json();
+      bodyText = await req.text();
+      console.log("Raw request body text:", bodyText);
+      
+      if (!bodyText || bodyText.trim() === '') {
+        throw new Error("Request body is empty");
+      }
+      
+      body = JSON.parse(bodyText);
       console.log("Parsed request payload:", JSON.stringify(body, null, 2));
     } catch (parseError) {
       console.error("JSON parsing failed:", parseError);
+      console.error("Raw body text was:", bodyText);
       throw new Error(`Invalid JSON: ${parseError.message}`);
     }
     
