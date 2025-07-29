@@ -14,6 +14,8 @@ import { Search, Plus, DollarSign, TrendingUp, Users, Calendar, Edit, Trash2 } f
 import { useWorkerCosts } from "@/hooks/useWorkerCosts";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Worker Cost Management Component
+
 
 export function WorkerCosts() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
