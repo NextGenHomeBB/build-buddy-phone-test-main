@@ -416,3 +416,5 @@ export function WorkerCosts() {
     </AppLayout>
   );
 }
+
+export default WorkerCosts;
