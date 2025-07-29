@@ -11,82 +11,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, DollarSign, TrendingUp, Users, Calendar, Edit, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useWorkerCosts } from "@/hooks/useWorkerCosts";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock data for demonstration
-const mockWorkers = [
-  {
-    id: "1",
-    name: "John Smith",
-    role: "Site Manager",
-    hourlyRate: 45,
-    hoursThisMonth: 160,
-    totalEarnings: 7200,
-    status: "active",
-    lastPayment: "2024-01-15",
-  },
-  {
-    id: "2", 
-    name: "Sarah Johnson",
-    role: "Electrician",
-    hourlyRate: 38,
-    hoursThisMonth: 155,
-    totalEarnings: 5890,
-    status: "active",
-    lastPayment: "2024-01-15",
-  },
-  {
-    id: "3",
-    name: "Mike Davis", 
-    role: "Plumber",
-    hourlyRate: 42,
-    hoursThisMonth: 148,
-    totalEarnings: 6216,
-    status: "active",
-    lastPayment: "2024-01-15",
-  },
-];
-
-const mockPayments = [
-  {
-    id: "1",
-    workerId: "1",
-    workerName: "John Smith",
-    amount: 7200,
-    period: "January 2024",
-    status: "paid",
-    paidDate: "2024-01-31",
-    method: "bank_transfer",
-  },
-  {
-    id: "2",
-    workerId: "2", 
-    workerName: "Sarah Johnson",
-    amount: 5890,
-    period: "January 2024",
-    status: "pending",
-    paidDate: null,
-    method: "bank_transfer",
-  },
-];
 
 export function WorkerCosts() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRole, setSelectedRole] = useState("all");
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isRateDialogOpen, setIsRateDialogOpen] = useState(false);
-  const { toast } = useToast();
-
-  const totalWorkers = mockWorkers.length;
-  const totalMonthlyPay = mockWorkers.reduce((sum, worker) => sum + worker.totalEarnings, 0);
-  const averageHourlyRate = mockWorkers.reduce((sum, worker) => sum + worker.hourlyRate, 0) / mockWorkers.length;
-  const pendingPayments = mockPayments.filter(p => p.status === "pending").length;
-
-  const filteredWorkers = mockWorkers.filter(worker => {
-    const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === "all" || worker.role.toLowerCase().includes(selectedRole.toLowerCase());
-    return matchesSearch && matchesRole;
-  });
+  
+  const {
+    workers,
+    payments,
+    loading,
+    searchTerm,
+    setSearchTerm,
+    selectedRole,
+    setSelectedRole,
+    stats,
+    updateWorkerRate,
+    processPayment,
+  } = useWorkerCosts();
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -117,20 +61,56 @@ export function WorkerCosts() {
   };
 
   const handleProcessPayment = () => {
-    toast({
-      title: "Payment Processed",
-      description: "Payment has been successfully processed.",
-    });
+    processPayment("", 0, "");
     setIsPaymentDialogOpen(false);
   };
 
   const handleUpdateRate = () => {
-    toast({
-      title: "Rate Updated",
-      description: "Worker hourly rate has been updated successfully.",
-    });
+    updateWorkerRate("", 0);
     setIsRateDialogOpen(false);
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Worker Cost Management</h1>
+            <p className="text-muted-foreground">
+              Manage worker salaries, payments, and financial data
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-3 w-20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -150,7 +130,7 @@ export function WorkerCosts() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalWorkers}</div>
+              <div className="text-2xl font-bold">{stats.totalWorkers}</div>
               <p className="text-xs text-muted-foreground">Active employees</p>
             </CardContent>
           </Card>
@@ -161,7 +141,7 @@ export function WorkerCosts() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totalMonthlyPay.toLocaleString()}</div>
+              <div className="text-2xl font-bold">${stats.totalMonthlyPay.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">Current month total</p>
             </CardContent>
           </Card>
@@ -172,7 +152,7 @@ export function WorkerCosts() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${averageHourlyRate.toFixed(0)}/hr</div>
+              <div className="text-2xl font-bold">${stats.averageHourlyRate.toFixed(0)}/hr</div>
               <p className="text-xs text-muted-foreground">Per hour average</p>
             </CardContent>
           </Card>
@@ -183,7 +163,7 @@ export function WorkerCosts() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pendingPayments}</div>
+              <div className="text-2xl font-bold">{stats.pendingPayments}</div>
               <p className="text-xs text-muted-foreground">Awaiting processing</p>
             </CardContent>
           </Card>
@@ -225,7 +205,7 @@ export function WorkerCosts() {
                                 <SelectValue placeholder="Select worker" />
                               </SelectTrigger>
                               <SelectContent>
-                                {mockWorkers.map((worker) => (
+                                {workers.map((worker) => (
                                   <SelectItem key={worker.id} value={worker.id}>
                                     {worker.name}
                                   </SelectItem>
@@ -291,7 +271,7 @@ export function WorkerCosts() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredWorkers.map((worker) => (
+                    {workers.map((worker) => (
                       <TableRow key={worker.id}>
                         <TableCell className="font-medium">{worker.name}</TableCell>
                         <TableCell>{worker.role}</TableCell>
@@ -346,7 +326,7 @@ export function WorkerCosts() {
                               <SelectValue placeholder="Select worker" />
                             </SelectTrigger>
                             <SelectContent>
-                              {mockWorkers.map((worker) => (
+                              {workers.map((worker) => (
                                 <SelectItem key={worker.id} value={worker.id}>
                                   {worker.name}
                                 </SelectItem>
@@ -396,7 +376,7 @@ export function WorkerCosts() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockPayments.map((payment) => (
+                    {payments.map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell className="font-medium">{payment.workerName}</TableCell>
                         <TableCell>${payment.amount.toLocaleString()}</TableCell>
