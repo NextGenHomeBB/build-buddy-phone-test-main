@@ -49,3 +49,33 @@ export class PhaseCostsService {
 }
 
 export const phaseCostsService = new PhaseCostsService();
+
+// Placeholder hooks for compatibility
+export function usePhaseCosts(phaseId: string) {
+  return {
+    data: null,
+    isLoading: false,
+    error: null
+  };
+}
+
+export function useInsertLabourCost() {
+  return {
+    mutate: () => console.warn('Labour cost insertion temporarily disabled'),
+    isLoading: false
+  };
+}
+
+export function useInsertMaterialCost() {
+  return {
+    mutate: () => console.warn('Material cost insertion temporarily disabled'),
+    isLoading: false
+  };
+}
+
+export function useEstimatePhaseCosts() {
+  return {
+    mutate: () => console.warn('Phase cost estimation temporarily disabled'),
+    isLoading: false
+  };
+}

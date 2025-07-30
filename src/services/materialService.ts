@@ -46,6 +46,20 @@ class MaterialService {
     console.warn('Material service temporarily disabled - table structure mismatch');
     return [];
   }
+
+  async getMaterialsPaginated(page: number, pageSize: number, filters: any): Promise<{ data: Material[], total: number }> {
+    console.warn('Material service temporarily disabled - table structure mismatch');
+    return { data: [], total: 0 };
+  }
+
+  async createMaterial(material: Partial<Material>): Promise<void> {
+    console.warn('Material service temporarily disabled - table structure mismatch');
+  }
+
+  async enhanceMaterialData(data: any): Promise<any> {
+    console.warn('Material service temporarily disabled - table structure mismatch');
+    return data;
+  }
 }
 
 export const materialService = new MaterialService();

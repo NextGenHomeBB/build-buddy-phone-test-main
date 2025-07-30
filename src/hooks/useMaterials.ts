@@ -109,9 +109,9 @@ export function useMaterials() {
   });
 
   return {
-    materials: materialsData?.materials || [],
-    totalCount: materialsData?.totalCount || 0,
-    totalPages: Math.ceil((materialsData?.totalCount || 0) / pageSize),
+    materials: materialsData?.data || [],
+    totalCount: materialsData?.total || 0,
+    totalPages: Math.ceil((materialsData?.total || 0) / pageSize),
     currentPage: page,
     isLoading,
     error,

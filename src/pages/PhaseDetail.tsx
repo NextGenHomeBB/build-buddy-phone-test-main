@@ -556,13 +556,13 @@ export default function PhaseDetail() {
       <MaterialCostSheet 
         phaseId={phase.id}
         open={showMaterialCostSheet}
-        onClose={() => setShowMaterialCostSheet(false)} 
+        onOpenChange={setShowMaterialCostSheet} 
       />
       
       <LabourCostSheet 
         phaseId={phase.id}
         open={showLabourCostSheet}
-        onClose={() => setShowLabourCostSheet(false)} 
+        onOpenChange={setShowLabourCostSheet} 
       />
     </AppLayout>
   );
