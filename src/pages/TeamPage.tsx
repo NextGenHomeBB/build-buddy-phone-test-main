@@ -101,7 +101,7 @@ export default function TeamPage() {
         .from('projects')
         .select(`
           manager_id,
-          manager:profiles!manager_id(user_id, name, role, avatar_url, phone)
+          manager:profiles!manager_id(id, name, role, avatar_url, phone)
         `)
         .eq('id', id)
         .single();
@@ -110,7 +110,7 @@ export default function TeamPage() {
         .from('tasks')
         .select(`
           assigned_to,
-          assignee:profiles!assigned_to(user_id, name, role, avatar_url, phone)
+          assignee:profiles!assigned_to(id, name, role, avatar_url, phone)
         `)
         .eq('project_id', id)
         .not('assigned_to', 'is', null);
@@ -120,30 +120,30 @@ export default function TeamPage() {
       const seenIds = new Set<string>();
 
       // Add project manager
-      if (projectData?.manager && !seenIds.has(projectData.manager.user_id)) {
+      if (projectData?.manager && !seenIds.has(projectData.manager.id)) {
         members.push({
-          id: projectData.manager.user_id,
-          user_id: projectData.manager.user_id,
+          id: projectData.manager.id,
+          user_id: projectData.manager.id,
           name: projectData.manager.name,
-          role: projectData.manager.role,
+          role: projectData.manager.role as 'admin' | 'manager' | 'worker' | 'viewer',
           avatar_url: projectData.manager.avatar_url,
           phone: projectData.manager.phone,
         });
-        seenIds.add(projectData.manager.user_id);
+        seenIds.add(projectData.manager.id);
       }
 
       // Add task assignees
       taskAssignees?.forEach((task) => {
-        if (task.assignee && !seenIds.has(task.assignee.user_id)) {
+        if (task.assignee && !seenIds.has(task.assignee.id)) {
           members.push({
-            id: task.assignee.user_id,
-            user_id: task.assignee.user_id,
+            id: task.assignee.id,
+            user_id: task.assignee.id,
             name: task.assignee.name,
-            role: task.assignee.role,
+            role: task.assignee.role as 'admin' | 'manager' | 'worker' | 'viewer',
             avatar_url: task.assignee.avatar_url,
             phone: task.assignee.phone,
           });
-          seenIds.add(task.assignee.user_id);
+          seenIds.add(task.assignee.id);
         }
       });
 
@@ -155,25 +155,38 @@ export default function TeamPage() {
   const onInvite = async (data: InviteFormData) => {
     setIsSubmitting(true);
     try {
-      // In a real implementation, you would send an invitation email
-      // For now, we'll just show a success message
-      
-      // This would typically involve:
-      // 1. Creating a user profile with the specified role
-      // 2. Sending an invitation email with a signup link
-      // 3. Adding the user to the project team
-      
+      // Get current user's organization for the invitation
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        throw new Error('Not authenticated');
+      }
+
+      // Call the send-invite edge function
+      const { data: inviteResult, error } = await supabase.functions.invoke('send-invite', {
+        body: {
+          email: data.email,
+          role: data.role,
+          message: `You've been invited to join our team as a ${data.role}. Welcome aboard!`,
+          organization_id: session.session.user.user_metadata?.organization_id
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to send invitation');
+      }
+
       toast({
-        title: t('Invitation sent'),
-        description: t(`Invitation sent to ${data.email} as ${data.role}`),
+        title: 'Invite sent 🎉',
+        description: `Invitation sent to ${data.email} as ${data.role}`,
       });
 
       form.reset();
       setIsInviteOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Invitation error:', error);
       toast({
         title: t('Error'),
-        description: t('Failed to send invitation'),
+        description: error.message || t('Failed to send invitation'),
         variant: 'destructive',
       });
     } finally {

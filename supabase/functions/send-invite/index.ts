@@ -14,6 +14,7 @@ interface InviteRequest {
   email: string;
   role: 'admin' | 'manager' | 'worker';
   message?: string;
+  organization_id?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -29,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { email, role, message }: InviteRequest = await req.json();
+    const { email, role, message, organization_id }: InviteRequest = await req.json();
 
     if (!email || !role) {
       return new Response(
@@ -41,8 +42,52 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // For invitations, we don't need to check if user exists in profiles
-    // This is an invitation system, not user management
+    // Try to invite the user through Supabase Auth
+    const { data: inviteData, error: inviteError } = await supabaseClient.auth.admin.inviteUserByEmail(
+      email,
+      {
+        data: {
+          role,
+          organization_id: organization_id || null
+        },
+        redirectTo: `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || 'http://localhost:5173'}/dashboard`
+      }
+    );
+
+    if (inviteError) {
+      console.error("Error inviting user:", inviteError);
+      throw new Error(`Failed to invite user: ${inviteError.message}`);
+    }
+
+    console.log("User invited successfully:", inviteData);
+
+    // If we have organization_id and user was created, set custom claims
+    if (organization_id && inviteData.user) {
+      try {
+        const claimsResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/setCustomClaims`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          },
+          body: JSON.stringify({
+            uid: inviteData.user.id,
+            organization_id,
+            role
+          })
+        });
+
+        if (!claimsResponse.ok) {
+          console.error("Failed to set custom claims:", await claimsResponse.text());
+        } else {
+          console.log("Custom claims set successfully");
+        }
+      } catch (claimsError) {
+        console.error("Error setting custom claims:", claimsError);
+        // Don't fail the invitation if claims setting fails
+      }
+    }
+
     let existingUser = null;
 
     let emailSubject = "You're invited to join our team!";
@@ -125,16 +170,19 @@ const handler = async (req: Request): Promise<Response> => {
         detail: {
           email,
           role,
+          organization_id,
           message: message || 'Default invitation message',
           timestamp: new Date().toISOString(),
-          success: true
+          success: true,
+          user_id: inviteData?.user?.id
         }
       });
 
     return new Response(JSON.stringify({ 
       success: true, 
       message: "Invitation sent successfully",
-      emailId: emailResponse.data?.id 
+      emailId: emailResponse.data?.id,
+      user: inviteData?.user
     }), {
       status: 200,
       headers: {
