@@ -227,11 +227,7 @@ function DroppableScheduleItem({ item, onWorkerClick, onWorkerTaskAssign, unassi
               worker={worker}
               isFromSchedule={true}
               scheduleItemId={item.id}
-              onClick={() => {
-                if (item.project_id) {
-                  onWorkerTaskAssign(worker, item.project_id);
-                }
-              }}
+              onClick={() => onWorkerTaskAssign(worker, item.project_id)}
             />
           ))}
         </SortableContext>
