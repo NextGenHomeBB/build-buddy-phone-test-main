@@ -26,7 +26,7 @@ export default function Dashboard() {
     id: project.id,
     name: project.name,
     description: project.description || "",
-    status: project.status as "planning" | "active" | "on-hold" | "completed" | "cancelled",
+    status: project.status as "draft" | "active" | "archived",
     progress: project.progress || 0,
     dueDate: project.end_date ? new Date(project.end_date).toLocaleDateString('en-US', {
       month: 'short',

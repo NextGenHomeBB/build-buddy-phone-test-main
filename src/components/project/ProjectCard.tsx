@@ -11,7 +11,7 @@ interface ProjectCardProps {
     id: string;
     name: string;
     description: string;
-    status: "planning" | "active" | "on-hold" | "completed" | "cancelled";
+    status: "draft" | "active" | "archived";
     progress: number;
     dueDate: string;
     teamSize: number;
@@ -22,17 +22,17 @@ interface ProjectCardProps {
 }
 
 const statusConfig = {
-  planning: { label: "Planning", variant: "secondary" as const, color: "bg-muted" },
+  draft: { label: "Draft", variant: "secondary" as const, color: "bg-muted" },
   active: { label: "Active", variant: "default" as const, color: "bg-primary" },
-  "on-hold": { label: "On Hold", variant: "outline" as const, color: "bg-warning" },
-  completed: { label: "Completed", variant: "secondary" as const, color: "bg-success" },
-  cancelled: { label: "Cancelled", variant: "destructive" as const, color: "bg-destructive" },
+  archived: { label: "Archived", variant: "outline" as const, color: "bg-muted" },
 };
 
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
   const [isPressed, setIsPressed] = useState(false);
   const navigate = useNavigate();
-  const status = statusConfig[project.status];
+  
+  // Add fallback for unknown status values
+  const status = statusConfig[project.status] || statusConfig.draft;
 
   const handleTouchStart = () => setIsPressed(true);
   const handleTouchEnd = () => setIsPressed(false);
