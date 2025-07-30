@@ -108,6 +108,9 @@ export function useUnassignedWorkers(date: Date) {
       return (allProfiles || []).map(profile => ({
         user_id: profile.id,
         name: profile.name || 'Unknown',
+        profiles: {
+          name: profile.name || 'Unknown'
+        }
       })) as UnassignedWorker[];
     }
   });
