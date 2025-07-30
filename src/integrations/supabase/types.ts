@@ -104,6 +104,66 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          attachment_url: string | null
+          category: string
+          created_at: string
+          external_issue_url: string | null
+          id: string
+          message: string
+          organization_id: string
+          project_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          category: string
+          created_at?: string
+          external_issue_url?: string | null
+          id?: string
+          message: string
+          organization_id?: string
+          project_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attachment_url?: string | null
+          category?: string
+          created_at?: string
+          external_issue_url?: string | null
+          id?: string
+          message?: string
+          organization_id?: string
+          project_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_feedback_project"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_feedback_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labour_entries: {
         Row: {
           created_at: string
@@ -369,30 +429,42 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_user_id: string | null
+          avatar_url: string | null
           company_name: string | null
           created_at: string
           full_name: string | null
           id: string
+          is_placeholder: boolean | null
+          name: string | null
           organization_id: string
           phone: string | null
           role: string | null
           updated_at: string
         }
         Insert: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
           company_name?: string | null
           created_at?: string
           full_name?: string | null
           id: string
+          is_placeholder?: boolean | null
+          name?: string | null
           organization_id: string
           phone?: string | null
           role?: string | null
           updated_at?: string
         }
         Update: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
           company_name?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          is_placeholder?: boolean | null
+          name?: string | null
           organization_id?: string
           phone?: string | null
           role?: string | null
@@ -576,6 +648,96 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          organization_id: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_task_comments_task"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_task_comments_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_workers: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          organization_id: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          organization_id?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          organization_id?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_task_workers_task"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_task_workers_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
