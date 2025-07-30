@@ -227,13 +227,12 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
           if (!item) throw new Error(`Checklist item ${itemId} not found`);
           
           return {
-            projectChecklistId: item.projectChecklistId,
             itemId: itemId,
-            userId: selectedWorker.id
+            assignedTo: selectedWorker.id
           };
         });
 
-        await bulkAssignChecklistMutation.mutateAsync({ assignments: checklistAssignments });
+      await bulkAssignChecklistMutation.mutateAsync(checklistAssignments);
       }
 
       const itemType = assignMode === 'tasks' ? 'tasks' : 'checklist items';

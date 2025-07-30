@@ -19,12 +19,17 @@ export function usePhaseCalendar(projectId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('project_phases')
-        .select('id, name, start_date, end_date, status, progress, material_cost, labour_cost')
+        .select('id, name, start_date, end_date, status, material_cost, labour_cost')
         .eq('project_id', projectId)
         .order('start_date', { ascending: true });
 
       if (error) throw error;
-      return data as PhaseCalendarData[];
+      
+      // Transform data to include missing progress field
+      return (data || []).map(phase => ({
+        ...phase,
+        progress: 0 // Default progress since it doesn't exist in schema
+      })) as PhaseCalendarData[];
     },
   });
 

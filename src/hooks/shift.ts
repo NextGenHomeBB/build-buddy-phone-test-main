@@ -1,176 +1,194 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/integrations/supabase/client'
-import { useToast } from '@/hooks/use-toast'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-export interface Timesheet {
-  id: string
-  user_id: string
-  schedule_item_id?: string
-  project_id?: string
-  phase_id?: string
-  start_time: string
-  end_time?: string
-  duration_generated?: number
-  approved: boolean
-  created_at: string
-  updated_at: string
+export interface ShiftData {
+  id: string;
+  start_time: string;
+  end_time?: string;
+  break_start?: string;
+  break_end?: string;
+  user_id: string;
+  project_id?: string;
 }
 
-export const useActiveShift = () => {
+export interface ShiftSummary {
+  totalHours: number;
+  breakHours: number;
+  workingHours: number;
+  projects: Array<{
+    id: string;
+    name: string;
+    hours: number;
+  }>;
+}
+
+export function useActiveShift() {
   return useQuery({
     queryKey: ['activeShift'],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0]
+      // Use time_entries table instead of timesheets
+      const today = new Date().toISOString().split('T')[0];
       
       const { data, error } = await supabase
-        .from('timesheets')
+        .from('time_entries')
         .select('*')
-        .is('end_time', null)
-        .gte('start_time', `${today}T00:00:00Z`)
-        .lt('start_time', `${today}T23:59:59Z`)
-        .single()
-
-      if (error && error.code !== 'PGRST116') {
-        throw error
-      }
-
-      return data as Timesheet | null
-    },
-  })
+        .is('end_ts', null)
+        .gte('start_ts', `${today}T00:00:00Z`)
+        .lt('start_ts', `${today}T23:59:59Z`)
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .order('start_ts', { ascending: false })
+        .limit(1);
+      
+      if (error) throw error;
+      
+      return data?.[0] ? {
+        id: data[0].id,
+        start_time: data[0].start_ts,
+        end_time: data[0].end_ts,
+        break_start: null,
+        break_end: null,
+        user_id: data[0].user_id,
+        project_id: data[0].project_id
+      } as ShiftData : null;
+    }
+  });
 }
 
-export const useStartShift = () => {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
+export function useShiftSummary(date: Date) {
+  const dateStr = date.toISOString().split('T')[0];
+  
+  return useQuery({
+    queryKey: ['shiftSummary', dateStr],
+    queryFn: async () => {
+      // Get time entries for the date
+      const { data: entries, error } = await supabase
+        .from('time_entries')
+        .select(`
+          *,
+          projects(id, name)
+        `)
+        .gte('start_ts', `${dateStr}T00:00:00Z`)
+        .lt('start_ts', `${dateStr}T23:59:59Z`)
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
 
-  return useMutation({
-    mutationFn: async (scheduleItemId?: string) => {
-      const { data: user } = await supabase.auth.getUser()
-      if (!user.user) throw new Error('Not authenticated')
+      if (error) throw error;
 
-      // Get schedule item details if provided
-      let projectId, phaseId
-      if (scheduleItemId) {
-        const { data: scheduleItem } = await supabase
-          .from('schedule_items')
-          .select('project_id')
-          .eq('id', scheduleItemId)
-          .single()
-        
-        if (scheduleItem) {
-          projectId = scheduleItem.project_id
-          // Get phase from project
-          const { data: phases } = await supabase
-            .from('project_phases')
-            .select('id')
-            .eq('project_id', scheduleItem.project_id)
-            .limit(1)
+      // Calculate totals - simplified since we don't have proper time tracking structure
+      const totalHours = (entries || []).reduce((total, entry) => {
+        if (entry.end_ts) {
+          const hours = (new Date(entry.end_ts).getTime() - new Date(entry.start_ts).getTime()) / (1000 * 60 * 60);
+          return total + hours;
+        }
+        return total;
+      }, 0);
+
+      // Group by projects
+      const projectMap = new Map();
+      (entries || []).forEach(entry => {
+        if (entry.project_id && entry.projects) {
+          const hours = entry.end_ts ? 
+            (new Date(entry.end_ts).getTime() - new Date(entry.start_ts).getTime()) / (1000 * 60 * 60) : 0;
           
-          if (phases && phases.length > 0) {
-            phaseId = phases[0].id
+          if (projectMap.has(entry.project_id)) {
+            projectMap.get(entry.project_id).hours += hours;
+          } else {
+            projectMap.set(entry.project_id, {
+              id: entry.project_id,
+              name: entry.projects.name,
+              hours
+            });
           }
         }
-      }
+      });
 
-      const { data, error } = await supabase
-        .from('timesheets')
-        .insert({
-          user_id: user.user.id,
-          schedule_item_id: scheduleItemId,
-          project_id: projectId,
-          phase_id: phaseId,
-          start_time: new Date().toISOString()
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-      return data as Timesheet
-    },
-    onMutate: async (scheduleItemId) => {
-      // Optimistic update
-      await queryClient.cancelQueries({ queryKey: ['activeShift'] })
-      const previousShift = queryClient.getQueryData(['activeShift'])
-      
-      const optimisticShift: Timesheet = {
-        id: 'temp-' + Date.now(),
-        user_id: 'current-user',
-        schedule_item_id: scheduleItemId,
-        start_time: new Date().toISOString(),
-        approved: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-      
-      queryClient.setQueryData(['activeShift'], optimisticShift)
-      return { previousShift }
-    },
-    onError: (err, variables, context) => {
-      // Rollback on error
-      queryClient.setQueryData(['activeShift'], context?.previousShift)
-      toast({
-        title: "Error",
-        description: "Failed to start shift. Please try again.",
-        variant: "destructive"
-      })
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(['activeShift'], data)
-      toast({
-        title: "Shift Started",
-        description: "Your shift has been started successfully.",
-      })
-    },
-  })
+      return {
+        totalHours,
+        breakHours: 0, // Not tracked in current schema
+        workingHours: totalHours,
+        projects: Array.from(projectMap.values())
+      } as ShiftSummary;
+    }
+  });
 }
 
-export const useEndShift = () => {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
-
+export function useStartShift() {
+  const queryClient = useQueryClient();
+  
   return useMutation({
-    mutationFn: async (shiftId: string) => {
-      console.log('Attempting to end shift:', shiftId);
-      
-      // First verify the user is authenticated
-      const { data: user } = await supabase.auth.getUser()
-      if (!user.user) {
-        throw new Error('Not authenticated')
-      }
-      
-      console.log('User authenticated:', user.user.id);
+    mutationFn: async (projectId?: string) => {
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
-        .from('timesheets')
-        .update({ end_time: new Date().toISOString() })
+        .from('time_entries')
+        .insert({
+          user_id: user.data.user.id,
+          start_ts: new Date().toISOString(),
+          project_id: projectId,
+          organization_id: '00000000-0000-0000-0000-000000000000', // Default org
+          entry_type: 'labour'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activeShift'] });
+      queryClient.invalidateQueries({ queryKey: ['shiftSummary'] });
+    }
+  });
+}
+
+export function useEndShift() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (shiftId: string) => {
+      const { data, error } = await supabase
+        .from('time_entries')
+        .update({
+          end_ts: new Date().toISOString()
+        })
         .eq('id', shiftId)
         .select()
-        .single()
-
-      if (error) {
-        console.error('Error ending shift:', error);
-        throw error;
-      }
+        .single();
       
-      console.log('Shift ended successfully:', data);
-      return data as Timesheet
+      if (error) throw error;
+      return data;
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(['activeShift'], null)
-      const hours = data.duration_generated || 0
-      toast({
-        title: "Shift Ended",
-        description: `Shift completed. Duration: ${hours.toFixed(2)} hours`,
-      })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activeShift'] });
+      queryClient.invalidateQueries({ queryKey: ['shiftSummary'] });
+    }
+  });
+}
+
+export function useStartBreak() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (shiftId: string) => {
+      // Break functionality not supported in current schema
+      throw new Error('Break tracking not available in current schema');
     },
-    onError: (error: any) => {
-      console.error('End shift mutation error:', error);
-      const errorMessage = error?.message || error?.details || "Unknown error occurred";
-      toast({
-        title: "Error",
-        description: `Failed to end shift: ${errorMessage}`,
-        variant: "destructive"
-      })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activeShift'] });
+    }
+  });
+}
+
+export function useEndBreak() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (shiftId: string) => {
+      // Break functionality not supported in current schema
+      throw new Error('Break tracking not available in current schema');
     },
-  })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activeShift'] });
+    }
+  });
 }
