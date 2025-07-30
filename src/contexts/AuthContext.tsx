@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .single();
       
       if (!error && data) {
@@ -52,11 +52,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from('profiles')
         .insert({
-          user_id: userId,
+          id: userId,
           auth_user_id: userId,
           name: userName,
           role: 'worker',
-          is_placeholder: false
+          is_placeholder: false,
+          organization_id: '00000000-0000-0000-0000-000000000000' // Will be set by RLS/trigger
         })
         .select()
         .single();
@@ -170,7 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase
       .from('profiles')
       .update(updates)
-      .eq('user_id', user.id);
+      .eq('id', user.id);
     
     if (!error) {
       setProfile({ ...profile, ...updates });
