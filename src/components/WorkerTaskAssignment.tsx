@@ -8,6 +8,7 @@ import { Search, Filter, Users, Clock, CheckCircle2, Calendar } from 'lucide-rea
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AssignableItem {
   id: string;
@@ -35,6 +36,7 @@ interface Assignment {
 }
 
 export function WorkerTaskAssignment() {
+  const { user, profile } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedWorker, setSelectedWorker] = useState<string | null>(null);
@@ -132,6 +134,26 @@ export function WorkerTaskAssignment() {
   };
 
   const handleAssign = async () => {
+    // Check authentication
+    if (!user || !profile) {
+      toast({
+        title: 'Authentication Required',
+        description: 'You must be logged in to assign tasks.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check permissions
+    if (profile.role !== 'admin' && profile.role !== 'manager') {
+      toast({
+        title: 'Permission Denied',
+        description: 'You don\'t have permission to assign tasks. Only admins and managers can assign tasks.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!selectedWorker || selectedItems.length === 0) {
       toast({
         title: 'Selection Required',
@@ -142,7 +164,12 @@ export function WorkerTaskAssignment() {
     }
 
     try {
-      console.log('🎯 Starting assignment process...', { selectedWorker, selectedItems });
+      console.log('🎯 Starting assignment process...', { 
+        user: user.id, 
+        role: profile.role, 
+        selectedWorker, 
+        selectedItems 
+      });
       
       // Update tasks to assign them to the worker
       const taskIds = selectedItems.filter(id => 
@@ -222,6 +249,27 @@ export function WorkerTaskAssignment() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Show loading or auth error states
+  if (!user || !profile) {
+    return (
+      <Card className="p-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">You must be logged in to assign tasks.</p>
+        </div>
+      </Card>
+    );
+  }
+
+  if (profile.role !== 'admin' && profile.role !== 'manager') {
+    return (
+      <Card className="p-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">You don't have permission to assign tasks. Only admins and managers can assign tasks.</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6 outline-none focus:outline-none">
