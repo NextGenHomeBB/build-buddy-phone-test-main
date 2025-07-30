@@ -153,7 +153,7 @@ export function useUpsertSchedule() {
       // Create schedule items and worker assignments from tasks
       const scheduleItemsToCreate = tasks.map((task, index) => ({
         schedule_id: scheduleId,
-        project_id: null, // Would need to get from task data
+        project_id: task.task_id, // Use task_id as project_id since tasks are created from projects
         address: `Project ${task.task_id.slice(0, 8)}`, // Use part of task_id as address
         category: 'normal' as const,
         start_time: `${8 + index}:00:00`,
