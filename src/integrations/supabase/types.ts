@@ -24,6 +24,7 @@ export type Database = {
           description: string | null
           id: string
           is_completed: boolean
+          is_done: boolean | null
           organization_id: string
           title: string
           updated_at: string
@@ -37,6 +38,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_completed?: boolean
+          is_done?: boolean | null
           organization_id: string
           title: string
           updated_at?: string
@@ -50,6 +52,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_completed?: boolean
+          is_done?: boolean | null
           organization_id?: string
           title?: string
           updated_at?: string
@@ -505,37 +508,49 @@ export type Database = {
       }
       project_phases: {
         Row: {
+          budget: number | null
           created_at: string
           description: string | null
           end_date: string | null
           id: string
+          labour_cost: number | null
+          material_cost: number | null
           name: string
           organization_id: string
           project_id: string
+          spent: number | null
           start_date: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          budget?: number | null
           created_at?: string
           description?: string | null
           end_date?: string | null
           id?: string
+          labour_cost?: number | null
+          material_cost?: number | null
           name: string
           organization_id: string
           project_id: string
+          spent?: number | null
           start_date?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          budget?: number | null
           created_at?: string
           description?: string | null
           end_date?: string | null
           id?: string
+          labour_cost?: number | null
+          material_cost?: number | null
           name?: string
           organization_id?: string
           project_id?: string
+          spent?: number | null
           start_date?: string | null
           status?: string
           updated_at?: string
@@ -600,37 +615,49 @@ export type Database = {
       }
       projects: {
         Row: {
+          budget: number | null
           created_at: string
           description: string | null
           end_date: string | null
           id: string
+          location: string | null
           manager_id: string | null
           name: string
           organization_id: string
+          remaining_budget: number | null
+          spent: number | null
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"]
           updated_at: string
         }
         Insert: {
+          budget?: number | null
           created_at?: string
           description?: string | null
           end_date?: string | null
           id?: string
+          location?: string | null
           manager_id?: string | null
           name: string
           organization_id: string
+          remaining_budget?: number | null
+          spent?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           updated_at?: string
         }
         Update: {
+          budget?: number | null
           created_at?: string
           description?: string | null
           end_date?: string | null
           id?: string
+          location?: string | null
           manager_id?: string | null
           name?: string
           organization_id?: string
+          remaining_budget?: number | null
+          spent?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           updated_at?: string
@@ -735,6 +762,13 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_task_workers_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_task_workers_user_id"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

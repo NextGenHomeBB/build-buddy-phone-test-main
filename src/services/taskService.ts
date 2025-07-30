@@ -10,10 +10,10 @@ export const taskService = {
       // Get linked profile IDs for this auth user
       const { data: linkedProfiles } = await supabase
         .from('profiles')
-        .select('user_id')
+        .select('id')
         .eq('auth_user_id', userId);
       
-      const linkedProfileIds = linkedProfiles?.map(p => p.user_id) || [];
+      const linkedProfileIds = linkedProfiles?.map(p => p.id) || [];
       console.log('👥 Linked profiles found:', linkedProfileIds);
       
       // Get task IDs from task_workers table (both direct and via linked profiles)
@@ -348,10 +348,10 @@ export const taskService = {
     // Get linked profile IDs for this auth user
     const { data: linkedProfiles } = await supabase
       .from('profiles')
-      .select('user_id')
+      .select('id')
       .eq('auth_user_id', userId);
     
-    const linkedProfileIds = linkedProfiles?.map(p => p.user_id) || [];
+    const linkedProfileIds = linkedProfiles?.map(p => p.id) || [];
     
     // Get task IDs from task_workers table
     const { data: taskWorkerTasks } = await supabase

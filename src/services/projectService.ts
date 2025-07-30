@@ -32,7 +32,7 @@ export const projectService = {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single();
 
     console.log('👥 User profile:', profile);
