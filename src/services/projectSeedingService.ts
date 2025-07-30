@@ -23,10 +23,11 @@ export const projectSeedingService = {
             project_id: projectId,
             name: phaseTemplate.name,
             description: `Phase: ${phaseTemplate.name}`,
-            status: 'planning',
+            status: 'pending',
             progress: 0,
             budget: 0,
-            spent: 0
+            spent: 0,
+            organization_id: '00000000-0000-0000-0000-000000000001'
           })
           .select()
           .single();
@@ -47,9 +48,9 @@ export const projectSeedingService = {
               phase_id: createdPhase.id,
               title: checklistItem,
               description: `${phaseTemplate.name} - ${checklistItem}`,
-              status: 'todo',
+              status: 'pending',
               priority: 'medium',
-              assigned_by: user.id
+              organization_id: '00000000-0000-0000-0000-000000000001'
             });
 
           if (taskError) {

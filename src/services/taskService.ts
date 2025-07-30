@@ -210,7 +210,7 @@ export const taskService = {
       .from('task_comments')
       .insert({
         task_id: taskId,
-        message,
+        content: message,
         user_id: userId
       })
       .select()
@@ -304,9 +304,7 @@ export const taskService = {
     const { data, error } = await supabase
       .from('tasks')
       .update({
-        approved_at: new Date().toISOString(),
-        approved_by: approverId,
-        signature_url: signatureUrl
+        status: 'completed'
       })
       .eq('id', taskId)
       .select()

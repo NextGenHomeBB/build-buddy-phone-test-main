@@ -324,7 +324,7 @@ export default function SchedulePlanner() {
         .from('projects')
         .select('id, name, location, status')
         .in('id', selectedProjectIds)
-        .in('status', ['planning', 'active']);
+        .in('status', ['draft', 'active']);
 
       if (error) throw error;
 
