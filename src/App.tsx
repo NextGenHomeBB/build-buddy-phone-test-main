@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { RequireAccess } from "@/components/auth/RequireAccess";
+import { OrganizationGuard } from "@/components/auth/OrganizationGuard";
 import { Suspense, lazy } from "react";
 
 // Lazy load pages
@@ -38,6 +39,7 @@ const ChecklistCreator = lazy(() => import("./pages/ChecklistCreator"));
 const SubcontractorPage = lazy(() => import("./pages/SubcontractorPage"));
 const TeamPage = lazy(() => import("./pages/TeamPage"));
 const Onboarding = lazy(() => import("./pages/auth/Onboarding"));
+const JoinOrganization = lazy(() => import("./pages/auth/JoinOrganization"));
 const FeedbackHome = lazy(() => import("./pages/feedback/FeedbackHome"));
 const FeedbackAdminList = lazy(() => import("./pages/feedback/FeedbackAdminList"));
 const ScheduleDayView = lazy(() => import("./pages/schedule/ScheduleDayView"));
@@ -121,12 +123,14 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-            <Routes>
+          <OrganizationGuard>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <Routes>
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login/admin" element={<AdminLogin />} />
+              <Route path="/join-organization" element={<RequireAuth><JoinOrganization /></RequireAuth>} />
               
               {/* Protected routes */}
               <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
@@ -179,8 +183,9 @@ const App = () => (
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+              </Routes>
+            </Suspense>
+          </OrganizationGuard>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

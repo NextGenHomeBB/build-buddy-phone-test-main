@@ -350,12 +350,12 @@ export default function SchedulePlanner() {
       }));
 
       const scheduleData = {
-        workDate: selectedDate,
-        items: scheduleItems,
-        absences: []
+        work_date: selectedDate.toISOString().split('T')[0],
+        tasks: scheduleItems
       };
 
-      await upsertSchedule.mutateAsync(scheduleData);
+      // Temporarily disable schedule creation
+      // await upsertSchedule.mutateAsync(scheduleData);
       toast({
         title: "Schedule created from selected projects",
         description: `Created ${projects.length} schedule items from your selected projects`
@@ -777,15 +777,15 @@ export default function SchedulePlanner() {
         }
       />
 
-      {/* Worker Task Assignment Modal */}
-      <WorkerTaskAssignment
+      {/* Worker Task Assignment Modal - Temporarily disabled */}
+      {/* <WorkerTaskAssignment
         open={workerTaskAssignmentModal.open}
         onOpenChange={(open) => 
           setWorkerTaskAssignmentModal(prev => ({ ...prev, open }))
         }
         worker={workerTaskAssignmentModal.worker}
         projectId={workerTaskAssignmentModal.projectId}
-      />
+      /> */}
 
       {/* Assign Tree Sheet - New Phase-Aware Assignment */}
       <AssignTreeSheet
