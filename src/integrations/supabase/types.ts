@@ -339,6 +339,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          company_name: string | null
           created_at: string
           full_name: string | null
           id: string
@@ -348,6 +349,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_name?: string | null
           created_at?: string
           full_name?: string | null
           id: string
@@ -357,6 +359,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_name?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -630,6 +633,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_project_role: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          project_id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          project_id: string
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          project_id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       worker_costs: {
         Row: {
