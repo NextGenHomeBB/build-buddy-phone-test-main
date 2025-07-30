@@ -24,7 +24,7 @@ export function ProjectSelectionDialog({
   const { data: projects = [], isLoading } = useAccessibleProjects();
 
   const availableProjects = projects.filter(project => 
-    project.status === 'planning' || project.status === 'active'
+    project.status === 'active' || project.status === 'draft'
   );
 
   const handleProjectToggle = (projectId: string) => {

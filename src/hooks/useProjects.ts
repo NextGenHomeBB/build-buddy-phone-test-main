@@ -56,8 +56,14 @@ export function useProjectPhases(projectId: string) {
   return useQuery({
     queryKey: ['projects', projectId, 'phases'],
     queryFn: async () => {
-      const project = await projectService.getProject(projectId);
-      return project?.phases || [];
+      const { data, error } = await supabase
+        .from('project_phases')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at');
+
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!projectId,
   });

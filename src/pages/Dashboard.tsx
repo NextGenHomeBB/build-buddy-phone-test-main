@@ -27,14 +27,14 @@ export default function Dashboard() {
     name: project.name,
     description: project.description || "",
     status: project.status as "planning" | "active" | "on-hold" | "completed" | "cancelled",
-    progress: project.progress,
-    dueDate: new Date(project.end_date).toLocaleDateString('en-US', {
+    progress: project.progress || 0,
+    dueDate: project.end_date ? new Date(project.end_date).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric'
-    }),
-    teamSize: project.user_project_roles?.length || 0,
-    currentPhase: project.phases?.[0]?.name || "Not started",
-    urgentTasks: project.tasks?.filter(task => task.priority === 'urgent' && task.status !== 'completed')?.length || 0
+    }) : 'No due date',
+    teamSize: 0, // Will be implemented when we have team management
+    currentPhase: "Not started", // Will be implemented when we fetch phases
+    urgentTasks: 0 // Will be implemented when we have task management
   }));
   
   // Sort projects by progress (highest first)

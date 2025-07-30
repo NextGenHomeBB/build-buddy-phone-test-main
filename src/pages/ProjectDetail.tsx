@@ -290,7 +290,14 @@ export default function ProjectDetail() {
             
             <div className={`flex gap-2 ${isMobile ? 'w-full' : ''}`}>
               {canEditProject() && (
-                <EditProjectDialog project={{...project, type: project.description || 'Residential'}}>
+                <EditProjectDialog project={{
+                  ...project, 
+                  type: project.type || 'residential',
+                  location: project.location || 'TBD',
+                  start_date: project.start_date || '',
+                  end_date: project.end_date || '',
+                  budget: project.budget || 0
+                }}>
                   <Button variant="outline" size="sm" className={isMobile ? 'flex-1 text-xs' : ''}>
                     {isMobile ? 'Edit' : 'Edit Project'}
                   </Button>
