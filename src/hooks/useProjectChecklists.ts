@@ -6,21 +6,14 @@ export function useProjectChecklists(projectId: string) {
     queryKey: ['project-checklists', projectId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('project_checklists')
-        .select(`
-          *,
-          checklist:checklists(*)
-        `)
+        .from('checklists')
+        .select('*')
         .eq('project_id', projectId);
 
       if (error) throw error;
 
-      // Transform the data to include project_id in checklist items
-      return (data || []).map(projectChecklist => ({
-        ...projectChecklist.checklist,
-        project_id: projectId,
-        items: projectChecklist.checklist?.items || []
-      }));
+      // Return checklists directly since project_checklists table doesn't exist
+      return data || [];
     },
     enabled: !!projectId,
   });

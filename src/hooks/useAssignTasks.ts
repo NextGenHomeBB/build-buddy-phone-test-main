@@ -69,10 +69,10 @@ export function useChecklistItems(taskId?: string) {
       
       const { data, error } = await supabase
         .from('checklist_items')
-        .select('id, title, description, is_done')
-        .eq('task_id', taskId)
-        .eq('is_done', false)
-        .is('assignee_id', null)
+        .select('id, title, description, is_completed')
+        .eq('checklist_id', taskId)
+        .eq('is_completed', false)
+        .is('assigned_to', null)
         .order('created_at', { ascending: true });
 
       if (error) throw error;

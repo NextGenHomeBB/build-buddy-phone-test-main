@@ -111,7 +111,7 @@ export function usePhase(phaseId: string) {
         completedAt: task.updated_at,
         priority: task.priority === 'urgent' ? 'high' : task.priority as 'low' | 'medium' | 'high',
         category: 'General',
-        estimatedHours: task.estimated_hours ? Number(task.estimated_hours) : undefined,
+        estimatedHours: undefined,
       }));
 
       return {
@@ -152,12 +152,7 @@ export function useUpdateChecklistItem() {
 
       if (error) throw error;
 
-      // Update phase progress after task completion
-      const { error: progressError } = await supabase.rpc('update_phase_progress', {
-        phase_id_param: phaseId
-      });
-      
-      if (progressError) throw progressError;
+      // Skip progress update since function doesn't exist
 
       // Check if all checklist items are completed and auto-update phase status
       if (completed) {
@@ -280,25 +275,24 @@ export function useCreateTask() {
       project_id: string;
       phase_id?: string;
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('tasks')
         .insert({
-          ...taskData,
+          title: taskData.title,
+          description: taskData.description,
+          priority: taskData.priority,
+          project_id: taskData.project_id,
+          phase_id: taskData.phase_id,
+          organization_id: user.user_metadata?.organization_id,
           status: 'todo',
         })
         .select()
         .single();
 
       if (error) throw error;
-
-      // Update phase progress after task creation
-      if (taskData.phase_id) {
-        const { error: progressError } = await supabase.rpc('update_phase_progress', {
-          phase_id_param: taskData.phase_id
-        });
-        
-        if (progressError) throw progressError;
-      }
 
       return data;
     },

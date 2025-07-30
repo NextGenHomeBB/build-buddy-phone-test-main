@@ -9,25 +9,12 @@ export function useAvailableChecklists(projectId?: string) {
       // Get all checklist templates
       const { data: allChecklists, error: checklistError } = await supabase
         .from('checklists')
-        .select('*')
-        .eq('is_template', true);
+        .select('*');
 
       if (checklistError) throw checklistError;
 
-      if (!projectId) return allChecklists;
-
-      // Get already assigned checklists for this project
-      const { data: assignedChecklists, error: assignedError } = await supabase
-        .from('project_checklists')
-        .select('checklist_id')
-        .eq('project_id', projectId);
-
-      if (assignedError) throw assignedError;
-
-      const assignedIds = assignedChecklists.map(pc => pc.checklist_id);
-      
-      // Return only unassigned checklists
-      return allChecklists.filter(checklist => !assignedIds.includes(checklist.id));
+      // Since project_checklists table doesn't exist, return all checklists
+      return allChecklists || [];
     },
     enabled: !!projectId,
   });
@@ -38,13 +25,11 @@ export function useAssignChecklistToProject() {
 
   return useMutation({
     mutationFn: async ({ projectId, checklistId }: { projectId: string; checklistId: string }) => {
+      // Since project_checklists table doesn't exist, we'll update the checklist directly
       const { data, error } = await supabase
-        .from('project_checklists')
-        .insert({
-          project_id: projectId,
-          checklist_id: checklistId,
-          completed_items: {},
-        })
+        .from('checklists')
+        .update({ project_id: projectId })
+        .eq('id', checklistId)
         .select()
         .single();
 
@@ -75,11 +60,11 @@ export function useUnassignChecklistFromProject() {
 
   return useMutation({
     mutationFn: async ({ projectId, checklistId }: { projectId: string; checklistId: string }) => {
+      // Since project_checklists table doesn't exist, we'll clear the project_id
       const { error } = await supabase
-        .from('project_checklists')
-        .delete()
-        .eq('project_id', projectId)
-        .eq('checklist_id', checklistId);
+        .from('checklists')
+        .update({ project_id: null })
+        .eq('id', checklistId);
 
       if (error) throw error;
     },
