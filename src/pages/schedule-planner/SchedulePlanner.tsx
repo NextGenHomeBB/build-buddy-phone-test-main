@@ -774,8 +774,10 @@ export default function SchedulePlanner() {
           setWorkerTaskAssignmentModal(prev => ({ ...prev, open }))
         }
       >
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <WorkerTaskAssignment />
+        <DialogContent className="max-w-4xl max-h-[85vh] p-0 gap-0 overflow-hidden">
+          <div className="p-6 overflow-y-auto">
+            <WorkerTaskAssignment />
+          </div>
         </DialogContent>
       </Dialog>
 
