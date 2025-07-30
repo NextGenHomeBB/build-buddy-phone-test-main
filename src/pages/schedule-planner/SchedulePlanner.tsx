@@ -337,25 +337,18 @@ export default function SchedulePlanner() {
         return;
       }
 
-      const scheduleItems = projects.map((project, index) => ({
-        address: project.location,
-        category: index % 3 === 0 ? 'normal' as const : 
-                 index % 3 === 1 ? 'materials' as const : 'specials' as const,
-        startTime: index % 3 === 0 ? "09:00" : 
-                  index % 3 === 1 ? "13:00" : "08:00",
-        endTime: index % 3 === 0 ? "12:00" : 
-                index % 3 === 1 ? "17:00" : "16:00",
-        workers: [],
-        projectId: project.id
-      }));
-
+      // Create schedule items with tasks structure
       const scheduleData = {
         work_date: selectedDate.toISOString().split('T')[0],
-        tasks: scheduleItems
+        tasks: projects.map((project, index) => ({
+          task_id: project.id,
+          assigned_user_id: '', // Will be assigned later via drag & drop
+          estimated_hours: 4 + (index % 4) // Random hours between 4-7
+        }))
       };
 
-      // Temporarily disable schedule creation
-      // await upsertSchedule.mutateAsync(scheduleData);
+      // Create the schedule
+      await upsertSchedule.mutateAsync(scheduleData);
       toast({
         title: "Schedule created from selected projects",
         description: `Created ${projects.length} schedule items from your selected projects`
