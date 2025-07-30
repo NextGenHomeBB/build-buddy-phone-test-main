@@ -150,12 +150,11 @@ export function useUpsertSchedule() {
         scheduleId = newSchedule.id;
       }
 
-      // For now, create placeholder schedule items from tasks
-      // This is a basic implementation - in a real scenario you'd have more detailed scheduling logic
-      const scheduleItems = tasks.map((task, index) => ({
+      // Create schedule items and worker assignments from tasks
+      const scheduleItemsToCreate = tasks.map((task, index) => ({
         schedule_id: scheduleId,
-        project_id: null, // Would need to get from task
-        address: `Task ${task.task_id}`,
+        project_id: null, // Would need to get from task data
+        address: `Project ${task.task_id.slice(0, 8)}`, // Use part of task_id as address
         category: 'normal' as const,
         start_time: `${8 + index}:00:00`,
         end_time: `${8 + index + task.estimated_hours}:00:00`
@@ -163,18 +162,24 @@ export function useUpsertSchedule() {
 
       const { data: createdItems, error: itemsError } = await supabase
         .from('schedule_items')
-        .insert(scheduleItems)
+        .insert(scheduleItemsToCreate)
         .select('id');
 
       if (itemsError) throw itemsError;
 
-      // Assign workers to schedule items
+      // Assign workers to schedule items only if they have valid assigned_user_id
       if (createdItems && tasks.length > 0) {
-        const workerAssignments = tasks.map((task, index) => ({
-          schedule_item_id: createdItems[index]?.id,
-          user_id: task.assigned_user_id,
-          is_assistant: false
-        })).filter(assignment => assignment.schedule_item_id);
+        const workerAssignments = tasks
+          .map((task, index) => ({
+            schedule_item_id: createdItems[index]?.id,
+            user_id: task.assigned_user_id,
+            is_assistant: false
+          }))
+          .filter(assignment => 
+            assignment.schedule_item_id && 
+            assignment.user_id && 
+            assignment.user_id.trim() !== ''
+          );
 
         if (workerAssignments.length > 0) {
           const { error: assignmentError } = await supabase
