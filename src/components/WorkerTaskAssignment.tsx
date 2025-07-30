@@ -157,6 +157,7 @@ export function WorkerTaskAssignment() {
           task_id: taskId,
           user_id: selectedWorker,
           is_primary: true
+          // organization_id will be set automatically via current_org() default
         }));
 
         const { error: taskWorkerError } = await supabase
