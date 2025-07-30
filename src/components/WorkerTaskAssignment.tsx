@@ -42,7 +42,7 @@ export function WorkerTaskAssignment() {
   const { toast } = useToast();
 
   // Fetch workers
-  const { data: workers = [] } = useQuery({
+  const { data: workers = [], refetch: refetchWorkers } = useQuery({
     queryKey: ['workers'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -78,7 +78,7 @@ export function WorkerTaskAssignment() {
   });
 
   // Fetch tasks
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [], refetch: refetchTasks } = useQuery({
     queryKey: ['unassigned-tasks'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -142,18 +142,45 @@ export function WorkerTaskAssignment() {
     }
 
     try {
+      console.log('🎯 Starting assignment process...', { selectedWorker, selectedItems });
+      
       // Update tasks to assign them to the worker
       const taskIds = selectedItems.filter(id => 
         assignableTaskItems.some(item => item.id === id)
       );
 
       if (taskIds.length > 0) {
-        const { error } = await supabase
+        console.log('📝 Assigning tasks:', taskIds);
+        
+        // First, insert into task_workers table for each task
+        const taskWorkerInserts = taskIds.map(taskId => ({
+          task_id: taskId,
+          user_id: selectedWorker,
+          is_primary: true
+        }));
+
+        const { error: taskWorkerError } = await supabase
+          .from('task_workers')
+          .insert(taskWorkerInserts);
+
+        if (taskWorkerError) {
+          console.error('❌ Error inserting task workers:', taskWorkerError);
+          throw taskWorkerError;
+        }
+
+        // Then update the tasks table for backward compatibility
+        const { error: taskUpdateError } = await supabase
           .from('tasks')
-          .update({ assigned_to: selectedWorker })
+          .update({ 
+            assigned_to: selectedWorker,
+            status: 'in-progress'
+          })
           .in('id', taskIds);
 
-        if (error) throw error;
+        if (taskUpdateError) {
+          console.error('❌ Error updating tasks:', taskUpdateError);
+          throw taskUpdateError;
+        }
       }
 
       // Create assignments record
@@ -167,16 +194,20 @@ export function WorkerTaskAssignment() {
       setSelectedItems([]);
       setSelectedWorker(null);
 
+      // Refetch data to update the UI
+      await refetchTasks();
+      await refetchWorkers();
+
       toast({
         title: 'Assignment Successful',
-        description: `${selectedItems.length} items assigned successfully.`,
+        description: `Successfully assigned ${selectedItems.length} items to the selected worker.`,
       });
 
     } catch (error) {
-      console.error('Assignment error:', error);
+      console.error('❌ Assignment error:', error);
       toast({
         title: 'Assignment Failed',
-        description: 'Failed to assign items to worker.',
+        description: 'Failed to assign items to worker. Please try again.',
         variant: 'destructive',
       });
     }
