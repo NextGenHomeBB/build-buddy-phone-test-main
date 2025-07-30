@@ -48,8 +48,18 @@ export function WorkerQuickTasks({ children }: WorkerQuickTasksProps) {
       if (!user) return [];
 
       const { data, error } = await supabase
-        .from('user_tasks')
-        .select('*')
+        .from('tasks')
+        .select(`
+          id,
+          title,
+          description,
+          priority,
+          status,
+          due_date,
+          created_at,
+          project:projects(name),
+          phase:project_phases(name)
+        `)
         .eq('assigned_to', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -59,7 +69,18 @@ export function WorkerQuickTasks({ children }: WorkerQuickTasksProps) {
         throw error;
       }
 
-      return data as QuickTask[];
+      return (data || []).map(task => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        status: task.status,
+        created_at: task.created_at,
+        due_date: task.due_date,
+        project_name: task.project?.name || null,
+        phase_name: task.phase?.name || null,
+        assigned_by_user_name: null // We'll need to add this to the query if needed
+      })) as QuickTask[];
     },
     enabled: open,
   });

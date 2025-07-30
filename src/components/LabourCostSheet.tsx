@@ -53,7 +53,7 @@ export function LabourCostSheet({ phaseId, open, onClose }: LabourCostSheetProps
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, name')
+        .select('id, name')
         .eq('role', 'worker')
         .order('name');
       
@@ -179,7 +179,7 @@ export function LabourCostSheet({ phaseId, open, onClose }: LabourCostSheetProps
               <SelectContent className="bg-background border z-50">
                 <SelectItem value="internal">Internal Team</SelectItem>
                 {workers.map((worker) => (
-                  <SelectItem key={worker.user_id} value={worker.user_id}>
+                  <SelectItem key={worker.id} value={worker.id}>
                     {worker.name}
                   </SelectItem>
                 ))}

@@ -136,12 +136,12 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         // Then get profile data for those users
         const { data, error } = await supabase
           .from('profiles')
-          .select('user_id, name, avatar_url, role')
-          .in('user_id', userIds);
+          .select('id, name, avatar_url, role')
+          .in('id', userIds);
 
         if (error) throw error;
         return data.map(profile => ({
-          id: profile.user_id,
+          id: profile.id,
           name: profile.name,
           avatar_url: profile.avatar_url,
           role: profile.role
@@ -150,12 +150,12 @@ export function QuickAssignDrawer({ projectId, children }: QuickAssignDrawerProp
         // If no projectId, get all workers and managers
         const { data, error } = await supabase
           .from('profiles')
-          .select('user_id, name, avatar_url, role')
+          .select('id, name, avatar_url, role')
           .in('role', ['worker', 'manager']);
 
         if (error) throw error;
         return data.map(profile => ({
-          id: profile.user_id,
+          id: profile.id,
           name: profile.name,
           avatar_url: profile.avatar_url,
           role: profile.role
