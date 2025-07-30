@@ -133,7 +133,7 @@ export function ProjectManagerSelector({
             <SelectContent>
               <SelectItem value="unassigned">Unassigned</SelectItem>
               {managers.map((manager) => (
-                <SelectItem key={manager.user_id} value={manager.user_id}>
+                <SelectItem key={manager.id} value={manager.id}>
                   {manager.name} ({manager.role})
                 </SelectItem>
               ))}

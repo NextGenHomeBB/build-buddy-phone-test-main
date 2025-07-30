@@ -27,14 +27,8 @@ export const AccessTestButton = ({ userId, userName }: AccessTestButtonProps) =>
         `)
         .eq('user_id', userId);
 
-      // Get user's accessible phases
-      const { data: phaseRoles } = await supabase
-        .from('user_phase_role')
-        .select(`
-          role,
-          phase:project_phases(id, name, project_id)
-        `)
-        .eq('user_id', userId);
+      // Skip phase roles test as user_phase_role table doesn't exist yet
+      const phaseRoles = [];
 
       return {
         projects: projectRoles || [],

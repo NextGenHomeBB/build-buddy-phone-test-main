@@ -76,6 +76,7 @@ export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProp
       const { data: phase, error } = await supabase
         .from('project_phases')
         .insert({
+          organization_id: '00000000-0000-0000-0000-000000000000', // Default org
           project_id: projectId,
           name: data.name,
           description: data.description,
@@ -85,7 +86,6 @@ export function CreatePhaseDialog({ projectId, children }: CreatePhaseDialogProp
           labour_cost: data.labour_cost,
           budget: data.material_cost + data.labour_cost,
           status: 'planning',
-          progress: 0,
           spent: 0,
         })
         .select()

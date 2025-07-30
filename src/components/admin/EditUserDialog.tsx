@@ -74,13 +74,12 @@ export function EditUserDialog({ children, user, onUserUpdated }: EditUserDialog
 
       if (profileError) throw profileError;
 
-      // Update role if it changed
+      // Update role if it changed (direct update to profiles table)
       if (values.role !== user.role) {
         const { error: roleError } = await supabase
-          .rpc('update_user_role', {
-            target_user_id: user.id,
-            new_role: values.role
-          });
+          .from('profiles')
+          .update({ role: values.role })
+          .eq('id', user.id);
 
         if (roleError) throw roleError;
       }
