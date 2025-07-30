@@ -237,7 +237,8 @@ export default function AdminChecklists() {
             name: `Renovatie: ${category}`,
             description: `Checklist voor renovatievragen over ${category.toLowerCase()}. Deze template helpt bij het plannen en organiseren van renovatieprojecten.`,
             items: checklistItems,
-            is_template: true
+            is_template: true,
+            organization_id: 'current_org()' // Use function to get current org
           });
       }
 
@@ -250,14 +251,15 @@ export default function AdminChecklists() {
         }))
       );
 
-      await supabase
-        .from('checklists')
-        .insert({
-          name: 'Renovatie: Volledige Checklist',
-          description: 'Uitgebreide renovatiechecklist met alle 50 essentiële vragen voor woningrenovatie. Bevat structuur, stijl, techniek, keuken/badkamer en installatievragen.',
-          items: allItems,
-          is_template: true
-        });
+        await supabase
+          .from('checklists')
+          .insert({
+            name: 'Renovatie: Volledige Checklist',
+            description: 'Uitgebreide renovatiechecklist met alle 50 essentiële vragen voor woningrenovatie. Bevat structuur, stijl, techniek, keuken/badkamer en installatievragen.',
+            items: allItems,
+            is_template: true,
+            organization_id: 'current_org()' // Use function to get current org
+          });
 
       toast({
         title: "Success",

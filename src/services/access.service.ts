@@ -115,6 +115,7 @@ export const accessService = {
       .upsert({
         user_id: userId,
         phase_id: phaseId,
+        project_id: '', // We need to get the project_id from the phase
         role
       }, {
         onConflict: 'user_id,phase_id'

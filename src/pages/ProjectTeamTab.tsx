@@ -22,7 +22,7 @@ interface TeamMember {
   role: string;
   user_id: string;
   profile: {
-    user_id: string;
+    id: string;
     name: string;
     avatar_url: string | null;
     phone: string | null;

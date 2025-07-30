@@ -21,8 +21,8 @@ export function fetchProjectTeam(projectId: string) {
       const userIds = data.map(item => item.user_id);
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, name, avatar_url, phone')
-        .in('user_id', userIds);
+        .select('id, name, avatar_url, phone')
+        .in('id', userIds);
       
       if (profilesError) throw profilesError;
       
@@ -30,7 +30,7 @@ export function fetchProjectTeam(projectId: string) {
       return data.map(roleItem => ({
         role: roleItem.role,
         user_id: roleItem.user_id,
-        profile: profiles?.find(p => p.user_id === roleItem.user_id) || null
+        profile: profiles?.find(p => p.id === roleItem.user_id) || null
       }));
     }
   );

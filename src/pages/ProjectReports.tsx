@@ -104,7 +104,7 @@ export default function ProjectReports() {
   const totalTasks = tasks.length;
   const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
-  const totalLabourHours = labourEntries.reduce((sum, entry) => sum + (entry.total_hours || 0), 0);
+  const totalLabourHours = labourEntries.reduce((sum, entry) => sum + (entry.hours_worked || 0), 0);
   const totalLabourCost = labourEntries.reduce((sum, entry) => sum + (entry.total_cost || 0), 0);
 
   const totalMaterialCost = materials.reduce((sum, material) => sum + (material.total_cost || 0), 0);

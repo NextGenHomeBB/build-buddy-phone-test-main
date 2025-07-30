@@ -26,18 +26,16 @@ export async function fetchProjectCostData(projectId: string): Promise<ProjectCo
     .eq('project_id', projectId)
     .order('created_at');
 
-  // Fetch material costs for all phases
   const { data: materialCosts } = await supabase
-    .from('material_costs')
+    .from('project_materials')
     .select(`
       *,
       project_phases!inner(name, project_id)
     `)
     .eq('project_phases.project_id', projectId);
 
-  // Fetch labour costs for all phases
   const { data: labourCosts } = await supabase
-    .from('labour_costs')
+    .from('labour_entries')
     .select(`
       *,
       project_phases!inner(name, project_id)

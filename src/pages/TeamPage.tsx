@@ -96,54 +96,32 @@ export default function TeamPage() {
     async (): Promise<TeamMember[]> => {
       if (!id) return [];
 
-      // Get project members (assigned to tasks or project manager)
-      const { data: projectData } = await supabase
-        .from('projects')
+      // Get project managers from user_project_role
+      const { data: projectTeam } = await supabase
+        .from('user_project_role')
         .select(`
-          manager_id,
-          manager:profiles!manager_id(id, name, role, avatar_url, phone)
+          role,
+          user_id,
+          profiles!user_project_role_user_id_fkey(id, name, role, avatar_url, phone)
         `)
-        .eq('id', id)
-        .single();
-
-      const { data: taskAssignees } = await supabase
-        .from('tasks')
-        .select(`
-          assigned_to,
-          assignee:profiles!assigned_to(id, name, role, avatar_url, phone)
-        `)
-        .eq('project_id', id)
-        .not('assigned_to', 'is', null);
+        .eq('project_id', id);
 
       // Combine and deduplicate members
       const members: TeamMember[] = [];
       const seenIds = new Set<string>();
 
-      // Add project manager
-      if (projectData?.manager && !seenIds.has(projectData.manager.id)) {
-        members.push({
-          id: projectData.manager.id,
-          user_id: projectData.manager.id,
-          name: projectData.manager.name,
-          role: projectData.manager.role as 'admin' | 'manager' | 'worker' | 'viewer',
-          avatar_url: projectData.manager.avatar_url,
-          phone: projectData.manager.phone,
-        });
-        seenIds.add(projectData.manager.id);
-      }
-
-      // Add task assignees
-      taskAssignees?.forEach((task) => {
-        if (task.assignee && !seenIds.has(task.assignee.id)) {
+      // Add project team members
+      projectTeam?.forEach((member) => {
+        if (member.profiles && !seenIds.has(member.profiles.id)) {
           members.push({
-            id: task.assignee.id,
-            user_id: task.assignee.id,
-            name: task.assignee.name,
-            role: task.assignee.role as 'admin' | 'manager' | 'worker' | 'viewer',
-            avatar_url: task.assignee.avatar_url,
-            phone: task.assignee.phone,
+            id: member.profiles.id,
+            user_id: member.profiles.id,
+            name: member.profiles.name || 'Unknown',
+            role: member.profiles.role as 'admin' | 'manager' | 'worker' | 'viewer',
+            avatar_url: member.profiles.avatar_url,
+            phone: member.profiles.phone,
           });
-          seenIds.add(task.assignee.id);
+          seenIds.add(member.profiles.id);
         }
       });
 
