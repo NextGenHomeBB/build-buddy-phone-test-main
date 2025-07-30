@@ -173,6 +173,45 @@ export type Database = {
           },
         ]
       }
+      invite_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          current_uses: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          current_uses?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          current_uses?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       labour_entries: {
         Row: {
           created_at: string
@@ -1192,6 +1231,10 @@ export type Database = {
         Returns: undefined
       }
       current_org: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
