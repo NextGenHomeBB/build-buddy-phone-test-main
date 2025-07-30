@@ -64,6 +64,8 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_template: boolean | null
+          items: Json | null
           name: string
           organization_id: string
           phase_id: string | null
@@ -74,6 +76,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_template?: boolean | null
+          items?: Json | null
           name: string
           organization_id: string
           phase_id?: string | null
@@ -84,6 +88,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_template?: boolean | null
+          items?: Json | null
           name?: string
           organization_id?: string
           phase_id?: string | null
@@ -483,6 +489,108 @@ export type Database = {
           },
         ]
       }
+      project_checklists: {
+        Row: {
+          checklist_id: string
+          completed_items: Json | null
+          created_at: string | null
+          id: string
+          organization_id: string
+          project_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          checklist_id: string
+          completed_items?: Json | null
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          project_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          checklist_id?: string
+          completed_items?: Json | null
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          project_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_checklists_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_checklists_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_materials: {
+        Row: {
+          catalog_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          project_id: string
+          quantity: number
+          total_cost: number | null
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          catalog_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          organization_id?: string
+          project_id: string
+          quantity?: number
+          total_cost?: number | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          catalog_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          project_id?: string
+          quantity?: number
+          total_cost?: number | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_materials_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "material_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_materials_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_members: {
         Row: {
           project_id: string
@@ -517,6 +625,7 @@ export type Database = {
           material_cost: number | null
           name: string
           organization_id: string
+          progress: number | null
           project_id: string
           spent: number | null
           start_date: string | null
@@ -533,6 +642,7 @@ export type Database = {
           material_cost?: number | null
           name: string
           organization_id: string
+          progress?: number | null
           project_id: string
           spent?: number | null
           start_date?: string | null
@@ -549,6 +659,7 @@ export type Database = {
           material_cost?: number | null
           name?: string
           organization_id?: string
+          progress?: number | null
           project_id?: string
           spent?: number | null
           start_date?: string | null
@@ -624,10 +735,12 @@ export type Database = {
           manager_id: string | null
           name: string
           organization_id: string
+          progress: number | null
           remaining_budget: number | null
           spent: number | null
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"]
+          type: string | null
           updated_at: string
         }
         Insert: {
@@ -640,10 +753,12 @@ export type Database = {
           manager_id?: string | null
           name: string
           organization_id: string
+          progress?: number | null
           remaining_budget?: number | null
           spent?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
+          type?: string | null
           updated_at?: string
         }
         Update: {
@@ -656,10 +771,12 @@ export type Database = {
           manager_id?: string | null
           name?: string
           organization_id?: string
+          progress?: number | null
           remaining_budget?: number | null
           spent?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
+          type?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -678,6 +795,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limits: {
+        Row: {
+          attempt_count: number
+          created_at: string
+          id: string
+          operation_name: string
+          organization_id: string
+          updated_at: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          attempt_count?: number
+          created_at?: string
+          id?: string
+          operation_name: string
+          organization_id?: string
+          updated_at?: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          attempt_count?: number
+          created_at?: string
+          id?: string
+          operation_name?: string
+          organization_id?: string
+          updated_at?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
       }
       task_comments: {
         Row: {
@@ -893,6 +1043,54 @@ export type Database = {
           },
         ]
       }
+      user_phase_role: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          phase_id: string
+          project_id: string
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          phase_id: string
+          project_id: string
+          role?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          phase_id?: string
+          project_id?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_phase_role_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_phase_role_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_project_role: {
         Row: {
           created_at: string
@@ -981,6 +1179,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          operation_name: string
+          max_attempts?: number
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
       create_user_profile: {
         Args: { user_id: string; user_email: string }
         Returns: undefined
