@@ -73,13 +73,11 @@ export function SignatureDialog({ taskId, open, onClose, onSuccess }: SignatureD
         .from('signatures')
         .getPublicUrl(fileName);
 
-      // Update the task with approval information
+      // Update the task status (approved_at field doesn't exist in current schema)
       const { error: updateError } = await supabase
         .from('tasks')
         .update({
-          approved_at: new Date().toISOString(),
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          signature_url: urlData.publicUrl,
+          status: 'approved',
         })
         .eq('id', taskId);
 

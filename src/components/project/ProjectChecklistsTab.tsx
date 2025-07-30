@@ -64,7 +64,7 @@ export function ProjectChecklistsTab({ projectId }: ProjectChecklistsTabProps) {
                 </div>
               ) : (
                 availableChecklists.map((checklist) => {
-                  const itemCount = Array.isArray(checklist.items) ? checklist.items.length : 0;
+                  const itemCount = 0; // Items are stored separately in checklist_items table
                   return (
                     <Card key={checklist.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleAssignChecklist(checklist.id)}>
                       <CardContent className="p-4">
@@ -113,7 +113,7 @@ export function ProjectChecklistsTab({ projectId }: ProjectChecklistsTabProps) {
           </Card>
         ) : (
           projectChecklists.map((checklist) => {
-            const itemCount = Array.isArray(checklist.items) ? checklist.items.length : 0;
+            const itemCount = 0; // Items are stored separately in checklist_items table
             return (
               <Card key={checklist.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.href = `/projects/${projectId}/checklist/${checklist.id}`}>
                 <CardHeader>

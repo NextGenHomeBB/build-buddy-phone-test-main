@@ -53,10 +53,10 @@ export function SelectPhaseDialog({ projectId, children }: SelectPhaseDialogProp
         
         return {
           project_id: projectId,
+          organization_id: '00000000-0000-0000-0000-000000000000', // Default org
           name: phase.name,
           description: `Phase includes: ${phase.checklist.slice(0, 3).join(', ')}${phase.checklist.length > 3 ? '...' : ''}`,
           status: 'planning' as const,
-          progress: 0,
           budget: 0,
           spent: 0,
           material_cost: 0,

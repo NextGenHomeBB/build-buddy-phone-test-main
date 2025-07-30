@@ -48,10 +48,11 @@ export function LabourTracking({ projectId }: LabourTrackingProps) {
     notes: ''
   });
 
-  const activeEntries = entries.filter(entry => entry.status === 'active');
-  const completedEntries = entries.filter(entry => entry.status === 'completed');
+  // Use labour_entries from the database - they don't have status field, use hours_worked instead
+  const activeEntries = []; // No active/inactive concept in current schema
+  const completedEntries = entries; // All entries are completed
 
-  const totalHours = completedEntries.reduce((sum, entry) => sum + (entry.total_hours || 0), 0);
+  const totalHours = completedEntries.reduce((sum, entry) => sum + (entry.hours_worked || 0), 0);
   const totalCost = completedEntries.reduce((sum, entry) => sum + (entry.total_cost || 0), 0);
 
   const formatDuration = (startTime: string, endTime?: string | null) => {
@@ -165,16 +166,15 @@ export function LabourTracking({ projectId }: LabourTrackingProps) {
             {activeEntries.map((entry) => (
               <div key={entry.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex-1">
-                  <div className="font-medium">{entry.task_description}</div>
+                  <div className="font-medium">{entry.notes || 'Labour Entry'}</div>
                   <div className="text-sm text-muted-foreground">
-                    Started {formatDistanceToNow(new Date(entry.start_time))} ago
-                    {entry.project_phases?.name && ` • ${entry.project_phases.name}`}
+                    Date: {format(new Date(entry.entry_date), 'MMM dd, yyyy')}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <div className="font-mono font-semibold">
-                      {formatDuration(entry.start_time)}
+                      {entry.hours_worked}h
                     </div>
                     {entry.hourly_rate > 0 && (
                       <div className="text-xs text-muted-foreground">
@@ -298,10 +298,7 @@ export function LabourTracking({ projectId }: LabourTrackingProps) {
                 {completedEntries.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell>
-                      <div className="font-medium">{entry.task_description}</div>
-                      {entry.notes && (
-                        <div className="text-xs text-muted-foreground mt-1">{entry.notes}</div>
-                      )}
+                      <div className="font-medium">{entry.notes || 'Labour Entry'}</div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -310,13 +307,13 @@ export function LabourTracking({ projectId }: LabourTrackingProps) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {entry.project_phases?.name || '-'}
+                      {entry.task_id ? 'Task Work' : 'General Work'}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(entry.start_time), 'MMM dd, yyyy')}
+                      {format(new Date(entry.entry_date), 'MMM dd, yyyy')}
                     </TableCell>
                     <TableCell className="font-mono">
-                      {entry.total_hours?.toFixed(2)}h
+                      {entry.hours_worked?.toFixed(2)}h
                     </TableCell>
                     <TableCell>
                       ${entry.hourly_rate?.toFixed(2)}/hr
@@ -325,8 +322,8 @@ export function LabourTracking({ projectId }: LabourTrackingProps) {
                       ${entry.total_cost?.toFixed(2)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={entry.status === 'completed' ? 'default' : 'secondary'}>
-                        {entry.status}
+                      <Badge variant="default">
+                        Completed
                       </Badge>
                     </TableCell>
                     <TableCell>
