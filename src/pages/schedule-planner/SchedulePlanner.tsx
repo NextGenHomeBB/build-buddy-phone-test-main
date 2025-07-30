@@ -20,6 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Calendar, Plus, FileText, Users, ArrowLeft, ExternalLink, Loader2, Settings, ChevronDown } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -766,15 +767,17 @@ export default function SchedulePlanner() {
         }
       />
 
-      {/* Worker Task Assignment Modal - Temporarily disabled */}
-      {/* <WorkerTaskAssignment
-        open={workerTaskAssignmentModal.open}
+      {/* Worker Task Assignment Modal */}
+      <Dialog 
+        open={workerTaskAssignmentModal.open} 
         onOpenChange={(open) => 
           setWorkerTaskAssignmentModal(prev => ({ ...prev, open }))
         }
-        worker={workerTaskAssignmentModal.worker}
-        projectId={workerTaskAssignmentModal.projectId}
-      /> */}
+      >
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <WorkerTaskAssignment />
+        </DialogContent>
+      </Dialog>
 
       {/* Assign Tree Sheet - New Phase-Aware Assignment */}
       <AssignTreeSheet
