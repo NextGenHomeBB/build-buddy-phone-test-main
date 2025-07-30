@@ -23,7 +23,7 @@ const projectSchema = z.object({
   description: z.string().optional(),
   location: z.string().min(1, "Location is required"),
   type: z.enum(["residential", "commercial", "infrastructure", "renovation"]),
-  status: z.enum(["planning", "active", "on-hold", "completed", "cancelled"]).default("planning"),
+  status: z.enum(["draft", "active", "archived"]).default("draft"),
   start_date: z.date({
     required_error: "Start date is required",
   }),
@@ -52,7 +52,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
       description: "",
       location: "",
       type: "residential",
-      status: "planning",
+      status: "draft",
       budget: "",
     },
   });
