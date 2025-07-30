@@ -224,10 +224,10 @@ export function WorkerTaskAssignment() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 outline-none focus:outline-none">
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Items to Assign */}
-        <Card className="flex-1">
+        <Card className="flex-1 outline-none focus:outline-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5" />
