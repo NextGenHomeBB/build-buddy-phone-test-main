@@ -9,13 +9,14 @@ import { UserTable } from "@/components/admin/UserTable";
 import { UserCardList } from "@/components/admin/UserCardList";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { InviteUserDialog } from "@/components/admin/InviteUserDialog";
-import { Loader2, Shield } from "lucide-react";
+import { Loader2, Shield, QrCode, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 export default function UserManagement() {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { canManageUsers } = useRoleAccess();
   const {
     filteredUsers,
@@ -61,6 +62,14 @@ export default function UserManagement() {
             </Button>
             {canManageUsers() && (
               <>
+                <Button onClick={() => navigate('/admin/invite-codes')} variant="outline" size="sm">
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Invite Codes
+                </Button>
+                <Button onClick={() => setIsInviteOpen(true)} variant="outline" size="sm">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Invite User
+                </Button>
                 <InviteUserDialog 
                   isOpen={isInviteOpen}
                   onOpenChange={setIsInviteOpen}

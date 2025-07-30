@@ -27,42 +27,47 @@ export default function JoinOrganization({ onSuccess }: JoinOrganizationProps) {
 
     setLoading(true);
     try {
-      // For now, we'll create a simple join flow
-      // In a real implementation, you'd validate the invite code against a database
+      const { inviteCodesService } = await import('@/services/inviteCodesService');
       
-      // Simulate organization lookup
-      const orgId = inviteCode.toLowerCase() === 'demo' ? '00000000-0000-0000-0000-000000000001' : null;
+      // Validate the invite code
+      const validation = await inviteCodesService.validateCode(inviteCode);
       
-      if (!orgId) {
-        toast({
-          title: "Invalid invite code",
-          description: "Please check your invite code and try again.",
-          variant: "destructive"
-        });
-        return;
+      if (!validation.valid) {
+        throw new Error(validation.error || 'Invalid invite code');
       }
 
-      // Update user profile with organization
-      if (user) {
-        await updateProfile({
-          organization_id: orgId,
-          role: 'worker'
-        });
+      if (user && validation.organization) {
+        // Update user profile with organization
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            organization_id: validation.organization.id,
+            role: 'worker' // Default role for joined users
+          })
+          .eq('id', user.id);
 
+        if (error) throw error;
+
+        // Increment code usage
+        await inviteCodesService.useCode(inviteCode, user.id);
+
+        // Update auth context
+        await updateProfile({ organization_id: validation.organization.id });
+        
         toast({
-          title: "Successfully joined organization!",
-          description: "Welcome to the team."
+          title: "Welcome!",
+          description: `You've successfully joined ${validation.organization.name}.`,
         });
 
         onSuccess?.();
         navigate('/dashboard');
       }
-    } catch (error) {
-      console.error('Error joining organization:', error);
+    } catch (error: any) {
+      console.error('Join organization error:', error);
       toast({
-        title: "Error joining organization",
-        description: "Please try again.",
-        variant: "destructive"
+        title: "Error",
+        description: error.message || "Failed to join organization. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -156,7 +161,7 @@ export default function JoinOrganization({ onSuccess }: JoinOrganizationProps) {
                   required
                 />
                 <p className="text-sm text-muted-foreground">
-                  Try "demo" for testing
+                  Get your invite code from your organization admin
                 </p>
               </div>
               

@@ -24,6 +24,7 @@ const ProjectReports = lazy(() => import("./pages/ProjectReports"));
 const ReportsOverview = lazy(() => import("./pages/Reports/Overview"));
 const ReportsMaterials = lazy(() => import("./pages/Reports/Materials"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const InviteCodes = lazy(() => import("./pages/admin/InviteCodes"));
 const ProjectSettings = lazy(() => import("./pages/admin/ProjectSettings"));
 const AdminChecklists = lazy(() => import("./pages/admin/Checklists"));
 const AdminMaterials = lazy(() => import("./pages/admin/Materials"));
@@ -170,6 +171,7 @@ const App = () => (
               <Route path="/admin/schedule-planner" element={<RequireAuth roles={['admin', 'manager']}><SchedulePlanner /></RequireAuth>} />
               <Route path="/admin" element={<RequireAuth roles={['admin']}><AdminDashboard /></RequireAuth>} />
               <Route path="/admin/users" element={<RequireAuth roles={['admin']}><UserManagement /></RequireAuth>} />
+              <Route path="/admin/invite-codes" element={<RequireAuth roles={['admin']}><InviteCodes /></RequireAuth>} />
               <Route path="/admin/projects" element={<RequireAuth roles={['admin']}><ProjectSettings /></RequireAuth>} />
               <Route path="/admin/checklists" element={<RequireAuth roles={['admin']}><AdminChecklists /></RequireAuth>} />
               <Route path="/admin/materials" element={<RequireAuth roles={['admin']}><AdminMaterials /></RequireAuth>} />

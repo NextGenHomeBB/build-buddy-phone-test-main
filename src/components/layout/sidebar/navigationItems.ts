@@ -1,4 +1,4 @@
-import { Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield, Package, MessageSquarePlus, CalendarDays, ClipboardList, DollarSign } from "lucide-react";
+import { Home, FolderOpen, CheckSquare, BarChart3, Users, Settings, Shield, Package, MessageSquarePlus, CalendarDays, ClipboardList, DollarSign, QrCode } from "lucide-react";
 
 interface NavigationCounts {
   projectsCount: number;
@@ -52,6 +52,12 @@ export const getAdminItems = (counts: NavigationCounts) => [
     url: "/admin/users",
     icon: Users,
     badge: counts.usersCount > 0 ? counts.usersCount.toString() : null,
+  },
+  {
+    title: "Invite Codes",
+    url: "/admin/invite-codes",
+    icon: QrCode,
+    badge: null,
   },
   {
     title: "User Access",
