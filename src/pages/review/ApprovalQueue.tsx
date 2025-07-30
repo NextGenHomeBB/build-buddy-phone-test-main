@@ -15,7 +15,6 @@ interface Task {
   description: string;
   status: string;
   created_at: string;
-  approved_at: string | null;
   project: { name: string } | null;
   phase: { name: string } | null;
 }
@@ -37,17 +36,15 @@ export default function ApprovalQueue() {
           description,
           status,
           created_at,
-          approved_at,
           project:projects(name),
           phase:project_phases(name)
         `)
         .eq('project_id', projectId)
         .eq('status', 'completed')
-        .is('approved_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Task[];
+      return (data || []) as Task[];
     },
     enabled: !!projectId
   });

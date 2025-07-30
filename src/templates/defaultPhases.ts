@@ -1,4 +1,9 @@
-export const defaultPhases = [
+export interface DefaultPhase {
+  name: string;
+  checklist: string[];
+}
+
+export const defaultPhases: DefaultPhase[] = [
   {
     name: 'Bouwtekening',
     checklist: [
@@ -244,4 +249,4 @@ export const defaultPhases = [
       'Project mooi afronden',
     ],
   },
-] as const;
+];
