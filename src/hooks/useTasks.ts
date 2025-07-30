@@ -68,7 +68,18 @@ export function useTasks(filters?: TaskFilters) {
 
   const query = useQuery({
     queryKey: ['tasks', user?.id, filters],
-    queryFn: () => taskService.getTasks(user?.id, filters),
+    queryFn: async () => {
+      if (!user?.id) {
+        console.log('❌ No user ID available for tasks query');
+        return [];
+      }
+      
+      console.log('📋 useTasks: Fetching tasks for user:', user.id, 'with filters:', filters);
+      const tasks = await taskService.getTasks(user.id, filters);
+      console.log('📋 useTasks: Received tasks:', tasks?.length || 0, 'tasks');
+      console.log('📋 useTasks: Task details:', tasks?.map(t => ({ id: t.id, title: t.title, status: t.status, assigned_to: t.assigned_to })));
+      return tasks;
+    },
     enabled: !!user?.id,
   });
 

@@ -3,7 +3,7 @@ import { upsertUserProjectRole } from '@/services/userProjectRole.service';
 
 export const taskService = {
   async getTasks(userId?: string, filters?: any) {
-    console.log('🔍 getTasks called with userId:', userId, 'filters:', filters);
+    console.log('🔍 [TASK DEBUG] getTasks called with userId:', userId, 'filters:', filters);
     let query;
     
     if (userId) {
