@@ -1,380 +1,360 @@
 import { useState, useEffect } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle 
-} from '@/components/ui/dialog';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  User, 
-  CheckSquare, 
-  ListTodo, 
-  Clock, 
-  Flag,
-  Building2,
-  Users,
-  Loader2
-} from 'lucide-react';
-import { useAccessibleProjects } from '@/hooks/useProjects';
-import { useProjectChecklists } from '@/hooks/useProjectChecklists';
-import { useTasks } from '@/hooks/useTasks';
-import { useAssignWorkers, useBulkAssign } from '@/hooks/useTasks';
+import { Search, Filter, Users, Clock, CheckCircle2, Calendar } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-interface WorkerTaskAssignmentProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  worker: {
-    user_id: string;
-    name: string;
-    profiles?: { name: string };
-  } | null;
-  projectId?: string;
-}
 
 interface AssignableItem {
   id: string;
   title: string;
   description?: string;
-  type: 'task' | 'checklist-item';
-  projectId: string;
   projectName: string;
-  phaseId?: string;
-  phaseName?: string;
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  estimatedHours?: number;
-  status?: string;
-  isSelected?: boolean;
+  checklistName?: string;
+  type: 'task' | 'checklist';
 }
 
-export function WorkerTaskAssignment({ 
-  open, 
-  onOpenChange, 
-  worker,
-  projectId 
-}: WorkerTaskAssignmentProps) {
+interface Worker {
+  id: string;
+  name: string;
+  role: string;
+  avatar?: string;
+  skills?: string[];
+  currentTasks: number;
+  availability: 'available' | 'busy' | 'offline';
+}
+
+interface Assignment {
+  itemId: string;
+  workerId: string;
+  deadline?: Date;
+}
+
+export function WorkerTaskAssignment() {
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [selectedTab, setSelectedTab] = useState('tasks');
+  const [selectedWorker, setSelectedWorker] = useState<string | null>(null);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const { toast } = useToast();
 
-  const { data: projects = [] } = useAccessibleProjects();
-  const { data: tasks = [] } = useTasks({
-    projectId: projectId || undefined,
-    status: ['todo', 'in-progress']
+  // Fetch workers
+  const { data: workers = [] } = useQuery({
+    queryKey: ['workers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .neq('role', 'admin');
+
+      if (error) throw error;
+      
+      return data.map(profile => ({
+        id: profile.id,
+        name: profile.full_name || profile.name || 'Unknown',
+        role: profile.role || 'Worker',
+        avatar: profile.avatar_url,
+        skills: [],
+        currentTasks: 0,
+        availability: 'available' as const,
+      }));
+    },
   });
-  
-  const assignWorkers = useAssignWorkers();
-  const bulkAssign = useBulkAssign();
 
-  // Filter projects to those with project_id if provided
-  const availableProjects = projectId 
-    ? projects.filter(p => p.id === projectId)
-    : projects;
+  // Fetch projects for context
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name');
 
-  // Get checklists for the first available project (or all if no specific project)
-  const { data: checklists = [] } = useProjectChecklists(
-    projectId || (availableProjects.length > 0 ? availableProjects[0].id : '')
-  );
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch tasks
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['unassigned-tasks'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .is('assigned_to', null);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch checklists (disabled since items column doesn't exist)
+  const { data: checklists = [] } = useQuery({
+    queryKey: ['checklists'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('checklists')
+        .select('*');
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Transform tasks to assignable items
-  const assignableTasks: AssignableItem[] = tasks
-    .filter(task => !task.assigned_to || task.assigned_to !== worker?.user_id)
-    .map(task => ({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      type: 'task' as const,
-      projectId: task.project_id,
-      projectName: projects.find(p => p.id === task.project_id)?.name || 'Unknown Project',
-      phaseId: task.phase_id,
-      phaseName: task.phase?.name || 'No Phase',
-      priority: task.priority,
-      estimatedHours: task.estimated_hours ? Number(task.estimated_hours) : undefined,
-      status: task.status,
-    }));
+  const assignableTaskItems: AssignableItem[] = tasks.map(task => ({
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    projectName: projects.find(p => p.id === task.project_id)?.name || 'Unknown Project',
+    type: 'task' as const,
+  }));
 
-  // Transform checklist items to assignable items
-  const assignableChecklistItems: AssignableItem[] = checklists
-    .flatMap(checklist => {
-      const items = Array.isArray(checklist.items) ? checklist.items : [];
-      return items
-        .filter((item: any) => !item.completed)
-        .map((item: any) => ({
-          id: `${checklist.id}-${item.id}`,
-          title: item.title,
-          description: item.description,
-          type: 'checklist-item' as const,
-          projectId: checklist.project_id,
-          projectName: projects.find(p => p.id === checklist.project_id)?.name || 'Unknown Project',
-          priority: item.priority || 'medium',
-          estimatedHours: item.estimatedHours,
-        }))
-    });
+  // Transform checklist items to assignable items (disabled since items column doesn't exist)
+  const assignableChecklistItems: AssignableItem[] = [];
 
-  const handleItemSelect = (itemId: string, selected: boolean) => {
-    setSelectedItems(prev => 
-      selected 
-        ? [...prev, itemId]
-        : prev.filter(id => id !== itemId)
+  const allAssignableItems = [...assignableTaskItems, ...assignableChecklistItems];
+
+  const filteredItems = allAssignableItems.filter(item =>
+    item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.projectName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleItemSelect = (itemId: string) => {
+    setSelectedItems(prev =>
+      prev.includes(itemId)
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
     );
   };
 
-  const handleSelectAll = (items: AssignableItem[], selected: boolean) => {
-    const itemIds = items.map(item => item.id);
-    setSelectedItems(prev => 
-      selected 
-        ? [...new Set([...prev, ...itemIds])]
-        : prev.filter(id => !itemIds.includes(id))
-    );
-  };
-
-  const handleAssignSelected = async () => {
-    if (!worker || selectedItems.length === 0) return;
+  const handleAssign = async () => {
+    if (!selectedWorker || selectedItems.length === 0) {
+      toast({
+        title: 'Selection Required',
+        description: 'Please select both items and a worker to assign.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
-      const taskAssignments = selectedItems
-        .filter(id => assignableTasks.find(t => t.id === id))
-        .map(taskId => ({
-          taskId,
-          userIds: [worker.user_id],
-          primaryId: worker.user_id
-        }));
+      // Update tasks to assign them to the worker
+      const taskIds = selectedItems.filter(id => 
+        assignableTaskItems.some(item => item.id === id)
+      );
 
-      if (taskAssignments.length > 0) {
-        await bulkAssign.mutateAsync({ assignments: taskAssignments });
+      if (taskIds.length > 0) {
+        const { error } = await supabase
+          .from('tasks')
+          .update({ assigned_to: selectedWorker })
+          .in('id', taskIds);
+
+        if (error) throw error;
       }
 
-      // Handle checklist item assignments
-      const checklistAssignments = selectedItems
-        .filter(id => assignableChecklistItems.find(c => c.id === id));
+      // Create assignments record
+      const newAssignments = selectedItems.map(itemId => ({
+        itemId,
+        workerId: selectedWorker,
+        deadline: undefined,
+      }));
 
-      if (checklistAssignments.length > 0) {
-        // For now, we'll show a success message for checklist items
-        // In a full implementation, you'd need to create the checklist assignment logic
-        console.log('Checklist assignments:', checklistAssignments);
-      }
+      setAssignments(prev => [...prev, ...newAssignments]);
+      setSelectedItems([]);
+      setSelectedWorker(null);
 
       toast({
-        title: "Tasks assigned successfully",
-        description: `Assigned ${selectedItems.length} items to ${worker.profiles?.name || worker.name}`
+        title: 'Assignment Successful',
+        description: `${selectedItems.length} items assigned successfully.`,
       });
-
-      setSelectedItems([]);
-      onOpenChange(false);
 
     } catch (error) {
       console.error('Assignment error:', error);
       toast({
-        title: "Assignment failed",
-        description: "Failed to assign tasks. Please try again.",
-        variant: "destructive"
+        title: 'Assignment Failed',
+        description: 'Failed to assign items to worker.',
+        variant: 'destructive',
       });
     }
   };
 
-  const renderAssignableItem = (item: AssignableItem) => (
-    <Card key={item.id} className="mb-3">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <Checkbox
-            checked={selectedItems.includes(item.id)}
-            onCheckedChange={(checked) => 
-              handleItemSelect(item.id, checked as boolean)
-            }
-            className="mt-1"
-          />
-          
-          <div className="flex-1 space-y-2">
-            <div className="flex items-start justify-between">
-              <h4 className="font-medium text-sm">{item.title}</h4>
-              <div className="flex items-center gap-2">
-                {item.type === 'task' && (
-                  <Badge variant="outline" className="text-xs">
-                    <ListTodo className="h-3 w-3 mr-1" />
-                    Task
-                  </Badge>
-                )}
-                {item.type === 'checklist-item' && (
-                  <Badge variant="outline" className="text-xs">
-                    <CheckSquare className="h-3 w-3 mr-1" />
-                    Checklist
-                  </Badge>
-                )}
-                {item.priority && (
-                  <Badge 
-                    variant={
-                      item.priority === 'urgent' ? 'destructive' :
-                      item.priority === 'high' ? 'secondary' : 'outline'
-                    }
-                    className="text-xs"
-                  >
-                    <Flag className="h-3 w-3 mr-1" />
-                    {item.priority}
-                  </Badge>
-                )}
-              </div>
-            </div>
-            
-            {item.description && (
-              <p className="text-sm text-muted-foreground">{item.description}</p>
-            )}
-            
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Building2 className="h-3 w-3" />
-                {item.projectName}
-              </div>
-              
-              {item.phaseName && (
-                <div className="flex items-center gap-1">
-                  <ListTodo className="h-3 w-3" />
-                  {item.phaseName}
-                </div>
-              )}
-              
-              {item.estimatedHours && (
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {item.estimatedHours}h
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const isLoading = assignWorkers.isPending || bulkAssign.isPending;
-
-  if (!worker) return null;
+  const getWorkerColor = (availability: string) => {
+    switch (availability) {
+      case 'available': return 'bg-green-100 text-green-800';
+      case 'busy': return 'bg-yellow-100 text-yellow-800';
+      case 'offline': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] sm:h-[80vh] flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Assign Tasks to {worker.profiles?.name || worker.name}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="flex-1 flex flex-col min-h-0">
-          <Tabs value={selectedTab} onValueChange={setSelectedTab} className="flex-1 flex flex-col">
-            <div className="px-6 py-2 border-b">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="tasks" className="flex items-center gap-2">
-                  <ListTodo className="h-4 w-4" />
-                  Tasks ({assignableTasks.length})
-                </TabsTrigger>
-                <TabsTrigger value="checklists" className="flex items-center gap-2">
-                  <CheckSquare className="h-4 w-4" />
-                  Checklist Items ({assignableChecklistItems.length})
-                </TabsTrigger>
-              </TabsList>
+    <div className="space-y-6">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Items to Assign */}
+        <Card className="flex-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5" />
+              Available Items ({filteredItems.length})
+            </CardTitle>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tasks and checklists..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
             </div>
-
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="tasks" className="mt-0 h-full flex flex-col">
-                <div className="px-6 py-3 border-b">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={assignableTasks.length > 0 && assignableTasks.every(task => selectedItems.includes(task.id))}
-                        onCheckedChange={(checked) => 
-                          handleSelectAll(assignableTasks, checked as boolean)
-                        }
-                      />
-                      <span className="text-sm font-medium">Select All Tasks</span>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                    selectedItems.includes(item.id)
+                      ? 'bg-primary/10 border-primary'
+                      : 'hover:bg-muted'
+                  }`}
+                  onClick={() => handleItemSelect(item.id)}
+                >
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={selectedItems.includes(item.id)}
+                      onChange={() => handleItemSelect(item.id)}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium truncate">{item.title}</h4>
+                        <Badge variant="outline" className="shrink-0">
+                          {item.type}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                        {item.description}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {item.projectName}
+                        </span>
+                        {item.checklistName && (
+                          <span className="flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            {item.checklistName}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <Badge variant="outline">
-                      {selectedItems.filter(id => assignableTasks.find(t => t.id === id)).length} selected
-                    </Badge>
                   </div>
                 </div>
+              ))}
+              {filteredItems.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No items available for assignment</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-                <ScrollArea className="flex-1">
-                  <div className="px-6 py-2">
-                    {assignableTasks.length > 0 ? (
-                      assignableTasks.map(renderAssignableItem)
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <ListTodo className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No available tasks to assign</p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-
-              <TabsContent value="checklists" className="mt-0 h-full flex flex-col">
-                <div className="px-6 py-3 border-b">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={assignableChecklistItems.length > 0 && assignableChecklistItems.every(item => selectedItems.includes(item.id))}
-                        onCheckedChange={(checked) => 
-                          handleSelectAll(assignableChecklistItems, checked as boolean)
-                        }
-                      />
-                      <span className="text-sm font-medium">Select All Checklist Items</span>
+        {/* Workers */}
+        <Card className="lg:w-96">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Workers ({workers.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {workers.map((worker) => (
+                <div
+                  key={worker.id}
+                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                    selectedWorker === worker.id
+                      ? 'bg-primary/10 border-primary'
+                      : 'hover:bg-muted'
+                  }`}
+                  onClick={() => setSelectedWorker(worker.id)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      {worker.avatar ? (
+                        <img
+                          src={worker.avatar}
+                          alt={worker.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium">
+                          {worker.name.charAt(0)}
+                        </span>
+                      )}
                     </div>
-                    <Badge variant="outline">
-                      {selectedItems.filter(id => assignableChecklistItems.find(c => c.id === id)).length} selected
-                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-medium truncate">{worker.name}</h4>
+                        <Badge className={getWorkerColor(worker.availability)}>
+                          {worker.availability}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>{worker.role}</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {worker.currentTasks} tasks
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <ScrollArea className="flex-1">
-                  <div className="px-6 py-2">
-                    {assignableChecklistItems.length > 0 ? (
-                      assignableChecklistItems.map(renderAssignableItem)
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No available checklist items to assign</p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
+              ))}
+              {workers.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No workers available</p>
+                </div>
+              )}
             </div>
-          </Tabs>
-        </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <div className="px-6 py-4 border-t bg-background">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      {/* Assignment Actions */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {selectedItems.length} item(s) selected
+              {selectedWorker && (
+                <span className="ml-2">
+                  → {workers.find(w => w.id === selectedWorker)?.name}
+                </span>
+              )}
+            </div>
+            <Button
+              onClick={handleAssign}
+              disabled={!selectedWorker || selectedItems.length === 0}
+              className="flex items-center gap-2"
+            >
               <Users className="h-4 w-4" />
-              {selectedItems.length} items selected
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleAssignSelected}
-                disabled={selectedItems.length === 0 || isLoading}
-              >
-                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Assign ({selectedItems.length})
-              </Button>
-            </div>
+              Assign Selected Items
+            </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

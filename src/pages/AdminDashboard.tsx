@@ -59,16 +59,19 @@ export default function AdminDashboard() {
   const onSubmit = async (data: ProjectFormData) => {
     setIsSubmitting(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from("projects")
         .insert({
           name: data.name,
           description: data.description,
           location: data.location,
-          type: data.type,
           start_date: data.startDate,
           end_date: data.endDate,
           budget: parseFloat(data.budget),
+          organization_id: user.user_metadata?.organization_id,
         });
 
       if (error) throw error;

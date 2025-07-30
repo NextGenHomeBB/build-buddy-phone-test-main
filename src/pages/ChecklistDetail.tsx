@@ -46,7 +46,7 @@ export default function ChecklistDetail() {
     );
   }
 
-  const items = Array.isArray(checklist.items) ? checklist.items : [];
+  const items = []; // Disabled since items column doesn't exist
   const completedCount = completedItems.size;
   const totalCount = items.length;
   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;

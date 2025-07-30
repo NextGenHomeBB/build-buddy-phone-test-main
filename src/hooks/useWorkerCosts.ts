@@ -51,7 +51,7 @@ export const useWorkerCosts = () => {
       
       const { data: labourData, error: labourError } = await supabase
         .from('labour_entries')
-        .select('user_id, total_hours, total_cost, created_at')
+        .select('user_id, hours_worked, total_cost, created_at')
         .gte('created_at', `${currentMonth}-01`)
         .lt('created_at', `${currentMonth}-31`);
 
@@ -59,14 +59,14 @@ export const useWorkerCosts = () => {
 
       // Process and combine the data
       const workersWithStats = profilesData?.map(profile => {
-        const userLabourEntries = labourData?.filter(entry => entry.user_id === profile.user_id) || [];
+        const userLabourEntries = labourData?.filter(entry => entry.user_id === profile.id) || [];
         
-        const totalHours = userLabourEntries.reduce((sum, entry) => sum + (entry.total_hours || 0), 0);
+        const totalHours = userLabourEntries.reduce((sum, entry) => sum + (entry.hours_worked || 0), 0);
         const totalEarnings = userLabourEntries.reduce((sum, entry) => sum + (entry.total_cost || 0), 0);
         const hourlyRate = totalHours > 0 ? totalEarnings / totalHours : 25; // Default rate if no data
         
         return {
-          id: profile.user_id,
+          id: profile.id,
           name: profile.name,
           role: profile.role === 'admin' ? 'Site Manager' : 
                 profile.role === 'manager' ? 'Project Manager' : 

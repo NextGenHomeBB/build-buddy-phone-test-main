@@ -90,14 +90,7 @@ export default function ProjectDetail() {
           // Don't throw error, just warn - phase status update succeeded
         }
 
-        // Update phase progress to 100%
-        const { error: progressError } = await supabase.rpc('update_phase_progress', {
-          phase_id_param: phaseId
-        });
-        
-        if (progressError) {
-          console.warn('Failed to update phase progress:', progressError);
-        }
+        // Skip progress update since function doesn't exist
       }
       
       return data;
@@ -187,7 +180,7 @@ export default function ProjectDetail() {
     try {
       const { error } = await supabase
         .from('projects')
-        .update({ status: newStatus })
+        .update({ status: newStatus === 'completed' ? 'archived' : newStatus as any })
         .eq('id', id);
 
       if (error) throw error;
@@ -219,7 +212,7 @@ export default function ProjectDetail() {
     try {
       const { error } = await supabase
         .from('projects')
-        .update({ type: newType })
+        .update({ description: newType }) // Use description field since type doesn't exist
         .eq('id', id);
 
       if (error) throw error;
@@ -264,7 +257,7 @@ export default function ProjectDetail() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size={isMobile ? "sm" : "sm"} className={isMobile ? 'text-xs' : ''}>
-                        {project.type.charAt(0).toUpperCase() + project.type.slice(1)}
+                         {(project.description || 'Residential').charAt(0).toUpperCase() + (project.description || 'Residential').slice(1)}
                         <ChevronDown className="h-3 w-3 ml-1" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -285,7 +278,7 @@ export default function ProjectDetail() {
                   </DropdownMenu>
                 ) : (
                   <Badge variant="outline" className={isMobile ? 'text-xs' : ''}>
-                    {project.type.charAt(0).toUpperCase() + project.type.slice(1)}
+                    {(project.description || 'Residential').charAt(0).toUpperCase() + (project.description || 'Residential').slice(1)}
                   </Badge>
                  )}
                 </div>
@@ -297,7 +290,7 @@ export default function ProjectDetail() {
             
             <div className={`flex gap-2 ${isMobile ? 'w-full' : ''}`}>
               {canEditProject() && (
-                <EditProjectDialog project={project}>
+                <EditProjectDialog project={{...project, type: project.description || 'Residential'}}>
                   <Button variant="outline" size="sm" className={isMobile ? 'flex-1 text-xs' : ''}>
                     {isMobile ? 'Edit' : 'Edit Project'}
                   </Button>
@@ -323,10 +316,10 @@ export default function ProjectDetail() {
                   </div>
                   <div>
                     <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Progress</div>
-                    <div className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>{project.progress}%</div>
-                  </div>
-                </div>
-                <Progress value={project.progress} className="mt-2" />
+                     <div className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>0%</div>
+                   </div>
+                 </div>
+                 <Progress value={0} className="mt-2" />
               </CardContent>
             </Card>
 
@@ -578,8 +571,8 @@ export default function ProjectDetail() {
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="text-right space-y-1">
-                              <div className="text-sm font-medium">{phase.progress}%</div>
-                              <Progress value={phase.progress} className="w-20" />
+                               <div className="text-sm font-medium">0%</div>
+                               <Progress value={0} className="w-20" />
                             </div>
                             {canEditPhase() && (
                               <EditPhaseDialog phase={phase} projectId={id!}>

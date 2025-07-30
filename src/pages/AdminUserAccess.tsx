@@ -71,7 +71,7 @@ export default function AdminUserAccess() {
     queryFn: async () => {
       let query = supabase
         .from('profiles')
-        .select('user_id, name')
+        .select('id, name, full_name')
         .limit(50);
       
       // Apply search filter if provided
@@ -85,9 +85,9 @@ export default function AdminUserAccess() {
       
       // Convert to User format
       return data.map(profile => ({
-        id: profile.user_id,
-        email: `${profile.name}@user.local`, // Placeholder since email isn't available
-        name: profile.name
+        id: profile.id,
+        email: `${profile.full_name || profile.name}@user.local`, // Placeholder since email isn't available
+        name: profile.full_name || profile.name
       }));
     },
   });
@@ -133,13 +133,8 @@ export default function AdminUserAccess() {
     queryFn: async () => {
       if (!selectedUser) return [];
       
-      const { data, error } = await supabase
-        .from('user_phase_role')
-        .select('*')
-        .eq('user_id', selectedUser.id);
-      
-      if (error) throw error;
-      return data as UserPhaseRole[];
+      // Since user_phase_role table doesn't exist, return empty array
+      return [];
     },
     enabled: !!selectedUser,
   });

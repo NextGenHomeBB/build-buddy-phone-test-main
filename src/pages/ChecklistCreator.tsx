@@ -125,13 +125,15 @@ export default function ChecklistCreator() {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from("checklists")
         .insert({
           name: data.name,
           description: data.description,
-          items: data.items,
-          is_template: true,
+          organization_id: user.user_metadata?.organization_id,
         });
 
       if (error) throw error;
