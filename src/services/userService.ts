@@ -2,7 +2,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface UserProfile {
   id: string;
-  user_id: string;
   name: string;
   role: 'admin' | 'manager' | 'worker' | 'viewer';
   phone?: string;
@@ -68,7 +67,7 @@ export const userService = {
     const { error } = await supabase
       .from('profiles')
       .delete()
-      .eq('user_id', userId);
+      .eq('id', userId);
     
     if (error) throw error;
   },

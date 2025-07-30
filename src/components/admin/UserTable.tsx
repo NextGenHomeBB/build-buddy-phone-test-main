@@ -39,7 +39,7 @@ export function UserTable({ users, onUpdateRole, onUserUpdated, onDeleteUser }: 
                   </Avatar>
                   <div>
                     <div className="font-medium">{user.name}</div>
-                    <div className="text-sm text-muted-foreground">ID: {user.user_id.slice(0, 8)}...</div>
+                    <div className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</div>
                   </div>
                 </div>
               </TableCell>
@@ -58,7 +58,7 @@ export function UserTable({ users, onUpdateRole, onUserUpdated, onDeleteUser }: 
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={() => onDeleteUser(user.user_id)}
+                    onClick={() => onDeleteUser(user.id)}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -66,7 +66,7 @@ export function UserTable({ users, onUpdateRole, onUserUpdated, onDeleteUser }: 
                   <Select
                     value={user.role}
                     onValueChange={(value) => 
-                      onUpdateRole(user.user_id, value as UserProfile['role'])
+                      onUpdateRole(user.id, value as UserProfile['role'])
                     }
                   >
                     <SelectTrigger className="w-28 h-8">

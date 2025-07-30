@@ -70,7 +70,7 @@ export function EditUserDialog({ children, user, onUserUpdated }: EditUserDialog
           name: values.name,
           phone: values.phone || null,
         })
-        .eq('user_id', user.user_id);
+        .eq('id', user.id);
 
       if (profileError) throw profileError;
 
@@ -78,7 +78,7 @@ export function EditUserDialog({ children, user, onUserUpdated }: EditUserDialog
       if (values.role !== user.role) {
         const { error: roleError } = await supabase
           .rpc('update_user_role', {
-            target_user_id: user.user_id,
+            target_user_id: user.id,
             new_role: values.role
           });
 

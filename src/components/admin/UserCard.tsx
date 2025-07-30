@@ -25,7 +25,7 @@ export function UserCard({ user, onUpdateRole, onUserUpdated }: UserCardProps) {
           </Avatar>
           <div>
             <div className="font-medium text-sm">{user.name}</div>
-            <div className="text-xs text-muted-foreground">ID: {user.user_id.slice(0, 8)}...</div>
+            <div className="text-xs text-muted-foreground">ID: {user.id.slice(0, 8)}...</div>
           </div>
         </div>
         <EditUserDialog user={user} onUserUpdated={onUserUpdated}>
@@ -61,7 +61,7 @@ export function UserCard({ user, onUpdateRole, onUserUpdated }: UserCardProps) {
         <Select
           value={user.role}
           onValueChange={(value) => 
-            onUpdateRole(user.user_id, value as UserProfile['role'])
+            onUpdateRole(user.id, value as UserProfile['role'])
           }
         >
           <SelectTrigger className="w-32 h-9 touch-target">
