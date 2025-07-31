@@ -38,6 +38,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { getPriorityIcon, getStatusColor, getPhaseStatusIcon } from '@/lib/ui-helpers';
 import { usePhaseCosts } from '@/services/phaseCosts.service';
+import { calculateProgress, calculateBudgetProgress } from '@/lib/progress-utils';
 
 interface ChecklistItem {
   id: string;
@@ -430,7 +431,7 @@ export default function PhaseDetail() {
                     <div className="text-lg font-semibold">{completedTasks} / {totalTasks}</div>
                   </div>
                 </div>
-                <Progress value={(completedTasks / totalTasks) * 100} className="mt-2" />
+                <Progress value={calculateProgress(completedTasks, totalTasks)} className="mt-2" />
               </CardContent>
             </Card>
 
@@ -448,7 +449,7 @@ export default function PhaseDetail() {
                       </div>
                     </div>
                   </div>
-                  <Progress value={phase.budget > 0 ? (phase.spent / phase.budget) * 100 : 0} className="mt-2" />
+                  <Progress value={calculateBudgetProgress(phase.spent, phase.budget)} className="mt-2" />
                 </CardContent>
               </Card>
             </EditPhaseBudgetDialog>

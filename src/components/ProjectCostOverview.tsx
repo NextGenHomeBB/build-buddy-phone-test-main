@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Euro, Package, Users, TrendingUp, AlertTriangle } from 'lucide-react';
+import { calculateBudgetProgress, calculateProgress } from '@/lib/progress-utils';
 
 interface ProjectCostOverviewProps {
   projectId: string;
@@ -88,9 +89,7 @@ export function ProjectCostOverview({ projectId }: ProjectCostOverviewProps) {
 
   if (!costSummary) return null;
 
-  const budgetUsagePercentage = costSummary.budget > 0 
-    ? (costSummary.totalCosts / costSummary.budget) * 100 
-    : 0;
+  const budgetUsagePercentage = calculateBudgetProgress(costSummary.totalCosts, costSummary.budget);
 
   const isOverBudget = costSummary.totalCosts > costSummary.budget;
 
@@ -211,9 +210,7 @@ export function ProjectCostOverview({ projectId }: ProjectCostOverviewProps) {
           <div className="space-y-4">
             {costSummary.phaseBreakdown.map((phase) => {
               const phaseTotal = phase.materialCost + phase.labourCost;
-              const phasePercentage = costSummary.totalCosts > 0 
-                ? (phaseTotal / costSummary.totalCosts) * 100 
-                : 0;
+              const phasePercentage = calculateProgress(phaseTotal, costSummary.totalCosts);
 
               return (
                 <div key={phase.phaseId} className="space-y-2">
