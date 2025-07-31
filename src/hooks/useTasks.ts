@@ -202,7 +202,13 @@ export function useBulkAssign() {
       return taskService.bulkAssignWorkers(assignments);
     },
     onSuccess: () => {
+      // Invalidate all task-related queries to ensure UI updates across all components
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['unassigned-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['workers'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      console.log('✅ [QUERY INVALIDATION] All task and worker queries invalidated after assignment');
     },
     onError: (error) => {
       console.error('Failed to bulk assign workers:', error);

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Filter, Users, Clock, CheckCircle2, Calendar } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +37,7 @@ interface Assignment {
 
 export function WorkerTaskAssignment() {
   const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedWorker, setSelectedWorker] = useState<string | null>(null);
@@ -164,54 +165,38 @@ export function WorkerTaskAssignment() {
     }
 
     try {
-      console.log('🎯 Starting assignment process...', { 
+      console.log('🎯 [ASSIGNMENT] Starting assignment process...', { 
         user: user.id, 
         role: profile.role, 
         selectedWorker, 
         selectedItems 
       });
       
-      // Update tasks to assign them to the worker
+      // Filter task IDs from selected items
       const taskIds = selectedItems.filter(id => 
         assignableTaskItems.some(item => item.id === id)
       );
 
       if (taskIds.length > 0) {
-        console.log('📝 Assigning tasks:', taskIds);
+        console.log('📝 [ASSIGNMENT] Assigning tasks via taskService:', taskIds, 'to worker:', selectedWorker);
         
-        // First, insert into task_workers table for each task
-        const taskWorkerInserts = taskIds.map(taskId => ({
-          task_id: taskId,
-          user_id: selectedWorker,
-          is_primary: true
-          // organization_id will be set automatically via current_org() default
-        }));
-
-        const { error: taskWorkerError } = await supabase
-          .from('task_workers')
-          .insert(taskWorkerInserts);
-
-        if (taskWorkerError) {
-          console.error('❌ Error inserting task workers:', taskWorkerError);
-          throw taskWorkerError;
+        // Use the taskService for proper assignment with notifications
+        for (const taskId of taskIds) {
+          await supabase.functions.invoke('assign_workers_bulk', {
+            body: {
+              assignments: [{
+                taskId: taskId,
+                userIds: [selectedWorker],
+                primaryId: selectedWorker
+              }]
+            }
+          });
         }
-
-        // Then update the tasks table for backward compatibility
-        const { error: taskUpdateError } = await supabase
-          .from('tasks')
-          .update({ 
-            assigned_to: selectedWorker,
-            status: 'in-progress'
-          })
-          .in('id', taskIds);
-
-        if (taskUpdateError) {
-          console.error('❌ Error updating tasks:', taskUpdateError);
-          throw taskUpdateError;
-        }
+        
+        console.log('✅ [ASSIGNMENT] Tasks assigned successfully');
       }
 
-      // Create assignments record
+      // Create assignments record for UI state
       const newAssignments = selectedItems.map(itemId => ({
         itemId,
         workerId: selectedWorker,
@@ -222,7 +207,14 @@ export function WorkerTaskAssignment() {
       setSelectedItems([]);
       setSelectedWorker(null);
 
-      // Refetch data to update the UI
+      // Invalidate all relevant queries to update UI across the app
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['unassigned-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['workers'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      
+      // Also refetch local data
       await refetchTasks();
       await refetchWorkers();
 
@@ -232,7 +224,7 @@ export function WorkerTaskAssignment() {
       });
 
     } catch (error) {
-      console.error('❌ Assignment error:', error);
+      console.error('❌ [ASSIGNMENT] Assignment error:', error);
       toast({
         title: 'Assignment Failed',
         description: 'Failed to assign items to worker. Please try again.',
