@@ -1,7 +1,8 @@
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useProject, useProjectPhases } from '@/hooks/useProjects';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { calculateProgress, calculateBudgetProgress } from '@/lib/progress-utils';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,6 +56,34 @@ export default function ProjectDetail() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: project, isLoading: projectLoading, refetch: refetchProject } = useProject(id!);
   const { data: phases, isLoading: phasesLoading } = useProjectPhases(id!);
+  
+  // Fetch task data for all phases to calculate progress
+  const { data: phaseTasks } = useQuery({
+    queryKey: ['phases', id, 'tasks'],
+    queryFn: async () => {
+      if (!phases?.length) return {};
+      
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('id, phase_id, status')
+        .in('phase_id', phases.map(p => p.id));
+      
+      if (error) throw error;
+      
+      // Group tasks by phase_id
+      const tasksByPhase: Record<string, { total: number; completed: number }> = {};
+      phases.forEach(phase => {
+        const phaseTasks = tasks?.filter(t => t.phase_id === phase.id) || [];
+        tasksByPhase[phase.id] = {
+          total: phaseTasks.length,
+          completed: phaseTasks.filter(t => t.status === 'completed').length
+        };
+      });
+      
+      return tasksByPhase;
+    },
+    enabled: !!phases?.length,
+  });
   const { canEditProject, canAddPhase, canEditPhase, canViewReports, canCreateProject } = useRoleAccess();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -98,6 +127,7 @@ export default function ProjectDetail() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projects', id, 'phases'] });
       queryClient.invalidateQueries({ queryKey: ['phases', id, 'calendar'] });
+      queryClient.invalidateQueries({ queryKey: ['phases', id, 'tasks'] });
       
       const isCompleted = data.status === 'completed';
       toast({
@@ -323,10 +353,23 @@ export default function ProjectDetail() {
                   </div>
                   <div>
                     <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>Progress</div>
-                     <div className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>0%</div>
+                     <div className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
+                       {phaseTasks && phases ? (() => {
+                         const totalTasks = Object.values(phaseTasks).reduce((sum, p) => sum + p.total, 0);
+                         const completedTasks = Object.values(phaseTasks).reduce((sum, p) => sum + p.completed, 0);
+                         return `${calculateProgress(completedTasks, totalTasks).toFixed(0)}%`;
+                       })() : '0%'}
+                     </div>
                    </div>
                  </div>
-                 <Progress value={0} className="mt-2" />
+                 <Progress 
+                   value={phaseTasks && phases ? (() => {
+                     const totalTasks = Object.values(phaseTasks).reduce((sum, p) => sum + p.total, 0);
+                     const completedTasks = Object.values(phaseTasks).reduce((sum, p) => sum + p.completed, 0);
+                     return calculateProgress(completedTasks, totalTasks);
+                   })() : 0} 
+                   className="mt-2" 
+                 />
               </CardContent>
             </Card>
 
@@ -343,7 +386,7 @@ export default function ProjectDetail() {
                     </div>
                   </div>
                 </div>
-                <Progress value={(project.spent / project.budget) * 100} className="mt-2" />
+                <Progress value={calculateBudgetProgress(project.spent, project.budget)} className="mt-2" />
               </CardContent>
             </Card>
 
@@ -570,16 +613,32 @@ export default function ProjectDetail() {
                                 <DollarSign className="h-3 w-3" />
                                 ${((phase.material_cost || 0) + (phase.labour_cost || 0)).toLocaleString()} / ${phase.budget.toLocaleString()}
                               </span>
-                              <span className="flex items-center gap-1">
-                                <CheckCircle className="h-3 w-3" />
-                                0 / 0 tasks
-                              </span>
+                               <span className="flex items-center gap-1">
+                                 <CheckCircle className="h-3 w-3" />
+                                 {phaseTasks?.[phase.id] ? 
+                                   `${phaseTasks[phase.id].completed} / ${phaseTasks[phase.id].total} tasks` : 
+                                   '0 / 0 tasks'
+                                 }
+                               </span>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <div className="text-right space-y-1">
-                               <div className="text-sm font-medium">0%</div>
-                               <Progress value={0} className="w-20" />
+                             <div className="text-right space-y-1">
+                               <div className="text-sm font-medium">
+                                 {phase.status === 'completed' ? '100%' : (
+                                   phaseTasks?.[phase.id] ? 
+                                     `${calculateProgress(phaseTasks[phase.id].completed, phaseTasks[phase.id].total).toFixed(0)}%` : 
+                                     '0%'
+                                 )}
+                               </div>
+                               <Progress 
+                                 value={phase.status === 'completed' ? 100 : (
+                                   phaseTasks?.[phase.id] ? 
+                                     calculateProgress(phaseTasks[phase.id].completed, phaseTasks[phase.id].total) : 
+                                     0
+                                 )} 
+                                 className="w-20" 
+                               />
                             </div>
                             {canEditPhase() && (
                               <EditPhaseDialog phase={phase} projectId={id!}>
